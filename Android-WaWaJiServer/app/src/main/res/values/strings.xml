@@ -1,0 +1,34 @@
+<resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
+    <string name="app_name">ZegoWawaji</string>
+
+    <string name="vt_menu_action_log">日志</string>
+    <string name="vt_menu_action_clean">清除</string>
+    <string name="vt_menu_action_leave">下线</string>
+
+    <string name="zg_text_quality_options">直播品质:</string>
+    <string name="zg_text_resolution_type_lowest">超低质量</string>
+    <string name="zg_text_resolution_type_Low">低质量</string>
+    <string name="zg_text_resolution_type_Standard">标准质量</string>
+    <string name="zg_text_resolution_type_High">高质量</string>
+    <string name="zg_text_resolution_type_Higher">超高质量</string>
+    <string name="zg_text_resolution_type_Highest">特高质量</string>
+    <string name="zg_text_resolution_type_Customize">自定义</string>
+
+    <string name="resolution_prefix">分辨率&#160;<xliff:g id="value">%1$s</xliff:g></string>
+    <string name="fps_prefix">帧率&#160;<xliff:g id="value">%1$s</xliff:g></string>
+    <string name="bitrate_prefix">码率&#160;<xliff:g id="value">%1$s</xliff:g></string>
+
+    <string name="vt_dialog_logout_message">现在下线会中断所有玩家的操作，确认下线？</string>
+    <string name="vt_dialog_btn_positive">确认</string>
+    <string name="vt_dialog_btn_cancel">取消</string>
+
+    <string name="zg_toast_login_room_failed">登录房间失败，稍后自动重试</string>
+    <string name="zg_toast_reopen_app">修改完成后，需重启 App 才能生效</string>
+    <string name="zg_toast_change_quality_success">修改成功，重新启动后生效</string>
+    <string name="zg_toast_permission_denied">获取权限 %1$s 失败</string>
+
+    <string name="zg_text_current_total_user">共有 <b>%1$d</b> 人</string>
+    <string name="zg_text_current_queue_user">排队人数 <b>%1$d</b></string>
+    <string name="zg_text_current_player"><b>%1$s</b> 正在玩</string>
+    <string name="zg_text_current_no_player">当前机器空闲</string>
+</resources>

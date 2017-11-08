@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:id="@+id/cv_item">
+
+    <TextView
+        android:id="@+id/tv_room_name"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:gravity="center"/>
+
+</android.support.v7.widget.CardView>
