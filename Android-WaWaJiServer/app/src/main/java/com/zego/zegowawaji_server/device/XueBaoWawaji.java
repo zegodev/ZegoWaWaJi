@@ -39,6 +39,7 @@ public class XueBaoWawaji extends WawajiDevice {
 
     @Override
     public boolean sendBeginCommand(int flag, int seq) {
+        AppLogger.getInstance().writeLog("sendBeginCommand."+flag+","+seq);
         byte[] cmdData = CMD_BYTE_BEGIN;
         switch (flag) {
             case 0:

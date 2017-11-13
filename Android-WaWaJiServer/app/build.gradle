@@ -57,7 +57,7 @@ android {
         }
 
         surui {
-            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SuruiWawaji\"")
+            buildConfigField("String", "DEVICE_BRAND_NAME", "\"XueBaoWawaji\"")
         }
     }
 }

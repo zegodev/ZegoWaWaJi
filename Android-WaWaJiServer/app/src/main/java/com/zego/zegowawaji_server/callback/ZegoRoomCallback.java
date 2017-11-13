@@ -7,6 +7,7 @@ import android.os.Message;
 import android.text.TextUtils;
 
 import com.zego.base.utils.AppLogger;
+import com.zego.base.utils.PrefUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoCustomCommandCallback;
 import com.zego.zegoliveroom.callback.IZegoRoomCallback;
@@ -15,8 +16,9 @@ import com.zego.zegoliveroom.entity.ZegoUser;
 import com.zego.zegowawaji_server.Constants;
 import com.zego.zegowawaji_server.IRoomClient;
 import com.zego.zegowawaji_server.IStateChangedListener;
-import com.zego.zegowawaji_server.manager.DeviceManager;
 import com.zego.zegowawaji_server.manager.CommandSeqManager;
+import com.zego.zegowawaji_server.manager.DeviceManager;
+import com.zego.zegowawaji_server.tcp.TcpSocket;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -339,7 +341,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     }
 
     // 处理上机或者放弃游戏指令
-    private void handleStartOrAbandonCommand(String userId, String userName, JSONObject cmdJson) {
+    private void handleStartOrAbandonCommand(final String userId, String userName, JSONObject cmdJson) {
         List<ZegoUser> queueMembers = mRoomClient.getQueueUser();
 
         if (queueMembers.size() == 0 || !TextUtils.equals(queueMembers.get(0).userID, userId) || !TextUtils.equals(queueMembers.get(0).userName, userName)) {
@@ -419,8 +421,13 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     }
 
     // 处理上机应答指令
-    private void handleReadyReplyCommand(String userId, String userName, JSONObject jsonData) {
-
+    private void handleReadyReplyCommand(final String userId, String userName, JSONObject jsonData) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                new TcpSocket().sendMessage("{\"message_type\":\"userPlayStart\",\"data\":{\"uid\":\""+userId+"\", \"room_id\":\""+PrefUtil.getInstance().getRoomId()+"\"}}\n");
+            }
+        }).start();
     }
 
     // 在 Work 线程处理游戏结果应答指令
@@ -514,7 +521,13 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         });
     }
 
-    private void gameOver(int result, String userId, String userName) {
+    private void gameOver(final int result, final String userId, String userName) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                new TcpSocket().sendMessage("{\"message_type\":\"gameResult\",\"data\":{\"uid\":\""+userId+"\",\"room_id\":\""+ PrefUtil.getInstance().getRoomId()+"\",\"result\":"+(result==0?false:true)+"}}\n");
+            }
+        }).start();
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
 
         List<ZegoUser> allMembers = mRoomClient.getTotalUser();
