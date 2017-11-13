@@ -108,7 +108,7 @@ static ZegoSetting *_settingInstance;
     if (_userName.length == 0) {
         NSUserDefaults *ud = [self myUserDefaults];
         NSString *userName = [ud stringForKey:kZegoDemoUserNameKey];
-        if (userName.length > 0) {
+        if (userName.length > 0 && ![userName hasPrefix:@"summ"]) { // FIXME: 先把所有人的 userName 都去掉 summ 前缀
             _userName = userName;
         } else {
             srand((unsigned)time(0));

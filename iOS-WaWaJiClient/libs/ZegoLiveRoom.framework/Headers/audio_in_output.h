@@ -56,9 +56,10 @@ namespace AVE
         virtual void stopCapture() = 0;
         virtual void startRender() = 0;
         virtual void stopRender() = 0;
-        virtual bool onRecordAudioFrame(AudioFrame& audioFrame) = 0;
+        virtual bool onRecordAudioFrame(const AudioFrame& audioFrame) = 0;
         virtual bool onPlaybackAudioFrame(AudioFrame& audioFrame) = 0;
     };
+
     
     struct ExtPrepSet
     {
@@ -79,7 +80,7 @@ namespace AVE
      AudioFrame.frameType = TYPE_PCM;
      AudioFrame.timeStamp = 0;
      AudioFrame.configLen = 0;
-     AudioFrame.bufLen = AudioFrame.samples * AudioFrame.channels * 2(bytesPerSample);
+     AudioFrame.bufLen = AudioFrame.samples * AudioFrame.channels * 2(bitDepthInByte);
      
      AudioFrame& outFrame:
      outFrame is used for receiving data after called handle.
@@ -94,7 +95,7 @@ namespace AVE
      outFrame.frameType = TYPE_PCM;
 	 AudioFrame.timeStamp = 0;
 	 AudioFrame.configLen = 0;
-	 AudioFrame.bufLen = AudioFrame.samples * AudioFrame.channels * 2(bytesPerSample);
+	 AudioFrame.bufLen = AudioFrame.samples * AudioFrame.channels * 2(bitDepthInByte);
 	 
 	 PS：
      Even without any treatment, you need copy data from inFrame to outFrame,else the outFrame.buffer is empty data(all zeros/000000....0000);

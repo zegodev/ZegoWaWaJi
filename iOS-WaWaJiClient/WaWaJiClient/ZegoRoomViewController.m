@@ -49,6 +49,12 @@ static NSString *cellIdentifier = @"RoomCellID";
     [self.roomView insertSubview:self.refreshControl atIndex:0];
     self.roomView.alwaysBounceVertical = YES;
     
+//    if ([[[UIDevice currentDevice] systemVersion] floatValue] < 11.0)  {
+//        self.roomView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0);
+//    } else {
+//        self.roomView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+//    }
+    
     [self setBarButtonItemTitle];
     
     [self getPlayRoom];
@@ -60,6 +66,11 @@ static NSString *cellIdentifier = @"RoomCellID";
     self.navigationController.navigationBar.barStyle = UIBarStyleBlack;
     
     self.roomView.layer.cornerRadius = 4;
+    
+    [self.navigationItem.rightBarButtonItem setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont systemFontOfSize:14], NSFontAttributeName, nil]
+                                                          forState:UIControlStateNormal];
+    [self.navigationItem.rightBarButtonItem setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont systemFontOfSize:14], NSFontAttributeName, nil]
+                                                          forState:UIControlStateHighlighted];
 
 }
 
@@ -99,6 +110,10 @@ static NSString *cellIdentifier = @"RoomCellID";
 - (void)setBarButtonItemTitle
 {
     UIBarButtonItem *rightBarButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"刷新", nil) style:UIBarButtonItemStylePlain target:self action:@selector(onRightBarButton:)];
+    [rightBarButton setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont systemFontOfSize:14], NSFontAttributeName, nil]
+                                                          forState:UIControlStateNormal];
+    [rightBarButton setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont systemFontOfSize:14], NSFontAttributeName, nil]
+                                                          forState:UIControlStateHighlighted];
     rightBarButton.tintColor = [UIColor whiteColor];
     self.navigationItem.rightBarButtonItem = rightBarButton;
 }
@@ -237,6 +252,31 @@ static NSString *cellIdentifier = @"RoomCellID";
     [task resume];
 }
 
+- (void)showAlert:(NSString *)message title:(NSString *)title {
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] < 8.0) {
+        // 兼容 iOS 8.0 及以下系统版本
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title
+                                                            message:message
+                                                           delegate:self
+                                                  cancelButtonTitle:nil
+                                                  otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
+        [alertView show];
+    } else {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                                 message:message
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *confirm = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil)
+                                                          style:UIAlertActionStyleDefault
+                                                        handler:^(UIAlertAction * _Nonnull action) {
+                                                            
+                                                        }];
+        
+        [alertController addAction:confirm];
+        
+        [self presentViewController:alertController animated:YES completion:nil];
+    }
+}
+
 #pragma mark - UICollectionViewDataSource
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
@@ -257,8 +297,13 @@ static NSString *cellIdentifier = @"RoomCellID";
     ZegoRoomInfo *roomInfo = self.roomList[indexPath.item];
     
     [cell.roomImageView setImage:[UIImage imageNamed:[NSString stringWithFormat:@"0%ld", indexPath.item % 6 + 1]]];
-//    cell.roomTitleLabel.text = roomInfo.roomName;
-    cell.roomTitleLabel.text = [NSString stringWithFormat:@"娃娃机 %ld", indexPath.item + 1];
+    
+    cell.roomTitleLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    if (roomInfo.roomName.length > 0) {
+        cell.roomTitleLabel.text = roomInfo.roomName;
+    } else {
+        cell.roomTitleLabel.text = [NSString stringWithFormat:@"娃娃机 %ld", indexPath.item + 1];
+    }
     
     return cell;
 }
@@ -266,11 +311,14 @@ static NSString *cellIdentifier = @"RoomCellID";
 #pragma mark - UICollectionViewDelegate
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (!self.roomList.count) {
+        [self showAlert:NSLocalizedString(@"进入房间失败，请刷新后重试", nil) title:NSLocalizedString(@"提示", nil)];
+    }
     
     if (indexPath.item > self.roomList.count) {
         return;
     }
-    
+
     self.selectedRoom = self.roomList[indexPath.item];
     
     [self performSegueWithIdentifier:@"EnterRoomID" sender:nil];

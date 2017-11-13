@@ -6,6 +6,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
          <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            scope = "0"
+            stopOnStyle = "0">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
+         <BreakpointContent
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
@@ -20,44 +30,28 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WaWaJiClient/ZegoLiveViewController.m"
-            timestampString = "531293648.240865"
+            timestampString = "531500816.257556"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "916"
-            endingLineNumber = "916"
-            landmarkName = "-onReceiveCustomCommand:userName:content:roomID:"
+            startingLineNumber = "215"
+            endingLineNumber = "215"
+            landmarkName = "-loginRoom"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "WaWaJiClient/ZegoLiveViewController.m"
-            timestampString = "531293648.241292"
+            filePath = "WaWaJiClient/ZegoPlayViewController.m"
+            timestampString = "532254725.220374"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "921"
-            endingLineNumber = "921"
-            landmarkName = "-onReceiveCustomCommand:userName:content:roomID:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "WaWaJiClient/ZegoLiveViewController.m"
-            timestampString = "531293648.241578"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "553"
-            endingLineNumber = "553"
-            landmarkName = "-setPrepareButtonVisible:"
+            startingLineNumber = "604"
+            endingLineNumber = "604"
+            landmarkName = "-startCancelApplyTimer"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
