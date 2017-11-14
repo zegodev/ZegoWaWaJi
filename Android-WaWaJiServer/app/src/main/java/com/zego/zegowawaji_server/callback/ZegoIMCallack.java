@@ -57,7 +57,7 @@ public class ZegoIMCallack implements IZegoIMCallback {
      */
     @Override
     public void onRecvRoomMessage(String roomId, ZegoRoomMessage[] zegoRoomMessages) {
-        AppLogger.getInstance().writeLog("onRecvRoomMessage, roomId: %d; zegoRoomMessages count: %d", roomId, zegoRoomMessages.length);
+        AppLogger.getInstance().writeLog("onRecvRoomMessage, roomId: %s; zegoRoomMessages count: %d", roomId, zegoRoomMessages.length);
     }
 
     /**

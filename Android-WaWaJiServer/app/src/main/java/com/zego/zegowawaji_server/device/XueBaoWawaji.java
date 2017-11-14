@@ -35,17 +35,25 @@ public class XueBaoWawaji extends WawajiDevice {
         readThread.start();
     }
 
+    /**
+     * 初始化指令数据，能否中奖，除了概率设置值外，还与各阶段的力度、娃娃的种类、形状、用料等有关，并非完全受控，只是无限接近。<br>
+     * 各阶段爪力值的设置需要根据娃娃样式、重量、用料等现场调节，以下各值只是用在即构公司体验机上的一组相对较优值，客户需要根据自己的实际情况做调优。
+     *
+     * @param hit 控制是否中奖，true：中奖；false：概率
+     * @param seq 指令序号
+     * @return
+     */
     @Override
     public boolean sendBeginCommand(boolean hit, int seq) {
         byte[] cmdData = CMD_BYTE_BEGIN;
 
         int index = 9;
-        cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 是否中奖
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)
-        cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)
-        cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)
-        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10）
+        cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 1: 表示全部使用最大抓力，会忽略用户设置的各爪力值；0: 表示使用用户设置的爪力值，不代表一定抓不中
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10），需根据实际投放的娃娃类型做现场调优
 
         int sum = 0;
         for (int i = 6; i < cmdData.length - 1; i++) {

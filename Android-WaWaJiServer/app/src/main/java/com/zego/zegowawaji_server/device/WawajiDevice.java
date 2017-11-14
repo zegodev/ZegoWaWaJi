@@ -36,7 +36,7 @@ public abstract class WawajiDevice extends SerialPort {
         mRandom = new Random();
     }
     /**
-     * 初始化指令数据
+     * 初始化指令数据，能否中奖，除了概率设置值外，还与各阶段的力度、娃娃的种类、形状、用料等有关，并非完全受控，只是无限接近
      * @param hit 控制是否中奖，true：中奖；false：概率
      * @param seq 指令序号
      * @return 初始化指令数据
