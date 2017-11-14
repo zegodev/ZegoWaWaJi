@@ -18,49 +18,40 @@ public class XueBaoWawaji extends WawajiDevice {
     static final private int BAUD_RATE = 115200;
 
     static final private byte[] CMD_BYTE_BEGIN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x00, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1d};
-    static final private byte[] CMD_BYTE_BEGIN_GET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1e};
+//    static final private byte[] CMD_BYTE_BEGIN_GET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1e};
     static final private byte[] CMD_BYTE_FORWARD = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x00, (byte) 0x2c, (byte) 0x01, (byte) 0x07};
     static final private byte[] CMD_BYTE_BACKWARD = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x01, (byte) 0x2c, (byte) 0x01, (byte) 0x08};
     static final private byte[] CMD_BYTE_LEFT = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x02, (byte) 0x2c, (byte) 0x01, (byte) 0x09};
     static final private byte[] CMD_BYTE_RIGHT = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x03, (byte) 0x2c, (byte) 0x01, (byte) 0x0a};
     static final private byte[] CMD_BYTE_DOWN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0b, (byte) 0x32, (byte) 0x04, (byte) 0x00, (byte) 0x41};
 
-    private Random mRandom = new Random();
     private DeviceStateListener mListener;
 
     public XueBaoWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
         mListener = listener;
-        mRandom = new Random();
 
         Thread readThread = new ReadThread("xuebao-reader");
         readThread.start();
     }
 
     @Override
-    public boolean sendBeginCommand(int flag, int seq) {
+    public boolean sendBeginCommand(boolean hit, int seq) {
         byte[] cmdData = CMD_BYTE_BEGIN;
-        switch (flag) {
-            case 0:
-                int index = 9;
-                cmdData[index++] = (mRandom.nextInt(6) == 1) ? (byte) 1: (byte) 0;     // 是否中奖
-                cmdData[index++] = (byte) (mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)
-                cmdData[index++] = (byte) (mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)
-                cmdData[index++] = (byte) (mRandom.nextInt(47) + 1);    // 移动爪力(1—48)
-                cmdData[index++] = (byte) (mRandom.nextInt(47) + 1);    // 大爪力(1—48)
-                cmdData[index++] = (byte) mRandom.nextInt(10);        // 抓起高度（0--10）
 
-                int sum = 0;
-                for (int i = 6; i < cmdData.length - 1; i++) {
-                    sum += (cmdData[i] & 0xff);
-                }
-                cmdData[cmdData.length - 1] = (byte) (sum % 100); // 检验位
-                break;
+        int index = 9;
+        cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 是否中奖
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)
+        cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)
+        cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)
+        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10）
 
-            case 1:
-                cmdData = CMD_BYTE_BEGIN_GET;
-                break;
+        int sum = 0;
+        for (int i = 6; i < cmdData.length - 1; i++) {
+            sum += (cmdData[i] & 0xff);
         }
+        cmdData[cmdData.length - 1] = (byte) (sum % 100); // 检验位
 
         updateSequence(cmdData, seq);
 
