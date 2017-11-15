@@ -48,8 +48,8 @@ public class XueBaoWawaji extends WawajiDevice {
                 cmdData[index++] = (byte) 0;     // 是否中奖
                 cmdData[index++] = (byte) (rand.randomCatch());    // 抓起爪力(1—48)
                 cmdData[index++] = (byte) (rand.randomUp());    // 到顶爪力(1—48)
-                cmdData[index++] = (byte) (rand.randomMove());    // 移动爪力(1—48)
-                cmdData[index++] = (byte) (mRandom.nextInt(47) + 1);    // 大爪力(1—48)
+                cmdData[index++] = (byte) (rand.randomTop());    // 移动爪力(1—48)
+                cmdData[index++] = (byte) (rand.randomMove());    // 大爪力(1—48)
                 cmdData[index++] = (byte) mRandom.nextInt(10);        // 抓起高度（0--10）
 
                 int sum = 0;
@@ -232,11 +232,11 @@ public class XueBaoWawaji extends WawajiDevice {
 
         public int randomCatch(){
             int i=randoms();
-            if(i<15){
+            if(i<10){
                 return randomRange(10,20);
-            }else if(i>=15 && i<85){
+            }else if(i>=10 && i<25){
                 return randomRange(20,30);
-            }else if(i>=85 && i<95){
+            }else if(i>=25 && i<95){
                 return randomRange(30,40);
             }else{
                 return randomRange(40,49);
@@ -245,11 +245,24 @@ public class XueBaoWawaji extends WawajiDevice {
 
         public int randomUp(){
             int i=randoms();
-            if(i<25){
-                return randomRange(1,20);
-            }else if(i>=25 && i<85){
+            if(i<10){
+                return randomRange(10,20);
+            }else if(i>=10 && i<25){
                 return randomRange(20,30);
-            }else if(i>=85 && i<95){
+            }else if(i>=25 && i<95){
+                return randomRange(30,40);
+            }else{
+                return randomRange(40,49);
+            }
+        }
+
+        public int randomTop(){
+            int i=randoms();
+            if(i<25){
+                return randomRange(10,20);
+            }else if(i>=25 && i<75){
+                return randomRange(20,30);
+            }else if(i>=75 && i<95){
                 return randomRange(30,40);
             }else{
                 return randomRange(40,49);
@@ -258,11 +271,11 @@ public class XueBaoWawaji extends WawajiDevice {
 
         public int randomMove(){
             int i=randoms();
-            if(i<25){
+            if(i<20){
                 return randomRange(1,20);
-            }else if(i>=25 && i<85){
+            }else if(i>=20 && i<45){
                 return randomRange(20,30);
-            }else if(i>=85 && i<95){
+            }else if(i>=45 && i<95){
                 return randomRange(30,40);
             }else{
                 return randomRange(40,49);
