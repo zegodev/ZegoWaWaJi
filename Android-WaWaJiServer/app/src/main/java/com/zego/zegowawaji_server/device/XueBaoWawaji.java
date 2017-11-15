@@ -258,27 +258,23 @@ public class XueBaoWawaji extends WawajiDevice {
 
         public int randomTop(){
             int i=randoms();
-            if(i<25){
-                return randomRange(10,20);
-            }else if(i>=25 && i<75){
-                return randomRange(20,30);
-            }else if(i>=75 && i<95){
-                return randomRange(30,40);
+            if(i<70){
+                return randomRange(1,9);
+            }else if(i>=70 && i<95){
+                return randomRange(9,12);
             }else{
-                return randomRange(40,49);
+                return randomRange(12,15);
             }
         }
 
         public int randomMove(){
             int i=randoms();
-            if(i<20){
-                return randomRange(1,20);
-            }else if(i>=20 && i<45){
-                return randomRange(20,30);
-            }else if(i>=45 && i<95){
-                return randomRange(30,40);
+            if(i<60){
+                return randomRange(1,9);
+            }else if(i>=60 && i<95){
+                return randomRange(9,12);
             }else{
-                return randomRange(40,49);
+                return randomRange(12,15);
             }
         }
 
