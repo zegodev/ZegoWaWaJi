@@ -28,6 +28,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -290,6 +291,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     private void startPreview() {
+        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
+        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, ZegoConstants.PublishChannelIndex.AUX);
         mZegoLiveRoom.enableMic(false);
 
         mZegoLiveRoom.enableCamera(true);
