@@ -16,6 +16,8 @@
 
 #endif
 
+//#define I18N  // 切换到国际版宏
+
 // 房间模式
 typedef NS_ENUM(NSUInteger, ZegoRoomType)
 {

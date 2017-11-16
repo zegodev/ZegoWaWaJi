@@ -2,7 +2,7 @@
 //  ZegoReadyView.m
 //  WaWaJiClient
 //
-//  Created by xia on 10/11/2017.
+//  Created by summery on 10/11/2017.
 //  Copyright © 2017 zego. All rights reserved.
 //
 
