@@ -291,8 +291,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     private void startPreview() {
-        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
-        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, ZegoConstants.PublishChannelIndex.AUX);
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, ZegoConstants.PublishChannelIndex.AUX);
         mZegoLiveRoom.enableMic(false);
 
         mZegoLiveRoom.enableCamera(true);

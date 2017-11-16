@@ -425,7 +425,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                new TcpSocket().sendMessage("{\"message_type\":\"userPlayStart\",\"data\":{\"uid\":\""+userId+"\", \"room_id\":\""+PrefUtil.getInstance().getRoomId()+"\"}}\n");
+                new TcpSocket().sendMessage("{\"message_type\":\"userPlayStart\",\"data\":{\"uid\":"+userId+", \"room_id\":\""+PrefUtil.getInstance().getRoomId()+"\"}}\n");
             }
         }).start();
     }
@@ -525,7 +525,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                new TcpSocket().sendMessage("{\"message_type\":\"gameResult\",\"data\":{\"uid\":\""+userId+"\",\"room_id\":\""+ PrefUtil.getInstance().getRoomId()+"\",\"result\":"+(result==0?false:true)+"}}\n");
+                new TcpSocket().sendMessage("{\"message_type\":\"gameResult\",\"data\":{\"uid\":"+userId+",\"room_id\":\""+ PrefUtil.getInstance().getRoomId()+"\",\"result\":"+(result==0?false:true)+"}}\n");
             }
         }).start();
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
