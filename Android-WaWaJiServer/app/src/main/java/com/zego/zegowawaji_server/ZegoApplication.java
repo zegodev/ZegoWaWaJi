@@ -21,13 +21,17 @@ import com.zego.zegoliveroom.constants.ZegoConstants;
 
 public class ZegoApplication extends Application {
 
-    static final private long APP_ID =  3177435262L;
+//    static final private long APP_ID =  3177435262L;
+//
+//    static final private byte[] APP_SIGN_KEY = new byte[] {
+//            (byte)0x16, (byte)0x6c, (byte)0x57, (byte)0x8b, (byte)0xb0, (byte)0xb5, (byte)0x51, (byte)0xfd,
+//            (byte)0xc4, (byte)0xd9, (byte)0xb7, (byte)0xaf, (byte)0x96, (byte)0x1f, (byte)0x13, (byte)0x82,
+//            (byte)0xc9, (byte)0xb6, (byte)0x2b, (byte)0x0f, (byte)0x99, (byte)0x75, (byte)0x3a, (byte)0xb3,
+//            (byte)0xc1, (byte)0x7e, (byte)0xc4, (byte)0x54, (byte)0x30, (byte)0x93, (byte)0x28, (byte)0xfa
+//    };
+    static final private long APP_ID =  3159586084L;
 
-    static final private byte[] APP_SIGN_KEY = new byte[] {
-            (byte)0x16, (byte)0x6c, (byte)0x57, (byte)0x8b, (byte)0xb0, (byte)0xb5, (byte)0x51, (byte)0xfd,
-            (byte)0xc4, (byte)0xd9, (byte)0xb7, (byte)0xaf, (byte)0x96, (byte)0x1f, (byte)0x13, (byte)0x82,
-            (byte)0xc9, (byte)0xb6, (byte)0x2b, (byte)0x0f, (byte)0x99, (byte)0x75, (byte)0x3a, (byte)0xb3,
-            (byte)0xc1, (byte)0x7e, (byte)0xc4, (byte)0x54, (byte)0x30, (byte)0x93, (byte)0x28, (byte)0xfa
+    static final private byte[] APP_SIGN_KEY = new byte[] {(byte)0x45,(byte)0x3c,(byte)0xfd,(byte)0x96,(byte)0xc2,(byte)0x99,(byte)0xd8,(byte)0xbc,(byte)0xe0,(byte)0xbc,(byte)0xed,(byte)0xe8,(byte)0xd9,(byte)0x2f,(byte)0xb1,(byte)0xe6,(byte)0xf5,(byte)0x97,(byte)0x80,(byte)0xad,(byte)0x3c,(byte)0x0b,(byte)0x2b,(byte)0x48,(byte)0x6c,(byte)0x3b,(byte)0x36,(byte)0x97,(byte)0x56,(byte)0x14,(byte)0x87,(byte)0x1b
     };
 
     static final private  String BUGLY_APP_KEY = "1e4b3a1ac0";
@@ -49,7 +53,7 @@ public class ZegoApplication extends Application {
         super.onCreate();
 
         sInstance = this;
-
+        ZegoLiveRoom.setTestEnv(true);
         AppLogger.getInstance().writeLog("******* Application onCreate *******");
 
         initUserInfo(); // first

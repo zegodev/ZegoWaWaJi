@@ -224,4 +224,68 @@ public class XueBaoWawaji extends WawajiDevice {
             return sum % 100 == data[length - 1];
         }
     }
+
+    public class Rand {
+
+        public int randomCatch(){
+            int i=randoms();
+            if(i<10){
+                return randomRange(10,20);
+            }else if(i>=10 && i<25){
+                return randomRange(20,30);
+            }else if(i>=25 && i<95){
+                return randomRange(30,40);
+            }else{
+                return randomRange(40,49);
+            }
+        }
+
+        public int randomUp(){
+            int i=randoms();
+            if(i<10){
+                return randomRange(10,20);
+            }else if(i>=10 && i<25){
+                return randomRange(20,30);
+            }else if(i>=25 && i<95){
+                return randomRange(30,40);
+            }else{
+                return randomRange(40,49);
+            }
+        }
+
+        public int randomTop(){
+            int i=randoms();
+            if(i<70){
+                return randomRange(1,9);
+            }else if(i>=70 && i<95){
+                return randomRange(9,12);
+            }else{
+                return randomRange(12,15);
+            }
+        }
+
+        public int randomMove(){
+            int i=randoms();
+            if(i<60){
+                return randomRange(1,9);
+            }else if(i>=60 && i<95){
+                return randomRange(9,12);
+            }else{
+                return randomRange(12,15);
+            }
+        }
+
+        private  int randoms(){
+            Random random = new Random();
+            int i=random.nextInt(100);
+            return i;
+        }
+
+        private int randomRange(int start,int end){
+            Random random = new Random();
+            int i=random.nextInt(end - start);
+            int j=start;
+            return i+j;
+        }
+    }
 }

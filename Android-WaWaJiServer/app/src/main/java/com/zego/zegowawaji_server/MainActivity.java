@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -20,13 +21,14 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.AppCompatSeekBar;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,6 +58,7 @@ import com.zego.zegowawaji_server.callback.ZegoRoomCallback;
 import com.zego.zegowawaji_server.manager.CommandSeqManager;
 import com.zego.zegowawaji_server.service.GuardService;
 import com.zego.zegowawaji_server.service.IRemoteApi;
+import com.zego.zegowawaji_server.tcp.TcpSocket;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -287,6 +290,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     private void startPreview() {
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, ZegoConstants.PublishChannelIndex.AUX);
         mZegoLiveRoom.enableMic(false);
 
         mZegoLiveRoom.enableCamera(true);
@@ -322,6 +327,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
     private void initRoomAndStreamInfo() {
         PrefUtil prefUtil = PrefUtil.getInstance();
+        Log.e("zhen",prefUtil.getRoomId());
         if (TextUtils.isEmpty(prefUtil.getRoomId())
                 || TextUtils.isEmpty(prefUtil.getRoomName())
                 || TextUtils.isEmpty(prefUtil.getStreamId())
@@ -330,6 +336,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
             String roomId = String.format("%s_%s", ROOM_ID_PREFIX, deviceId);
             PrefUtil.getInstance().setRoomId(roomId);
+            AppLogger.getInstance().writeLog("initRoomAndStreamInfo, roomid: %s", roomId);
 
             // 对娃娃机名做特殊处理以区分是即构的还是开发者的
             if (deviceId.startsWith("12345_5432")) {
@@ -399,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             String streamId = PrefUtil.getInstance().getStreamId();
             boolean success = mZegoLiveRoom.startPublishing(streamId, "", ZegoConstants.PublishFlag.JoinPublish, extraInfo);
             AppLogger.getInstance().writeLog("Publish main stream [%s] success ? %s", streamId, success);
+            Log.e("zhen","Publish main stream  success | "+streamId);
 
             if (!success) {
                 republishStreamDelay(ZegoConstants.PublishChannelIndex.MAIN);
@@ -409,6 +417,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             String streamId2 = PrefUtil.getInstance().getStreamId2();
             boolean success = mZegoLiveRoom.startPublishing2(streamId2, "", ZegoConstants.PublishFlag.JoinPublish, ZegoConstants.PublishChannelIndex.AUX);
             AppLogger.getInstance().writeLog("Publish second stream [%s] success ? %s", streamId2, success);
+            Log.e("zhen","Publish second stream  success | "+streamId2);
 
             if (!success) {
                 republishStreamDelay(ZegoConstants.PublishChannelIndex.AUX);
@@ -560,6 +569,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                         } else {
                             mCurrentOperatorView.setText(getString(R.string.zg_text_current_no_player));
                         }
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                new TcpSocket().sendMessage("{\"message_type\":\"roomStatus\",\"data\":{\"status\":"+(isPlaying?2:1)+", \"room_id\":\""+PrefUtil.getInstance().getRoomId()+"\"}}\n");
+                            }
+                        }).start();
                     }
                 });
 
