@@ -182,7 +182,7 @@
             android:src="@drawable/sl_rectangle"/>
 
         <TextView
-            android:id="@+id/tv_apply"
+            android:id="@+id/tv_apply_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"

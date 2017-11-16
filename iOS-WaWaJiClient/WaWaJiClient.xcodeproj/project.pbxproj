@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		16084C0D1FB33FBE00976890 /* ZegoResultView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 16084C0C1FB33FBE00976890 /* ZegoResultView.xib */; };
-		16084C101FB340E800976890 /* ZegoResultView.m in Sources */ = {isa = PBXBuildFile; fileRef = 16084C0F1FB340E800976890 /* ZegoResultView.m */; };
 		163A9B861FAC46B900029BD2 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B851FAC46AC00029BD2 /* SystemConfiguration.framework */; };
 		163A9B881FAC46CC00029BD2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B871FAC46C400029BD2 /* Security.framework */; };
 		163A9B8A1FAC46D400029BD2 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B891FAC46D400029BD2 /* libz.tbd */; };
@@ -28,8 +26,6 @@
 		167F4E7E1FA6DA6D0084082D /* ZegoPlayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E7A1FA6DA6D0084082D /* ZegoPlayViewController.m */; };
 		16A431CD1FB04F8E00D5C861 /* ZegoRoomInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */; };
 		16B0A2361FAA3E3000F93361 /* ZegoCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 16B0A2351FAA3E3000F93361 /* ZegoCommand.m */; };
-		16B4AA721FB5AB8600C95045 /* ZegoReadyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */; };
-		16B4AA751FB5AB9D00C95045 /* ZegoReadyView.m in Sources */ = {isa = PBXBuildFile; fileRef = 16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,9 +43,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		16084C0C1FB33FBE00976890 /* ZegoResultView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ZegoResultView.xib; sourceTree = "<group>"; };
-		16084C0E1FB340E800976890 /* ZegoResultView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoResultView.h; sourceTree = "<group>"; };
-		16084C0F1FB340E800976890 /* ZegoResultView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoResultView.m; sourceTree = "<group>"; };
 		163A9B821FAC469700029BD2 /* Bugly.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bugly.framework; sourceTree = "<group>"; };
 		163A9B851FAC46AC00029BD2 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		163A9B871FAC46C400029BD2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -78,9 +71,6 @@
 		16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoRoomInfo.m; sourceTree = "<group>"; };
 		16B0A2341FAA3E3000F93361 /* ZegoCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoCommand.h; sourceTree = "<group>"; };
 		16B0A2351FAA3E3000F93361 /* ZegoCommand.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoCommand.m; sourceTree = "<group>"; };
-		16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ZegoReadyView.xib; sourceTree = "<group>"; };
-		16B4AA731FB5AB9D00C95045 /* ZegoReadyView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoReadyView.h; sourceTree = "<group>"; };
-		16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoReadyView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,12 +136,6 @@
 				16B0A2351FAA3E3000F93361 /* ZegoCommand.m */,
 				16A431CB1FB04F8E00D5C861 /* ZegoRoomInfo.h */,
 				16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */,
-				16084C0E1FB340E800976890 /* ZegoResultView.h */,
-				16084C0F1FB340E800976890 /* ZegoResultView.m */,
-				16084C0C1FB33FBE00976890 /* ZegoResultView.xib */,
-				16B4AA731FB5AB9D00C95045 /* ZegoReadyView.h */,
-				16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */,
-				16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */,
 				167F4E5D1FA6DA270084082D /* AppDelegate.h */,
 				167F4E5E1FA6DA270084082D /* AppDelegate.m */,
 				167F4E631FA6DA270084082D /* Main.storyboard */,
@@ -205,11 +189,6 @@
 					167F4E591FA6DA260084082D = {
 						CreatedOnToolsVersion = 9.0.1;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = {
-							com.apple.BackgroundModes = {
-								enabled = 1;
-							};
-						};
 					};
 				};
 			};
@@ -236,10 +215,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				16B4AA721FB5AB8600C95045 /* ZegoReadyView.xib in Resources */,
 				167F4E6A1FA6DA270084082D /* LaunchScreen.storyboard in Resources */,
 				167F4E671FA6DA270084082D /* Assets.xcassets in Resources */,
-				16084C0D1FB33FBE00976890 /* ZegoResultView.xib in Resources */,
 				167F4E651FA6DA270084082D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -254,9 +231,7 @@
 				16A431CD1FB04F8E00D5C861 /* ZegoRoomInfo.m in Sources */,
 				16B0A2361FAA3E3000F93361 /* ZegoCommand.m in Sources */,
 				167F4E7B1FA6DA6D0084082D /* ZegoRoomViewController.m in Sources */,
-				16B4AA751FB5AB9D00C95045 /* ZegoReadyView.m in Sources */,
 				167F4E7E1FA6DA6D0084082D /* ZegoPlayViewController.m in Sources */,
-				16084C101FB340E800976890 /* ZegoResultView.m in Sources */,
 				167F4E6D1FA6DA270084082D /* main.m in Sources */,
 				167F4E7D1FA6DA6D0084082D /* ZegoLogTableViewController.m in Sources */,
 				167F4E7C1FA6DA6D0084082D /* ZegoManager.mm in Sources */,

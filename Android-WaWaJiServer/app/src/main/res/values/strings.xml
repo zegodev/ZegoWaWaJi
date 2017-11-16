@@ -31,6 +31,4 @@
     <string name="zg_text_current_queue_user">排队人数 <b>%1$d</b></string>
     <string name="zg_text_current_player"><b>%1$s</b> 正在玩</string>
     <string name="zg_text_current_no_player">当前机器空闲</string>
-
-    <string name="zg_text_wawaji_name_template">即构娃娃机%1$d</string>
 </resources>

@@ -31,7 +31,6 @@ public class PrefUtil {
     static private String KEY_LIVE_QUALITY_BITRATE = "_zego_live_bitrate";
 
     static private String KEY_ROOM_ID = "_zego_room_id";
-    static private String KEY_ROOM_NAME = "_zego_room_name";
     static private String KEY_STREAM_ID = "_zego_stream_id";
     static private String KEY_STREAM_ID2 = "_zego_stream_id2";
 
@@ -171,7 +170,7 @@ public class PrefUtil {
     }
 
     public int getLiveQualityBitrate() {
-        return mPref.getInt(KEY_LIVE_QUALITY_BITRATE, 600 * 1000);
+        return mPref.getInt(KEY_LIVE_QUALITY_BITRATE, 600);
     }
 
     public void setRoomId(String roomId) {
@@ -180,14 +179,6 @@ public class PrefUtil {
 
     public String getRoomId() {
         return mPref.getString(KEY_ROOM_ID, "");
-    }
-
-    public void setRoomName(String roomName) {
-        setString(KEY_ROOM_NAME, roomName);
-    }
-
-    public String getRoomName() {
-        return mPref.getString(KEY_ROOM_NAME, "");
     }
 
     public void setStreamId(String streamId) {

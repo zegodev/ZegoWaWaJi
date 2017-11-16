@@ -37,7 +37,7 @@ public class CommandUtil {
     static final public int CMD_USER_UPDATE = 0x101;
 
     /**
-     * 预约上机, Client->Server.
+     * 预约, Client->Server.
      */
     static final public int CMD_APPLY = 0x201;
 
@@ -47,24 +47,9 @@ public class CommandUtil {
     static final public int CMD_APPLY_RESULT = 0x110;
 
     /**
-     * 取消预约, Client->Server.
-     */
-    static final public int CMD_CANCEL_APPLY = 0x202;
-
-    /**
-     * 回复收到"取消预约", Server->Client
-     */
-    static final public int CMD_REPLY_CANCEL_APPLY = 0x112;
-
-    /**
      * 准备游戏, Server->Client.
      */
     static final public int CMD_GAME_READY = 0x102;
-
-    /**
-     * 回复收到"准备游戏", Client->Server.
-     */
-    static final public int CMD_REPLY_RECV_GAME_READY = 0x204;
 
     /**
      * 确认上机或者取消, Client->Server.
@@ -72,7 +57,7 @@ public class CommandUtil {
     static final public int CMD_CONFIRM_BOARD = 0x203;
 
     /**
-     * 回复收到"确认上机", Server->Client.
+     * Server->Client.
      */
     static final public int CMD_CONFIRM_BOARD_REPLY = 0x111;
 
@@ -271,33 +256,6 @@ public class CommandUtil {
                 }
             }
         }.start();
-    }
-
-    public void replyRecvGameReady(int rspSeq, String sessionData){
-        printLog("[CommandUtil_replyRecvGameReady], currentState: " + mCurrentBoardSate);
-
-        Map<String, Object> cmdString = new HashMap<>();
-        cmdString.put("cmd", CMD_REPLY_RECV_GAME_READY);
-        cmdString.put("seq", getSeq());
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("seq", rspSeq);
-        data.put("time_stamp", System.currentTimeMillis());
-        if (!TextUtils.isEmpty(sessionData)) {
-            data.put("session_data", sessionData);
-        }
-        cmdString.put("data", data);
-
-        Gson gson = new Gson();
-        final String msg = gson.toJson(cmdString);
-
-        printLog(mResources.getString(R.string.send_reply_recv_game_ready) + msg);
-        mZegoLiveRoom.sendCustomCommand(mAnchors, msg, new IZegoCustomCommandCallback() {
-            @Override
-            public void onSendCustomCommand(int errorCode, String roomID) {
-                printLog(mResources.getString(R.string.rsp_reply_recv_game_ready) + errorCode);
-            }
-        });
     }
 
     public void confirmBoard(int rspSeq, String sessionData, int result, final OnCommandSendCallback callback) {
@@ -588,6 +546,7 @@ public class CommandUtil {
     }
 
     public interface OnCommandSendCallback {
+        void onSendSuccess();
         void onSendFail();
     }
 }

@@ -114,10 +114,6 @@ public class ZegoApplication extends Application {
             return;
         }
 
-        // 推荐使用如下参数配置推流以达到最佳均衡效果
-        // 采集分辨率：720 * 1280
-        // 编码分辨率：480 * 640
-        // 推流码率：600 * 1000 bps （在合适范围内，码率对视频效果基本无影响）
         int resolutionLevel;
         ZegoAvConfig config;
         int level = PrefUtil.getInstance().getLiveQuality();
@@ -131,7 +127,7 @@ public class ZegoApplication extends Application {
             PrefUtil.getInstance().setLiveQuality(resolutionLevel);
             PrefUtil.getInstance().setLiveQualityResolution(resolutionLevel);
             PrefUtil.getInstance().setLiveQualityFps(15);
-            PrefUtil.getInstance().setLiveQualityBitrate(600 * 1000);
+            PrefUtil.getInstance().setLiveQualityBitrate(600);
         } else if (level > ZegoAvConfig.Level.SuperHigh) {
             resolutionLevel = PrefUtil.getInstance().getLiveQualityResolution();
 
@@ -149,13 +145,7 @@ public class ZegoApplication extends Application {
         int height = Integer.parseInt(strWidthHeight[0].trim());
         int width = Integer.parseInt(strWidthHeight[1].trim());
         config.setVideoEncodeResolution(width, height);
-
-        if (width <= 720 && height <= 1280) {
-            // 默认使用 720 * 1280 采集分辨率以达到最佳推流质量
-            config.setVideoCaptureResolution(720, 1280);
-        } else {
-            config.setVideoCaptureResolution(width, height);
-        }
+        config.setVideoCaptureResolution(width, height);
 
         liveRoom.setAVConfig(config);
         liveRoom.setAVConfig(config, ZegoConstants.PublishChannelIndex.AUX);

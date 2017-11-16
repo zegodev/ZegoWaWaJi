@@ -40,6 +40,7 @@ import com.zego.zegoliveroom.callback.IZegoLivePublisherCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.callback.IZegoRoomCallback;
 import com.zego.zegoliveroom.constants.ZegoConstants;
+import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.AuxData;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoStreamQuality;
@@ -50,179 +51,173 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.zego.wawaji_client.ZegoStream.STREAM_STATE_FAIL;
+import static com.zego.wawaji_client.ZegoStream.STREAM_STATE_SUCCESS;
+
 /**
  * Copyright © 2017 Zego. All rights reserved.
  */
+
 public class PlayActivity extends AppCompatActivity {
-    /**
-     * 流状态.
-     */
+
+    private Room mRoom;
+
+    private Dialog mDialog;
     private TextView mTvStreamSate;
 
-    /**
-     * 切换摄像头.
-     */
     private ImageButton mIbtnSwitchCamera;
-
-    /**
-     * 操作.
-     */
     private ImageButton mIBtnLeft;
     private ImageButton mIBtnForward;
     private ImageButton mIBtnBackward;
     private ImageButton mIBtnRight;
-    private ImageButton mIBtnGO;
 
-    /**
-     * 预约按钮.
-     */
     private ImageButton mIBtnApply;
-    private TextView mTvApply;
-
-    /**
-     * 抓娃娃操作面板.
-     */
+    private ImageButton mIBtnGO;
+    private TextView mTvApplyHint;
     private RelativeLayout mRlytControlPannel;
-
-    /**
-     * 上机倒计时.
-     */
     private TextView mTvBoardingCountDown;
 
-    /**
-     * 切换摄像头次数, 用于记录当前正在显示"哪一条流"
-     */
-    private int mSwitchCameraTimes = 0;
+    private ZegoLiveRoom mZegoLiveRoom;
 
+    private int mSwitchCameraTimes = 0;
     private List<ZegoStream> mListStream = new ArrayList<>();
 
-    /**
-     * 当前排队人数.
-     */
     private int mCurrentQueueCount = 0;
-
-    /**
-     * "确认上机"计时器.
-     */
     private CountDownTimer mCountDownTimerConfirmBoard;
-
-    /**
-     * "上机操作"计时器.
-     */
     private CountDownTimer mCountDownTimerBoarding;
 
-    /**
-     * 网络质量.
-     */
     private ImageView mIvQuality;
     private TextView mTvQuality;
-
-    /**
-     * 房间人数.
-     */
     private TextView mTvRoomUserCount;
-
-    /**
-     * "确认上机"对话框.
-     */
-    private AlertDialog mDialogConfirmGameReady;
-
-    private ZegoLiveRoom mZegoLiveRoom = ZegoApiManager.getInstance().getZegoLiveRoom();
-
-    private Room mRoom;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
-
         if (intent != null) {
             mRoom = (Room) intent.getSerializableExtra("room");
-
-            setTitle(mRoom.roomName);
-            setContentView(R.layout.activity_play);
-
-            initStreamList();
-            initViews();
-            startPlay();
-
         } else {
             Toast.makeText(this, "房间信息初始化错误, 请重新开始", Toast.LENGTH_LONG).show();
             finish();
         }
-    }
 
-    private ZegoStream constructStream(int index, String streamID) {
-        String sateStrings[];
-        TextureView textureView;
-        if (index == 0) {
-            sateStrings = getResources().getStringArray(R.array.video1_state);
-            textureView = (TextureView) findViewById(R.id.textureview1);
+        setTitle(mRoom.roomName);
+        setContentView(R.layout.activity_play);
+
+        if (mRoom.streamList.size() >= 2) {
+            ZegoStream zegoStream1 = new ZegoStream();
+            zegoStream1.streamID = mRoom.streamList.get(0);
+            zegoStream1.textureView = (TextureView) findViewById(R.id.textureview1);
+            zegoStream1.stateStrings = getResources().getStringArray(R.array.video1_state);
+            mListStream.add(zegoStream1);
+
+            ZegoStream zegoStream2 = new ZegoStream();
+            zegoStream2.streamID = mRoom.streamList.get(1);
+            zegoStream2.textureView = (TextureView) findViewById(R.id.textureview2);
+            zegoStream2.stateStrings = getResources().getStringArray(R.array.video2_state);
+            mListStream.add(zegoStream2);
         } else {
-            sateStrings = getResources().getStringArray(R.array.video2_state);
-            textureView = (TextureView) findViewById(R.id.textureview2);
+            Toast.makeText(this, "流信息数量错误, 请重新开始", Toast.LENGTH_LONG).show();
+            finish();
         }
-        return new ZegoStream(streamID, textureView, sateStrings);
+
+        mZegoLiveRoom = ZegoApiManager.getInstance().getZegoLiveRoom();
+        initViews();
+        startPlay();
     }
 
-    /**
-     * 初始化流信息. 当前, 一个房间内只需要2条流用于播放，少了用"空流"替代.
-     */
-    private void initStreamList() {
-
-        int streamSize = mRoom.streamList.size() >= 2 ? 2 : mRoom.streamList.size();
-
-        for (int index = 0; index < streamSize; index++) {
-            mListStream.add(constructStream(index, mRoom.streamList.get(index)));
-        }
-
-        if (mListStream.size() < 2) {
-            for (int index = mListStream.size(); index < 2; index++) {
-                mListStream.add(constructStream(index, null));
-            }
-        }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 
-    private void switchPlaySource(boolean useUltraSource){
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
-        // 停止推流
-        for(ZegoStream zegoStream : mListStream){
-            zegoStream.stopPlayStream();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_log:
+                showLogMenu();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setControlPannel(boolean enable) {
+        if (enable) {
+            mRlytControlPannel.setVisibility(View.VISIBLE);
+        } else {
+            mRlytControlPannel.setVisibility(View.INVISIBLE);
         }
 
-        String config;
-        if (useUltraSource){
-            // 切到zego服务器拉流
-            config = ZegoConstants.Config.PREFER_PLAY_ULTRA_SOURCE + "=1";
-        }else {
-            //切回cdn拉流
-            config = ZegoConstants.Config.PREFER_PLAY_ULTRA_SOURCE + "=0";
-        }
+        mIBtnLeft.setEnabled(enable);
+        mIBtnForward.setEnabled(enable);
+        mIBtnRight.setEnabled(enable);
+        mIBtnBackward.setEnabled(enable);
+        mIBtnGO.setEnabled(enable);
+        mTvBoardingCountDown.setText("");
+    }
 
-        ZegoLiveRoom.setConfig(config);
+    private void pauseControlPannel() {
+        mIBtnLeft.setEnabled(false);
+        mIBtnForward.setEnabled(false);
+        mIBtnRight.setEnabled(false);
+        mIBtnBackward.setEnabled(false);
+        mIBtnGO.setEnabled(false);
+        mTvBoardingCountDown.setText("");
+    }
 
-        int currentShowIndex = mSwitchCameraTimes % 2;
-        if (currentShowIndex == 0){
-            mListStream.get(0).playStream(100);
-            mListStream.get(1).playStream(0);
-        }else {
-            mListStream.get(0).playStream(0);
-            mListStream.get(1).playStream(100);
-        }
+    private void sendCMDFail(String cmd) {
+        CommandUtil.getInstance().printLog("send cmd error: " + cmd);
+        Toast.makeText(PlayActivity.this, getString(R.string.send_cmd_error), Toast.LENGTH_SHORT).show();
+        reinitGame();
+    }
+
+    private void reinitGame() {
+        CommandUtil.getInstance().setCurrentBoardSate(BoardState.Ended);
+        setControlPannel(false);
+        mIBtnApply.setEnabled(true);
+        String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mCurrentQueueCount + "");
+        showApplyHint(msg, 6);
+        mIBtnApply.setVisibility(View.VISIBLE);
+        mTvApplyHint.setVisibility(View.VISIBLE);
+    }
+
+    private void startGame() {
+        mIBtnApply.setVisibility(View.INVISIBLE);
+        mTvApplyHint.setVisibility(View.INVISIBLE);
+        setControlPannel(true);
+    }
+
+    private void showApplyHint(String msg, int separatePostion) {
+
+        SpannableString ss = new SpannableString(msg);
+        ss.setSpan(new TextAppearanceSpan(PlayActivity.this, R.style.tv_style1), 0, separatePostion,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new TextAppearanceSpan(PlayActivity.this, R.style.tv_style2), separatePostion,
+                msg.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        mTvApplyHint.setText(ss, TextView.BufferType.SPANNABLE);
     }
 
     private void initViews() {
 
         mTvBoardingCountDown = (TextView) findViewById(R.id.tv_boarding_countdown);
 
+        // 状态提示
         mTvStreamSate = (TextView) findViewById(R.id.tv_stream_state);
         mTvStreamSate.setText(mListStream.get(0).getStateString());
 
         mRlytControlPannel = (RelativeLayout) findViewById(R.id.rlyt_control_pannel);
 
-        mTvApply = (TextView) findViewById(R.id.tv_apply);
-        mTvApply.setText(getString(R.string.apply_grub));
+        mTvApplyHint = (TextView) findViewById(R.id.tv_apply_hint);
+        mTvApplyHint.setText(getString(R.string.apply_grub));
 
         mIBtnApply = (ImageButton) findViewById(R.id.ibtn_apply);
         mIBtnApply.setEnabled(false);
@@ -232,6 +227,11 @@ public class PlayActivity extends AppCompatActivity {
                 mIBtnApply.setEnabled(false);
                 if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.Ended) {
                     CommandUtil.getInstance().apply(new CommandUtil.OnCommandSendCallback() {
+                        @Override
+                        public void onSendSuccess() {
+
+                        }
+
                         @Override
                         public void onSendFail() {
                             sendCMDFail("Apply");
@@ -253,6 +253,11 @@ public class PlayActivity extends AppCompatActivity {
 
                     CommandUtil.getInstance().grub(new CommandUtil.OnCommandSendCallback() {
                         @Override
+                        public void onSendSuccess() {
+
+                        }
+
+                        @Override
                         public void onSendFail() {
                             sendCMDFail("Grub");
                         }
@@ -261,6 +266,7 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
 
+        // 切换摄像头
         mIbtnSwitchCamera = (ImageButton) findViewById(R.id.ibtn_switch_camera);
         mIbtnSwitchCamera.setEnabled(false);
         mIbtnSwitchCamera.setOnClickListener(new View.OnClickListener() {
@@ -270,25 +276,25 @@ public class PlayActivity extends AppCompatActivity {
 
                 mTvStreamSate.setVisibility(View.GONE);
 
-                int currentShowIndex = mSwitchCameraTimes % 2;
-                if (currentShowIndex == 1) {
-                    // 隐藏第一路流
-                    mListStream.get(0).hide();
+                int index = mSwitchCameraTimes % 2;
+                if (index == 1) {
+                    mListStream.get(0).textureView.setVisibility(View.INVISIBLE);
+                    mZegoLiveRoom.setPlayVolume(0, mListStream.get(0).streamID);
 
-                    // 显示第二路流
                     if (mListStream.get(1).isPlaySuccess()) {
-                        mListStream.get(1).show();
+                        mListStream.get(1).textureView.setVisibility(View.VISIBLE);
+                        mZegoLiveRoom.setPlayVolume(100, mListStream.get(1).streamID);
                     } else {
                         mTvStreamSate.setText(mListStream.get(1).getStateString());
                         mTvStreamSate.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    // 隐藏第二路流
-                    mListStream.get(1).hide();
+                    mListStream.get(1).textureView.setVisibility(View.INVISIBLE);
+                    mZegoLiveRoom.setPlayVolume(0, mListStream.get(1).streamID);
 
-                    // 显示第一路流
                     if (mListStream.get(0).isPlaySuccess()) {
-                        mListStream.get(0).show();
+                        mListStream.get(0).textureView.setVisibility(View.VISIBLE);
+                        mZegoLiveRoom.setPlayVolume(100, mListStream.get(0).streamID);
                     } else {
                         mTvStreamSate.setText(mListStream.get(0).getStateString());
                         mTvStreamSate.setVisibility(View.VISIBLE);
@@ -297,6 +303,7 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
 
+        // 娃娃机操作
         mIBtnLeft = (ImageButton) findViewById(R.id.ibtn_left);
         mIBtnLeft.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -361,14 +368,16 @@ public class PlayActivity extends AppCompatActivity {
                 if (errCode == 0) {
                     for (ZegoStreamInfo streamInfo : zegoStreamInfos) {
                         if (!TextUtils.isEmpty(streamInfo.extraInfo)) {
+
                             CommandUtil.getInstance().printLog("[onLoginCompletion], streamID: " + streamInfo.streamID + ", extraInfo: " + streamInfo.extraInfo);
+
+                            mIBtnApply.setEnabled(true);
 
                             ZegoUser zegoUser = new ZegoUser();
                             zegoUser.userID = streamInfo.userID;
                             zegoUser.userName = streamInfo.userName;
-                            CommandUtil.getInstance().setAnchor(zegoUser);
 
-                            mIBtnApply.setEnabled(true);
+                            CommandUtil.getInstance().setAnchor(zegoUser);
 
                             Map<String, Object> map = getMapFromJson(streamInfo.extraInfo);
                             if (map != null) {
@@ -376,7 +385,7 @@ public class PlayActivity extends AppCompatActivity {
                                 mCurrentQueueCount = count;
 
                                 String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, count + "");
-                                showApplyText(msg, 6);
+                                showApplyHint(msg, 6);
 
                                 int total = ((Double) map.get("total")).intValue();
                                 mTvRoomUserCount.setText(getString(R.string.room_user_count, total + ""));
@@ -389,9 +398,13 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
 
-        // 拉两路流
-        mListStream.get(0).playStream(100);
-        mListStream.get(1).playStream(0);
+        mZegoLiveRoom.startPlayingStream(mListStream.get(0).streamID, mListStream.get(0).textureView);
+        mZegoLiveRoom.setViewMode(ZegoVideoViewMode.ScaleAspectFit, mListStream.get(0).streamID);
+        mZegoLiveRoom.setPlayVolume(100, mListStream.get(0).streamID);
+
+        mZegoLiveRoom.startPlayingStream(mListStream.get(1).streamID, mListStream.get(1).textureView);
+        mZegoLiveRoom.setViewMode(ZegoVideoViewMode.ScaleAspectFit, mListStream.get(1).streamID);
+        mZegoLiveRoom.setPlayVolume(0, mListStream.get(1).streamID);
 
         mZegoLiveRoom.setZegoLivePlayerCallback(new IZegoLivePlayerCallback() {
             @Override
@@ -400,27 +413,26 @@ public class PlayActivity extends AppCompatActivity {
                 int currentShowIndex = mSwitchCameraTimes % 2;
 
                 if (errCode != 0) {
-                    // 设置流的状态
                     for (ZegoStream zegoStream : mListStream) {
-                        if (zegoStream.getStreamID().equals(streamID)) {
-                            zegoStream.setStreamSate(ZegoStream.StreamState.PlayFail);
+                        if (zegoStream.streamID.equals(streamID)) {
+                            zegoStream.state = STREAM_STATE_FAIL;
                             break;
                         }
                     }
 
-                    ZegoStream currentShowStream = mListStream.get(currentShowIndex);
-                    if (currentShowStream.getStreamID().equals(streamID)) {
-                        mTvStreamSate.setText(currentShowStream.getStateString());
+                    if (mListStream.get(currentShowIndex).streamID.equals(streamID)) {
+                        mTvStreamSate.setText(mListStream.get(currentShowIndex).getStateString());
                         mTvStreamSate.setVisibility(View.VISIBLE);
                     }
                 }
+
                 CommandUtil.getInstance().printLog("[onPlayStateUpdate], streamID: " + streamID + " ,errorCode: " + errCode + ", currentShowIndex: " + currentShowIndex);
             }
 
             @Override
             public void onPlayQualityUpdate(String streamID, ZegoStreamQuality zegoStreamQuality) {
                 // 当前显示的流质量
-                if (mListStream.get(mSwitchCameraTimes % 2).getStreamID().equals(streamID)) {
+                if (mListStream.get(mSwitchCameraTimes % 2).streamID.equals(streamID)) {
                     switch (zegoStreamQuality.quality) {
                         case 0:
                             mTvQuality.setText("网络优秀");
@@ -460,18 +472,18 @@ public class PlayActivity extends AppCompatActivity {
 
             @Override
             public void onVideoSizeChangedTo(String streamID, int i, int i1) {
+
                 for (ZegoStream zegoStream : mListStream) {
-                    if (zegoStream.getStreamID().equals(streamID)) {
-                        zegoStream.setStreamSate(ZegoStream.StreamState.PlaySuccess);
+                    if (zegoStream.streamID.equals(streamID)) {
+                        zegoStream.state = STREAM_STATE_SUCCESS;
                         break;
                     }
                 }
 
                 int currentShowIndex = mSwitchCameraTimes % 2;
-                ZegoStream currentShowStream = mListStream.get(currentShowIndex);
-                if (currentShowStream.getStreamID().equals(streamID)) {
+                if (mListStream.get(currentShowIndex).streamID.equals(streamID)) {
                     mTvStreamSate.setVisibility(View.GONE);
-                    currentShowStream.show();
+                    mListStream.get(currentShowIndex).textureView.setVisibility(View.VISIBLE);
                 }
 
                 CommandUtil.getInstance().printLog("[onVideoSizeChanged], streamID: " + streamID + ", currentShowIndex: " + currentShowIndex);
@@ -551,84 +563,6 @@ public class PlayActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_log:
-                showLogMenu();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setControlPannel(boolean enable) {
-        if (enable) {
-            mRlytControlPannel.setVisibility(View.VISIBLE);
-        } else {
-            mRlytControlPannel.setVisibility(View.INVISIBLE);
-        }
-
-        mIBtnLeft.setEnabled(enable);
-        mIBtnForward.setEnabled(enable);
-        mIBtnRight.setEnabled(enable);
-        mIBtnBackward.setEnabled(enable);
-        mIBtnGO.setEnabled(enable);
-        mTvBoardingCountDown.setText("");
-    }
-
-    private void pauseControlPannel() {
-        mIBtnLeft.setEnabled(false);
-        mIBtnForward.setEnabled(false);
-        mIBtnRight.setEnabled(false);
-        mIBtnBackward.setEnabled(false);
-        mIBtnGO.setEnabled(false);
-        mTvBoardingCountDown.setText("");
-    }
-
-    private void sendCMDFail(String cmd) {
-        CommandUtil.getInstance().printLog("send cmd error: " + cmd);
-        Toast.makeText(PlayActivity.this, getString(R.string.send_cmd_error), Toast.LENGTH_SHORT).show();
-        reinitGame();
-    }
-
-    private void reinitGame() {
-        CommandUtil.getInstance().setCurrentBoardSate(BoardState.Ended);
-        setControlPannel(false);
-        mIBtnApply.setEnabled(true);
-        String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mCurrentQueueCount + "");
-        showApplyText(msg, 6);
-        mIBtnApply.setVisibility(View.VISIBLE);
-        mTvApply.setVisibility(View.VISIBLE);
-    }
-
-    private void startGame() {
-        mIBtnApply.setVisibility(View.INVISIBLE);
-        mTvApply.setVisibility(View.INVISIBLE);
-        setControlPannel(true);
-    }
-
-    private void showApplyText(String msg, int separatePostion) {
-        SpannableString ss = new SpannableString(msg);
-        ss.setSpan(new TextAppearanceSpan(PlayActivity.this, R.style.tv_style1), 0, separatePostion,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new TextAppearanceSpan(PlayActivity.this, R.style.tv_style2), separatePostion,
-                msg.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        mTvApply.setText(ss, TextView.BufferType.SPANNABLE);
-    }
-
     private Map<String, Object> getMapFromJson(String json) {
         if (TextUtils.isEmpty(json)) {
             return null;
@@ -658,12 +592,12 @@ public class PlayActivity extends AppCompatActivity {
             mCurrentQueueCount = queueList.size();
             if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.Ended) {
                 String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mCurrentQueueCount + "");
-                showApplyText(msg, 6);
+                showApplyHint(msg, 6);
             } else if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
                 for (int i = 0, size = queueList.size(); i < size; i++) {
                     if (PreferenceUtil.getInstance().getUserID().equals(((Map<String, Object>) queueList.get(i)).get("userId"))) {
                         String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.apply_success, i + "");
-                        showApplyText(msg, 6);
+                        showApplyHint(msg, 6);
                         break;
                     }
                 }
@@ -701,7 +635,7 @@ public class PlayActivity extends AppCompatActivity {
         if (result == 0) {
             CommandUtil.getInstance().setCurrentBoardSate(BoardState.WaitingBoard);
             String msg = getString(R.string.apply_grub) + "\n" + getString(R.string.apply_success, ((Double) data.get("index")).intValue() + "");
-            showApplyText(msg, 6);
+            showApplyHint(msg, 6);
         } else {
             Toast.makeText(PlayActivity.this, getString(R.string.apply_faile), Toast.LENGTH_SHORT).show();
             reinitGame();
@@ -732,15 +666,7 @@ public class PlayActivity extends AppCompatActivity {
 
         final String sessionData = (String) data.get("session_data");
 
-        // 通知服务器，客户端已经收到GameReady指令
-        CommandUtil.getInstance().replyRecvGameReady(rspSeq, sessionData);
-
-        if (mDialogConfirmGameReady != null && mDialogConfirmGameReady.isShowing()) {
-            CommandUtil.getInstance().printLog("[handleGameReady], confirm dialog is showing");
-            return;
-        }
-
-        mDialogConfirmGameReady = new AlertDialog.Builder(this).setMessage(getString(R.string.confirm_board, "10")).setTitle("提示").setPositiveButton("上机", new DialogInterface.OnClickListener() {
+        final AlertDialog confirmDialog = new AlertDialog.Builder(this).setMessage(getString(R.string.confirm_board, "10")).setTitle("提示").setPositiveButton("上机", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
@@ -748,6 +674,11 @@ public class PlayActivity extends AppCompatActivity {
 
                 // 确认上机
                 CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 1, new CommandUtil.OnCommandSendCallback() {
+                    @Override
+                    public void onSendSuccess() {
+
+                    }
+
                     @Override
                     public void onSendFail() {
                         sendCMDFail("ConfirmBoard: 1");
@@ -763,6 +694,11 @@ public class PlayActivity extends AppCompatActivity {
                 // 放弃上机
                 CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 0, new CommandUtil.OnCommandSendCallback() {
                     @Override
+                    public void onSendSuccess() {
+
+                    }
+
+                    @Override
                     public void onSendFail() {
                         sendCMDFail("ConfirmBoard: 0");
                     }
@@ -771,21 +707,21 @@ public class PlayActivity extends AppCompatActivity {
                 reinitGame();
             }
         }).create();
-        mDialogConfirmGameReady.setCanceledOnTouchOutside(false);
-        mDialogConfirmGameReady.show();
+        confirmDialog.setCanceledOnTouchOutside(false);
+        confirmDialog.show();
 
         mCountDownTimerConfirmBoard = new CountDownTimer(10000, 500) {
             @Override
             public void onTick(long millisUntilFinished) {
                 if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    mDialogConfirmGameReady.setMessage(getString(R.string.confirm_board, ((millisUntilFinished / 1000) + 1) + ""));
+                    confirmDialog.setMessage(getString(R.string.confirm_board, ((millisUntilFinished / 1000) + 1) + ""));
                 }
             }
 
             @Override
             public void onFinish() {
                 if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    mDialogConfirmGameReady.dismiss();
+                    confirmDialog.dismiss();
                     reinitGame();
                 }
             }
@@ -806,9 +742,12 @@ public class PlayActivity extends AppCompatActivity {
         }
 
         if (CommandUtil.getInstance().isConfirmBoard()) {
-
-            // 从 CDN 切换到 ZEGO 服务器拉流，降低视频延迟
-            switchPlaySource(true);
+            // 推流
+            mZegoLiveRoom.enableCamera(false);
+            mZegoLiveRoom.enableMic(false);
+            mZegoLiveRoom.enableDTX(true);
+            mZegoLiveRoom.setAudioBitrate(8 * 1000);
+            mZegoLiveRoom.startPublishing(mRoom.publishStreamID, "title_" + mRoom.publishStreamID, ZegoConstants.PublishFlag.JoinPublish);
 
             // 正在上机
             CommandUtil.getInstance().setCurrentBoardSate(BoardState.Boarding);
@@ -829,6 +768,11 @@ public class PlayActivity extends AppCompatActivity {
                         pauseControlPannel();
 
                         CommandUtil.getInstance().grub(new CommandUtil.OnCommandSendCallback() {
+                            @Override
+                            public void onSendSuccess() {
+
+                            }
+
                             @Override
                             public void onSendFail() {
                                 sendCMDFail("Grub");
@@ -886,9 +830,6 @@ public class PlayActivity extends AppCompatActivity {
         dialog.show();
 
         reinitGame();
-
-        // 从 ZEGO 服务器切换到 CDN 拉流，节约成本
-        switchPlaySource(false);
     }
 
     /**
@@ -927,7 +868,7 @@ public class PlayActivity extends AppCompatActivity {
 
     public void showLogMenu() {
 
-        final Dialog dialog = new Dialog(this);
+        mDialog = new Dialog(this);
         View viewBottom = LayoutInflater.from(this).inflate(R.layout.dialog_bottom, null);
 
         TextView tvUserID = viewBottom.findViewById(R.id.tv_user_id);
@@ -935,7 +876,7 @@ public class PlayActivity extends AppCompatActivity {
         tvUserID.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                ClipboardManager cmb = (ClipboardManager) PlayActivity.this.getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipboardManager cmb = (ClipboardManager)PlayActivity.this.getSystemService(Context.CLIPBOARD_SERVICE);
                 cmb.setText(PreferenceUtil.getInstance().getUserID());
                 Toast.makeText(PlayActivity.this, "已复制到剪贴板", Toast.LENGTH_SHORT).show();
                 return false;
@@ -966,25 +907,22 @@ public class PlayActivity extends AppCompatActivity {
         viewBottom.findViewById(R.id.btn_cancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dialog.dismiss();
+                mDialog.dismiss();
             }
         });
 
-        dialog.setContentView(viewBottom);
-        Window dialogWindow = dialog.getWindow();
+        mDialog.setContentView(viewBottom);
+        Window dialogWindow = mDialog.getWindow();
         dialogWindow.setGravity(Gravity.BOTTOM);
         WindowManager.LayoutParams lp = dialogWindow.getAttributes();
         lp.y = 20;
         dialogWindow.setAttributes(lp);
-        dialog.show();
+        mDialog.show();
     }
 
     private void doLogout() {
-
-        for (ZegoStream zegoStream : mListStream) {
-            zegoStream.stopPlayStream();
-        }
-
+        mZegoLiveRoom.stopPlayingStream(mListStream.get(0).streamID);
+        mZegoLiveRoom.stopPlayingStream(mListStream.get(1).streamID);
         mZegoLiveRoom.stopPublishing();
         mZegoLiveRoom.logoutRoom();
         CommandUtil.getInstance().reset();

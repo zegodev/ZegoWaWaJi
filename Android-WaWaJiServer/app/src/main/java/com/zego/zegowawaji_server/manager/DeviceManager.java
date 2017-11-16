@@ -6,7 +6,6 @@ import com.zego.zegowawaji_server.device.WawajiDevice;
 import com.zego.zegowawaji_server.device.XueBaoWawaji;
 
 import java.io.IOException;
-import java.util.Random;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -17,7 +16,6 @@ import java.util.Random;
 public class DeviceManager {
     private WawajiDevice mWawajiDevice;
     private OnGameOverObserver mGameOverObserver;
-    private Random mRandom;
 
     static private DeviceManager sInstance;
 
@@ -57,7 +55,6 @@ public class DeviceManager {
             }
         };
 
-        mRandom = new Random();
         if (BuildConfig.DEVICE_BRAND_NAME.toLowerCase().contains("xuebao")) {
             mWawajiDevice = new XueBaoWawaji(listener);
         } else if (BuildConfig.DEVICE_BRAND_NAME.toLowerCase().contains("surui")) {
@@ -67,15 +64,11 @@ public class DeviceManager {
 
     /**
      * 初始化娃娃机
-     * @param probability 中奖概率, 取值为 (0, 1]
+     * @param flag 0: 随机；1: 中
+     * @return
      */
-    public boolean sendBeginCmd(float probability) {
-        if (probability <= 0 || probability > 1) {
-            probability = 0.5f;
-        }
-
-        boolean hit = canHit(probability);
-        return mWawajiDevice.sendBeginCommand(hit, sCmdSequence++);
+    public boolean sendBeginCmd(int flag) {
+        return mWawajiDevice.sendBeginCommand(flag, sCmdSequence++);
     }
 
     public boolean sendForwardCmd() {
@@ -104,14 +97,6 @@ public class DeviceManager {
         return mWawajiDevice.sendGrabCommand(sCmdSequence);
     }
 
-    /**
-     * 随机算出一个布尔值
-     * @param probability 概率 取值为 (0~1]
-     * @return
-     */
-    private boolean canHit(float probability) {
-        return (mRandom.nextInt(1000) % (100 / (100 * probability)) + 1) == 1;
-    }
 
     @Override
     protected void finalize() throws Throwable {

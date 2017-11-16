@@ -103,8 +103,4 @@ public class ZegoApiManager {
     public ZegoLiveRoom getZegoLiveRoom() {
         return mZegoLiveRoom;
     }
-
-    public long getAppID(){
-        return mAppID;
-    }
 }

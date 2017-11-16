@@ -5,7 +5,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.zego.wawaji.R;
@@ -37,7 +36,6 @@ public class RoomListAdapter extends RecyclerView.Adapter<RoomListAdapter.ViewHo
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.tvRoomName.setText(mRoomList.get(position).roomName);
-        holder.ivRoomIcon.setImageResource(mRoomList.get(position).roomIcon);
     }
 
     @Override
@@ -49,15 +47,9 @@ public class RoomListAdapter extends RecyclerView.Adapter<RoomListAdapter.ViewHo
         mItemClickListener = listener;
     }
 
-    public void setRoomList(List<Room> roomList){
-        mRoomList = roomList;
-        notifyDataSetChanged();
-    }
-
     class ViewHolder extends RecyclerView.ViewHolder{
 
         TextView tvRoomName;
-        ImageView ivRoomIcon;
 
         public ViewHolder(final View itemView) {
             super(itemView);
@@ -71,8 +63,6 @@ public class RoomListAdapter extends RecyclerView.Adapter<RoomListAdapter.ViewHo
                     }
                 }
             });
-
-            ivRoomIcon = itemView.findViewById(R.id.iv_room_icon);
         }
     }
 }

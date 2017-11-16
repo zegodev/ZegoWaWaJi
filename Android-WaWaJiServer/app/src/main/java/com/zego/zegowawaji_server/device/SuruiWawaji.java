@@ -18,15 +18,17 @@ public class SuruiWawaji extends WawajiDevice {
     static final private int BAUD_RATE = 9600;
 
     static final private byte[] CMD_BYTE_START = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x06, (byte)0x06, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x2a };    // 第3位控制时间，第13位控制是否抓中
-//    static final private byte[] CMD_BYTE_START_GET = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x06, (byte)0x06, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x2a };
+    static final private byte[] CMD_BYTE_START_GET = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x06, (byte)0x06, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x2a };
     static final private byte[] CMD_BYTE_MOVE = {(byte)0x23, (byte)0x01, (byte)0x00, (byte)0x2a};   // 第三位控制方向
     static final private byte[] CMD_BYTE_HEART_BIT = {(byte)0x23, (byte)0x02, (byte)0x00, (byte)0x2a};
 
     private DeviceStateListener mListener;
+    private Random mRandom;
 
     public SuruiWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
         mListener = listener;
+        mRandom = new Random();
 
         Thread readThread = new ReadThread("surui-reader");
         readThread.start();
@@ -34,13 +36,17 @@ public class SuruiWawaji extends WawajiDevice {
     /**
      * 初始化指令数据
      *
-     * @param hit 控制是否中奖，true：中奖；false：不中奖（概率）
+     * @param flag 控制是否中奖，1：中奖；0：概率
      * @param seq  指令序号
      * @return 初始化指令数据
      */
     @Override
-    public boolean sendBeginCommand(boolean hit, int seq) {
-        CMD_BYTE_START[12] = hit ? (byte) 1: (byte) 0;
+    public boolean sendBeginCommand(int flag, int seq) {
+        if (flag == 1) {
+            return sendCommandData(CMD_BYTE_START_GET);
+        }
+
+        CMD_BYTE_START[12] = (mRandom.nextInt(6) == 1) ? (byte) 1: (byte) 0;
         return sendCommandData(CMD_BYTE_START);
     }
 

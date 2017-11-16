@@ -7,9 +7,6 @@ import android.os.Build;
 import android.provider.Settings;
 import android.text.TextUtils;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
@@ -52,11 +49,6 @@ public class DeviceIdUtil {
             return deviceId;
         }
 
-        deviceId = getEthernetMac();
-        if (!TextUtils.isEmpty(deviceId) && !Build.UNKNOWN.equals(deviceId)) {
-            return deviceId;
-        }
-
         // wifi mac地址
         WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifi.getConnectionInfo();
@@ -66,40 +58,5 @@ public class DeviceIdUtil {
         }
 
         return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    /**
-     * 获取有线网卡的 MAC 地址
-     * @return
-     */
-    static private String getEthernetMac() {
-        String macSerial = null;
-        String str = "";
-        try {
-            Process pp = Runtime.getRuntime().exec("cat /sys/class/net/eth0/address ");
-            InputStreamReader ir = new InputStreamReader(pp.getInputStream());
-            LineNumberReader input = new LineNumberReader(ir);
-
-            for (; null != str; ) {
-                str = input.readLine();
-                if (str != null) {
-                    macSerial = str.trim();// 去空格
-                    break;
-                }
-            }
-        } catch (IOException ex) {
-            // 赋予默认值
-            ex.printStackTrace();
-
-            return Build.UNKNOWN;
-        }
-
-        if (macSerial != null && macSerial.length() > 0)
-            macSerial = macSerial.replaceAll(":", "");
-        else {
-            return Build.UNKNOWN;
-        }
-
-        return macSerial;
     }
 }

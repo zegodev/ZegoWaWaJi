@@ -6,3 +6,12 @@ iOS-WaWaJiClient/WaWaJiClient.xcodeproj/xcuserdata/xia.xcuserdatad/xcdebugger/Br
 iOS-WaWaJiClient/WaWaJiClient.xcodeproj/xcuserdata/xia.xcuserdatad/xcschemes/WaWaJiClient.xcscheme
 iOS-WaWaJiClient/WaWaJiClient.xcodeproj/project.xcworkspace/xcuserdata/xia.xcuserdatad/WorkspaceSettings.xcsettings
 iOS-WaWaJiClient/WaWaJiClient.xcodeproj/xcuserdata/xia.xcuserdatad/xcschemes/xcschememanagement.plist
+Android-WaWaJiServer/.gradle/
+Android-WaWaJiServer/.idea/
+Android-WaWaJiServer/Android-WaWaJiServer.iml
+Android-WaWaJiServer/app/.externalNativeBuild/
+Android-WaWaJiServer/app/app.iml
+Android-WaWaJiServer/app/build/
+Android-WaWaJiServer/app/google-services.json
+Android-WaWaJiServer/build/
+Android-WaWaJiServer/local.properties
