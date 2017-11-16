@@ -23,14 +23,14 @@
         android:gravity="center">
         <TextureView
             android:id="@+id/main_preview_view"
-            android:layout_width="144dp"
-            android:layout_height="256dp"
+            android:layout_width="216dp"
+            android:layout_height="384dp"
             android:layout_marginRight="10dp" />
 
         <TextureView
             android:id="@+id/second_preview_view"
-            android:layout_width="144dp"
-            android:layout_height="256dp"
+            android:layout_width="216dp"
+            android:layout_height="384dp"
             android:layout_marginLeft="10dp" />
     </LinearLayout>
 

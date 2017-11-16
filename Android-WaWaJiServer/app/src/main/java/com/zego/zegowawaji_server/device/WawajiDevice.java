@@ -5,6 +5,7 @@ import com.zego.base.utils.AppLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -13,6 +14,8 @@ import java.io.IOException;
  */
 
 public abstract class WawajiDevice extends SerialPort {
+
+    private Random mRandom = new Random();
 
     public interface DeviceStateListener {
         /**
@@ -30,14 +33,15 @@ public abstract class WawajiDevice extends SerialPort {
 
     public WawajiDevice(File devicePath, int baudrate, int flags) throws SecurityException, IOException {
         super(devicePath, baudrate, flags);
+        mRandom = new Random();
     }
     /**
-     * 初始化指令数据
-     * @param flag 控制是否中奖，1：中奖；0：概率
+     * 初始化指令数据，能否中奖，除了概率设置值外，还与各阶段的力度、娃娃的种类、形状、用料等有关，并非完全受控，只是无限接近
+     * @param hit 控制是否中奖，true：中奖；false：概率
      * @param seq 指令序号
      * @return 初始化指令数据
      */
-    abstract public boolean sendBeginCommand(int flag, int seq);
+    abstract public boolean sendBeginCommand(boolean hit, int seq);
 
     abstract public boolean sendForwardCommand(int seq);
 

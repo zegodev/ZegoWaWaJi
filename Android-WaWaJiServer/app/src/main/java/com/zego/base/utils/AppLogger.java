@@ -105,7 +105,9 @@ public class AppLogger {
 
                 int logLength = mLogList.size();
                 if (logLength > 1500) {
-                    mLogList.subList(500, logLength);
+                    for (int i = logLength - 1; i >= 1000; i--) {
+                        mLogList.remove(i);
+                    }
 
                     if (mLogFile.length() >= SINGLE_LOG_FILE_MAX_SIZE) {
                         initLogFile();
@@ -129,16 +131,14 @@ public class AppLogger {
     private void initLogFile() {
         String logPath = ZegoLogUtil.getLogPath(ZegoApplication.getAppContext());
         File logFile = new File(logPath, LOG_FILE_NAME);
-        if (logFile.exists()) {
-            if (logFile.length() >= SINGLE_LOG_FILE_MAX_SIZE) {    // 日志文件大于 10M 时，备份日志
-                File bakLogFile = new File(logPath, LOG_FILE_NAME_BAK);
-                if (bakLogFile.exists()) {
-                    bakLogFile.delete();
-                }
-
-                safeCloseStream(mLogWriter);
-                logFile.renameTo(bakLogFile);
+        if (logFile.exists() && logFile.length() >= SINGLE_LOG_FILE_MAX_SIZE) { // 日志文件存在，且文件尺寸大于 10M 时，备份日志
+            File bakLogFile = new File(logPath, LOG_FILE_NAME_BAK);
+            if (bakLogFile.exists()) {
+                bakLogFile.delete();
             }
+
+            safeCloseStream(mLogWriter);
+            logFile.renameTo(bakLogFile);
         }
 
         mLogFile = new File(logPath, LOG_FILE_NAME);

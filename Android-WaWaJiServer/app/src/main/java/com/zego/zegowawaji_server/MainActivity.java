@@ -52,7 +52,6 @@ import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoUser;
 import com.zego.zegowawaji_server.callback.ZegoIMCallack;
-import com.zego.zegowawaji_server.callback.ZegoLivePlayerCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback2;
 import com.zego.zegowawaji_server.callback.ZegoRoomCallback;
@@ -330,6 +329,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         PrefUtil prefUtil = PrefUtil.getInstance();
         Log.e("zhen",prefUtil.getRoomId());
         if (TextUtils.isEmpty(prefUtil.getRoomId())
+                || TextUtils.isEmpty(prefUtil.getRoomName())
                 || TextUtils.isEmpty(prefUtil.getStreamId())
                 || TextUtils.isEmpty(prefUtil.getStreamId2())) {
             String deviceId = DeviceIdUtil.generateDeviceId(this);
@@ -337,6 +337,15 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             String roomId = String.format("%s_%s", ROOM_ID_PREFIX, deviceId);
             PrefUtil.getInstance().setRoomId(roomId);
             AppLogger.getInstance().writeLog("initRoomAndStreamInfo, roomid: %s", roomId);
+
+            // 对娃娃机名做特殊处理以区分是即构的还是开发者的
+            if (deviceId.startsWith("12345_5432")) {
+                int deviceNo = Integer.valueOf(deviceId.substring(deviceId.length() - 1));
+                String roomName = getString(R.string.zg_text_wawaji_name_template, deviceNo);
+                PrefUtil.getInstance().setRoomName(roomName);
+            } else {
+                PrefUtil.getInstance().setRoomName(roomId);
+            }
 
             String streamId = String.format("%s_%s", STREAM_ID_PREFIX, deviceId);
             PrefUtil.getInstance().setStreamId(streamId);
@@ -358,7 +367,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mZegoLiveRoom.setRoomConfig(false, true);
         String roomId = PrefUtil.getInstance().getRoomId();
-        return mZegoLiveRoom.loginRoom(roomId, roomId, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
+        String roomName = PrefUtil.getInstance().getRoomName();
+        return mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
             @Override
             public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
                 AppLogger.getInstance().writeLog("onLoginCompletion, errorCode: %d", errorCode);
@@ -377,7 +387,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void setupCallbacks() {
         mZegoLiveRoom.setZegoLivePublisherCallback(new ZegoLivePublisherCallback(this));
         mZegoLiveRoom.setZegoLivePublisherCallback2(new ZegoLivePublisherCallback2(this));
-        mZegoLiveRoom.setZegoLivePlayerCallback(new ZegoLivePlayerCallback());
         mZegoLiveRoom.setZegoRoomCallback(new ZegoRoomCallback(this, this));
         mZegoLiveRoom.setZegoIMCallback(new ZegoIMCallack(this, this));
     }

@@ -39,8 +39,9 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     private HandlerThread mMessageThread;
     private Handler mHandler;
 
-    private volatile boolean mCurrentIsIdle = true;
-    private volatile String mCurrentPlayerId = null;
+    private volatile boolean mCurrentIsIdle = true;     // 当前设备是否空闲
+    private volatile boolean mIsDoGrabbing = false;     // 当前正在执行抓娃娃动作，不再重复接收此动作
+    private volatile String mCurrentPlayerId = null;    // 当前上机者的 UserId
 
     public ZegoRoomCallback(IRoomClient client, IStateChangedListener listener) {
         mRoomClient = client;
@@ -189,7 +190,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                         }
                     });
 
-                    AppLogger.getInstance().writeLog("send ready command success? %s", success);
+                    AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], send ready command success? %s", success);
                 }
             }
         });
@@ -235,10 +236,10 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         boolean success = liveRoom.sendCustomCommand(userArray, cmdString, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
-                AppLogger.getInstance().writeLog("reply appointment command result: %d", errorCode);
+                AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply appointment command result: %d", errorCode);
             }
         });
-        AppLogger.getInstance().writeLog("reply appointment command success? %s", success);
+        AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply appointment command success? %s", success);
 
         notifyNextPlayerIfNeed();
 
@@ -247,7 +248,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         }
     }
 
-    private String generateAppointmentReplyCommand(String userId, String userName, int queueSize, JSONObject requestData) {
+    private String generateAppointmentReplyCommand(String userId, String userName, int queueSize, JSONObject receivedData) {
         JSONObject json =  new JSONObject();
         try {
             json.put(Constants.JsonKey.KEY_SEQ, CommandSeqManager.getInstance().getAndIncreaseSequence());
@@ -262,8 +263,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             dataJson.put(Constants.JsonKey.KEY_PLAYER, playerJson);
             dataJson.put(Constants.JsonKey.KEY_ORDER_INDEX, queueSize);
 
-            dataJson.put(Constants.JsonKey.KEY_SEQ, requestData.optInt(Constants.JsonKey.KEY_SEQ));
-            JSONObject sessionData = requestData.optJSONObject(Constants.JsonKey.KEY_SESSION_DATA);
+            dataJson.put(Constants.JsonKey.KEY_SEQ, receivedData.optInt(Constants.JsonKey.KEY_SEQ));
+            JSONObject sessionData = receivedData.optJSONObject(Constants.JsonKey.KEY_SESSION_DATA);
             if (sessionData != null) {
                 dataJson.put(Constants.JsonKey.KEY_SESSION_DATA, sessionData);
             }
@@ -319,15 +320,58 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             }
         }
 
+        int errorCode = 0;
+        ZegoUser[] targetUsers;
         if (idx >= 0) {
-            queueMembers.remove(idx);
-            AppLogger.getInstance().writeLog("[handleAppointmentCommand], remove user: %s, queueMembers: %d", userName, queueMembers.size());
+            errorCode = 0;
+            ZegoUser removedUser = queueMembers.remove(idx);
+            targetUsers = new ZegoUser[] { removedUser };
 
-            notifyNextPlayerIfNeed();
-            mListener.onRoomStateUpdate();
+            AppLogger.getInstance().writeLog("[handleAppointmentCommand], remove user: %s from queue, current queue size: %d", userName, queueMembers.size());
         } else {
-            AppLogger.getInstance().writeLog("user %s not in queue, can't cancel apply", userName);
+            errorCode = 1;
+            ZegoUser user = new ZegoUser();
+            user.userID = userId;
+            user.userName = userName;
+            targetUsers = new ZegoUser[] { user };
+
+            AppLogger.getInstance().writeLog("[handleAppointmentCommand], user %s not in queue, can't cancel apply", userName);
         }
+
+        ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
+        String cmdString = generateCancelAppointmentReplyCommand(errorCode, cmdJson);
+        boolean success = liveRoom.sendCustomCommand(targetUsers, cmdString, new IZegoCustomCommandCallback() {
+
+            @Override
+            public void onSendCustomCommand(int errorCode, String roomId) {
+                AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply cancel appointment command result: %d", errorCode);
+            }
+        });
+
+        AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply cancel appointment command success? %d", success);
+    }
+
+    private String generateCancelAppointmentReplyCommand(int errorCode, JSONObject receivedJsonData) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put(Constants.JsonKey.KEY_SEQ, CommandSeqManager.getInstance().getAndIncreaseSequence());
+            json.put(Constants.JsonKey.KEY_CMD, Constants.Command.CMD_CANCEL_APPOINTMENT_REPLY);
+
+            JSONObject dataJson = new JSONObject();
+            dataJson.put(Constants.JsonKey.KEY_RESULT, errorCode);
+            dataJson.put(Constants.JsonKey.KEY_SEQ, receivedJsonData.optInt(Constants.JsonKey.KEY_SEQ));
+            JSONObject sessionData = receivedJsonData.optJSONObject(Constants.JsonKey.KEY_SESSION_DATA);
+            if (sessionData != null) {
+                dataJson.put(Constants.JsonKey.KEY_SESSION_DATA, sessionData);
+            }
+
+            dataJson.put(Constants.JsonKey.KEY_TIME_STAMP, System.currentTimeMillis());
+
+            json.put(Constants.JsonKey.KEY_DATA, dataJson);
+        } catch (JSONException e) {
+            AppLogger.getInstance().writeLog("generateCancelAppointmentCommand failed. " + e);
+        }
+        return json.toString();
     }
 
     // 在 Work 线程处理上机或者放弃游戏指令
@@ -345,7 +389,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         List<ZegoUser> queueMembers = mRoomClient.getQueueUser();
 
         if (queueMembers.size() == 0 || !TextUtils.equals(queueMembers.get(0).userID, userId) || !TextUtils.equals(queueMembers.get(0).userName, userName)) {
-            AppLogger.getInstance().writeLog("the user: %s not the next player, ignore. queueMembers: %d", userName, queueMembers.size());
+            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], the user: %s not the next player, ignore. queueMembers: %d", userName, queueMembers.size());
             return;
         }
 
@@ -361,10 +405,10 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         boolean success = liveRoom.sendCustomCommand(sendTo, replyCommand, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
-                AppLogger.getInstance().writeLog("reply StartOrAbandonReplyCommand result: %d", errorCode);
+                AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], reply StartOrAbandonReplyCommand result: %d", errorCode);
             }
         });
-        AppLogger.getInstance().writeLog("reply StartOrAbandonReplyCommand success ? %s", success);
+        AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], reply StartOrAbandonReplyCommand success ? %s", success);
 
         int confirm = cmdJson.optJSONObject(Constants.JsonKey.KEY_DATA).optInt(Constants.JsonKey.KEY_CONFIRM);
         if (confirm == 1) { // 确认上机
@@ -373,7 +417,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             mRoomClient.updateCurrentPlayerInfo(user.userID, user.userName);
 
             // 初始化设备
-            DeviceManager.getInstance().sendBeginCmd(0);
+            DeviceManager.getInstance().sendBeginCmd(0.06f);
 
             //计费，计时
             Message message = new Message();
@@ -445,25 +489,32 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
     }
 
-    private void doGrub(final String fromUserId, final String fromUserName){
+    private void doGrab(final String fromUserId, final String fromUserName) {
+        if (mIsDoGrabbing) {
+            AppLogger.getInstance().writeLog("[HandlerImpl_doGrub] The grab command can only be executed once in every round of the game. from user: %s", fromUserName);
+            return;
+        }
+
+        mIsDoGrabbing = true;
+        mHandler.removeMessages(HandlerImpl.MSG_WAIT_GAME_OVER);
         boolean success = DeviceManager.getInstance().sendDownCmd(new DeviceManager.OnGameOverObserver() {
             @Override
             public void onGameOver(boolean win) {
                 if (mHandler.hasMessages(HandlerImpl.MSG_WAIT_RECEIVE_DEVICE_RESULT, fromUserId)) {         // 没有超时，正常返回给客户
                     mHandler.removeMessages(HandlerImpl.MSG_WAIT_RECEIVE_DEVICE_RESULT, fromUserId);
-                    AppLogger.getInstance().writeLog("[HandlerImpl_doGrub] remove MSG_WAIT_RECEIVE_DEVICE_RESULT, userName: %s", fromUserName);
+                    AppLogger.getInstance().writeLog("[HandlerImpl_doGrab] remove MSG_WAIT_RECEIVE_DEVICE_RESULT, userName: %s", fromUserName);
 
                     int result = win ? 1 : 0;
                     handleGameOverInWorkThread(result, fromUserId, fromUserName);
-                }else {
-                    AppLogger.getInstance().writeLog("[HandlerImpl_doGrub] no MSG_WAIT_RECEIVE_DEVICE_RESULT, userName: %s", fromUserName);
+                } else {    // 已经通过超时逻辑返回游戏结果了 
+                    AppLogger.getInstance().writeLog("[HandlerImpl_doGrab] no MSG_WAIT_RECEIVE_DEVICE_RESULT, userName: %s", fromUserName);
                 }
             }
         });
 
         // 发送"抓娃娃指令"失败，直接抛出"抓取"失败
         if (!success) {
-            AppLogger.getInstance().writeLog("[doGrub] sendDownCmd fail, userName: %s", fromUserName);
+            AppLogger.getInstance().writeLog("[HandlerImpl_doGrab] sendDownCmd fail, userName: %s", fromUserName);
             handleGameOverInWorkThread(0, fromUserId, fromUserName);
             return;
         }
@@ -483,7 +534,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     // 为了响应速度，串口操作不进行线程切换
     private void handleOperationCommand(int commandId, final String fromUserId, final String fromUserName) {
         if (mCurrentIsIdle || TextUtils.isEmpty(mCurrentPlayerId) || !TextUtils.equals(mCurrentPlayerId, fromUserId)) {
-            AppLogger.getInstance().writeLog("anomaly operation, the playing user not the %s", fromUserName);
+            AppLogger.getInstance().writeLog("[handleOperationCommand], anomaly operation, the playing user not the %s, current device is idle? %s", fromUserName, mCurrentIsIdle);
             return;
         }
 
@@ -506,8 +557,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 break;
 
             case Constants.Command.CMD_GRAB:
-                mHandler.removeMessages(HandlerImpl.MSG_WAIT_GAME_OVER);
-                doGrub(fromUserId, fromUserName);
+                doGrab(fromUserId, fromUserName);
                 break;
         }
     }
@@ -539,12 +589,13 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         boolean success = liveRoom.sendCustomCommand(userArray, cmdString, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
-                AppLogger.getInstance().writeLog("send game result command result: %d", errorCode);
+                AppLogger.getInstance().writeLog("[gameOver], send game result command result: %d", errorCode);
             }
         });
 
-        AppLogger.getInstance().writeLog("send game result %s to %s success? %s", cmdString, userName, success);
+        AppLogger.getInstance().writeLog("[gameOver], send game result %s to %s success? %s", cmdString, userName, success);
 
+        mIsDoGrabbing = false;
         setIdle(true, "gameOver");
 
         mRoomClient.updateCurrentPlayerInfo("", "");
@@ -635,7 +686,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     final String userName = userData.getString("name");
                     AppLogger.getInstance().writeLog("timeout about MSG_WAIT_GAME_OVER, userName: %s", userName);
 
-                    doGrub(userId, userName);
+                    doGrab(userId, userName);
                 }
                     break;
 

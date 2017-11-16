@@ -18,51 +18,48 @@ public class XueBaoWawaji extends WawajiDevice {
     static final private int BAUD_RATE = 115200;
 
     static final private byte[] CMD_BYTE_BEGIN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x00, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1d};
-    static final private byte[] CMD_BYTE_BEGIN_GET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1e};
+//    static final private byte[] CMD_BYTE_BEGIN_GET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1e};
     static final private byte[] CMD_BYTE_FORWARD = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x00, (byte) 0x2c, (byte) 0x01, (byte) 0x07};
     static final private byte[] CMD_BYTE_BACKWARD = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x01, (byte) 0x2c, (byte) 0x01, (byte) 0x08};
     static final private byte[] CMD_BYTE_LEFT = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x02, (byte) 0x2c, (byte) 0x01, (byte) 0x09};
     static final private byte[] CMD_BYTE_RIGHT = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x03, (byte) 0x2c, (byte) 0x01, (byte) 0x0a};
     static final private byte[] CMD_BYTE_DOWN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0b, (byte) 0x32, (byte) 0x04, (byte) 0x00, (byte) 0x41};
 
-    private Random mRandom = new Random();
     private DeviceStateListener mListener;
 
     public XueBaoWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
         mListener = listener;
-        mRandom = new Random();
 
         Thread readThread = new ReadThread("xuebao-reader");
         readThread.start();
     }
 
+    /**
+     * 初始化指令数据，能否中奖，除了概率设置值外，还与各阶段的力度、娃娃的种类、形状、用料等有关，并非完全受控，只是无限接近。<br>
+     * 各阶段爪力值的设置需要根据娃娃样式、重量、用料等现场调节，以下各值只是用在即构公司体验机上的一组相对较优值，客户需要根据自己的实际情况做调优。
+     *
+     * @param hit 控制是否中奖，true：中奖；false：概率
+     * @param seq 指令序号
+     * @return
+     */
     @Override
-    public boolean sendBeginCommand(int flag, int seq) {
-        AppLogger.getInstance().writeLog("sendBeginCommand."+flag+","+seq);
+    public boolean sendBeginCommand(boolean hit, int seq) {
         byte[] cmdData = CMD_BYTE_BEGIN;
-        switch (flag) {
-            case 0:
-                Rand rand = new Rand();
-                int index = 9;
-                cmdData[index++] = (byte) 0;     // 是否中奖
-                cmdData[index++] = (byte) (rand.randomCatch());    // 抓起爪力(1—48)
-                cmdData[index++] = (byte) (rand.randomUp());    // 到顶爪力(1—48)
-                cmdData[index++] = (byte) (rand.randomTop());    // 移动爪力(1—48)
-                cmdData[index++] = (byte) (rand.randomMove());    // 大爪力(1—48)
-                cmdData[index++] = (byte) mRandom.nextInt(10);        // 抓起高度（0--10）
 
-                int sum = 0;
-                for (int i = 6; i < cmdData.length - 1; i++) {
-                    sum += (cmdData[i] & 0xff);
-                }
-                cmdData[cmdData.length - 1] = (byte) (sum % 100); // 检验位
-                break;
+        int index = 9;
+        cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 1: 表示全部使用最大抓力，会忽略用户设置的各爪力值；0: 表示使用用户设置的爪力值，不代表一定抓不中
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10），需根据实际投放的娃娃类型做现场调优
 
-            case 1:
-                cmdData = CMD_BYTE_BEGIN_GET;
-                break;
+        int sum = 0;
+        for (int i = 6; i < cmdData.length - 1; i++) {
+            sum += (cmdData[i] & 0xff);
         }
+        cmdData[cmdData.length - 1] = (byte) (sum % 100); // 检验位
 
         updateSequence(cmdData, seq);
 

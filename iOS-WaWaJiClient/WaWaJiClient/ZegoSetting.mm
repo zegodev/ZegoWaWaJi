@@ -108,7 +108,7 @@ static ZegoSetting *_settingInstance;
     if (_userName.length == 0) {
         NSUserDefaults *ud = [self myUserDefaults];
         NSString *userName = [ud stringForKey:kZegoDemoUserNameKey];
-        if (userName.length > 0) {
+        if (userName.length > 0 && ![userName hasPrefix:@"summ"]) { // FIXME: 先把所有人的 userName 都去掉 summ 前缀
             _userName = userName;
         } else {
             srand((unsigned)time(0));
@@ -188,7 +188,13 @@ static ZegoSetting *_settingInstance;
             break;
         case ZegoAppTypeUDP:
 //            return 1739272706;  // UDP版
-            return 3177435262;
+            
+#ifdef I18N
+            return 3322882036;   // 国际版临时用
+#else
+            return 3177435262;  // 娃娃机专用
+#endif
+            
             break;
         case ZegoAppTypeI18N:
             return 3322882036;  // 国际版
