@@ -46,14 +46,16 @@ public class XueBaoWawaji extends WawajiDevice {
     @Override
     public boolean sendBeginCommand(boolean hit, int seq) {
         byte[] cmdData = CMD_BYTE_BEGIN;
+        Random mRandom = new Random();
 
+        Rand rand = new Rand();
         int index = 9;
-        cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 1: 表示全部使用最大抓力，会忽略用户设置的各爪力值；0: 表示使用用户设置的爪力值，不代表一定抓不中
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10），需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0;     // 是否中奖
+        cmdData[index++] = (byte) (rand.randomCatch());    // 抓起爪力(1—48)
+        cmdData[index++] = (byte) (rand.randomUp());    // 到顶爪力(1—48)
+        cmdData[index++] = (byte) (rand.randomTop());    // 移动爪力(1—48)
+        cmdData[index++] = (byte) (rand.randomMove());    // 大爪力(1—48)
+        cmdData[index++] = (byte) mRandom.nextInt(10);        // 抓起高度（0--10）
 
         int sum = 0;
         for (int i = 6; i < cmdData.length - 1; i++) {
