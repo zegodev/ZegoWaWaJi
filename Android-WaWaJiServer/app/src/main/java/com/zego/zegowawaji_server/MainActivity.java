@@ -118,12 +118,12 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom = ((ZegoApplication) getApplication()).getZegoLiveRoom();
         mResolutionText = getResources().getStringArray(R.array.zg_resolutions);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                getNetTime();
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                getNetTime();
+//            }
+//        }).start();
 
         mWorkThread = new HandlerThread("worker_thread", Thread.NORM_PRIORITY);
         mWorkThread.start();
