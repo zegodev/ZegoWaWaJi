@@ -64,7 +64,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -111,6 +117,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mZegoLiveRoom = ((ZegoApplication) getApplication()).getZegoLiveRoom();
         mResolutionText = getResources().getStringArray(R.array.zg_resolutions);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getNetTime();
+            }
+        }).start();
 
         mWorkThread = new HandlerThread("worker_thread", Thread.NORM_PRIORITY);
         mWorkThread.start();
@@ -790,6 +803,43 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                     super.handleMessage(msg);
                     break;
             }
+        }
+    }
+
+    private void getNetTime() {
+        URL url = null;//取得资源对象
+        try {
+            url = new URL("http://www.baidu.com");
+            //url = new URL("http://www.ntsc.ac.cn");//中国科学院国家授时中心
+            //url = new URL("http://www.bjtime.cn");
+            URLConnection uc = url.openConnection();//生成连接对象
+            uc.connect(); //发出连接
+            long ld = uc.getDate(); //取得网站日期时间
+            DateFormat formatter = new SimpleDateFormat("yyyyMMdd.HHmmss");
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(ld);
+            final String format = formatter.format(calendar.getTime());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, "当前网络时间为: \n" + format, Toast.LENGTH_SHORT).show();
+                    setSystemDate(format);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setSystemDate(String str)
+    {
+        try {
+            Process process = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(process.getOutputStream());
+            os.writeBytes("date -s "+str+"; \n");
+        } catch (Exception e) {
+            Log.d("MainActivity","error=="+e.toString());
+            e.printStackTrace();
         }
     }
 }
