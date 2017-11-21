@@ -2,9 +2,9 @@
 
 ZegoWaWaJi is a delightful software solution for the Grab-Toy game. The content contains:
 
-* iOS-WaWaJiClient ——> App running on iOS
-* Android-WaWaJiClient ——> App running on Android
-* Android-WaWaJiServer ——> App running on the WaWaJi board，which is also Android system
+* ios/WaWaJiClient ——> App running on iOS
+* android/WaWaJiClient ——> App running on Android
+* android/WaWaJiServer ——> App running on the WaWaJi board，which is also Android system
 
 ## How To Get Started
 
