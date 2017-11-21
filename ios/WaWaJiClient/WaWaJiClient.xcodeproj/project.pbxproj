@@ -1,0 +1,511 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		16084C0D1FB33FBE00976890 /* ZegoResultView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 16084C0C1FB33FBE00976890 /* ZegoResultView.xib */; };
+		16084C101FB340E800976890 /* ZegoResultView.m in Sources */ = {isa = PBXBuildFile; fileRef = 16084C0F1FB340E800976890 /* ZegoResultView.m */; };
+		163A9B861FAC46B900029BD2 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B851FAC46AC00029BD2 /* SystemConfiguration.framework */; };
+		163A9B881FAC46CC00029BD2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B871FAC46C400029BD2 /* Security.framework */; };
+		163A9B8A1FAC46D400029BD2 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B891FAC46D400029BD2 /* libz.tbd */; };
+		163A9B8C1FAC46DC00029BD2 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9B8B1FAC46DC00029BD2 /* libc++.tbd */; };
+		163A9BA41FADB2AE00029BD2 /* ZegoLiveRoom.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9BA11FADB2A100029BD2 /* ZegoLiveRoom.framework */; };
+		163A9BA51FADB2AE00029BD2 /* ZegoLiveRoom.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 163A9BA11FADB2A100029BD2 /* ZegoLiveRoom.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		163B8DB11FBD998300031C7F /* Bugly.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 163B8DB01FBD998300031C7F /* Bugly.framework */; };
+		1641B06A1FA7705300EF478E /* ZegoSetting.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1641B0691FA7705300EF478E /* ZegoSetting.mm */; };
+		167F4E5F1FA6DA270084082D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E5E1FA6DA270084082D /* AppDelegate.m */; };
+		167F4E651FA6DA270084082D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 167F4E631FA6DA270084082D /* Main.storyboard */; };
+		167F4E671FA6DA270084082D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 167F4E661FA6DA270084082D /* Assets.xcassets */; };
+		167F4E6A1FA6DA270084082D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 167F4E681FA6DA270084082D /* LaunchScreen.storyboard */; };
+		167F4E6D1FA6DA270084082D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E6C1FA6DA270084082D /* main.m */; };
+		167F4E7B1FA6DA6D0084082D /* ZegoRoomViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E731FA6DA6C0084082D /* ZegoRoomViewController.m */; };
+		167F4E7C1FA6DA6D0084082D /* ZegoManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E761FA6DA6C0084082D /* ZegoManager.mm */; };
+		167F4E7D1FA6DA6D0084082D /* ZegoLogTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E771FA6DA6D0084082D /* ZegoLogTableViewController.m */; };
+		167F4E7E1FA6DA6D0084082D /* ZegoPlayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 167F4E7A1FA6DA6D0084082D /* ZegoPlayViewController.m */; };
+		16A431CD1FB04F8E00D5C861 /* ZegoRoomInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */; };
+		16B0A2361FAA3E3000F93361 /* ZegoCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 16B0A2351FAA3E3000F93361 /* ZegoCommand.m */; };
+		16B4AA721FB5AB8600C95045 /* ZegoReadyView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */; };
+		16B4AA751FB5AB9D00C95045 /* ZegoReadyView.m in Sources */ = {isa = PBXBuildFile; fileRef = 16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		163A9BA01FADB26E00029BD2 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				163A9BA51FADB2AE00029BD2 /* ZegoLiveRoom.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		16084C0C1FB33FBE00976890 /* ZegoResultView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ZegoResultView.xib; sourceTree = "<group>"; };
+		16084C0E1FB340E800976890 /* ZegoResultView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoResultView.h; sourceTree = "<group>"; };
+		16084C0F1FB340E800976890 /* ZegoResultView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoResultView.m; sourceTree = "<group>"; };
+		163A9B851FAC46AC00029BD2 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		163A9B871FAC46C400029BD2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		163A9B891FAC46D400029BD2 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		163A9B8B1FAC46DC00029BD2 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		163A9BA11FADB2A100029BD2 /* ZegoLiveRoom.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ZegoLiveRoom.framework; sourceTree = "<group>"; };
+		163B8DB01FBD998300031C7F /* Bugly.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bugly.framework; sourceTree = "<group>"; };
+		1641B0681FA7705200EF478E /* ZegoSetting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZegoSetting.h; sourceTree = "<group>"; };
+		1641B0691FA7705300EF478E /* ZegoSetting.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ZegoSetting.mm; sourceTree = "<group>"; };
+		167F4E5A1FA6DA260084082D /* WaWaJiClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WaWaJiClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		167F4E5D1FA6DA270084082D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		167F4E5E1FA6DA270084082D /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		167F4E641FA6DA270084082D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		167F4E661FA6DA270084082D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		167F4E691FA6DA270084082D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		167F4E6B1FA6DA270084082D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		167F4E6C1FA6DA270084082D /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		167F4E731FA6DA6C0084082D /* ZegoRoomViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZegoRoomViewController.m; sourceTree = "<group>"; };
+		167F4E741FA6DA6C0084082D /* ZegoRoomViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZegoRoomViewController.h; sourceTree = "<group>"; };
+		167F4E751FA6DA6C0084082D /* ZegoManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZegoManager.h; sourceTree = "<group>"; };
+		167F4E761FA6DA6C0084082D /* ZegoManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ZegoManager.mm; sourceTree = "<group>"; };
+		167F4E771FA6DA6D0084082D /* ZegoLogTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZegoLogTableViewController.m; sourceTree = "<group>"; };
+		167F4E781FA6DA6D0084082D /* ZegoLogTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZegoLogTableViewController.h; sourceTree = "<group>"; };
+		167F4E791FA6DA6D0084082D /* ZegoPlayViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZegoPlayViewController.h; sourceTree = "<group>"; };
+		167F4E7A1FA6DA6D0084082D /* ZegoPlayViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZegoPlayViewController.m; sourceTree = "<group>"; };
+		16A431CB1FB04F8E00D5C861 /* ZegoRoomInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoRoomInfo.h; sourceTree = "<group>"; };
+		16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoRoomInfo.m; sourceTree = "<group>"; };
+		16B0A2341FAA3E3000F93361 /* ZegoCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoCommand.h; sourceTree = "<group>"; };
+		16B0A2351FAA3E3000F93361 /* ZegoCommand.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoCommand.m; sourceTree = "<group>"; };
+		16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ZegoReadyView.xib; sourceTree = "<group>"; };
+		16B4AA731FB5AB9D00C95045 /* ZegoReadyView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ZegoReadyView.h; sourceTree = "<group>"; };
+		16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ZegoReadyView.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		167F4E571FA6DA260084082D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				163B8DB11FBD998300031C7F /* Bugly.framework in Frameworks */,
+				163A9B8C1FAC46DC00029BD2 /* libc++.tbd in Frameworks */,
+				163A9BA41FADB2AE00029BD2 /* ZegoLiveRoom.framework in Frameworks */,
+				163A9B881FAC46CC00029BD2 /* Security.framework in Frameworks */,
+				163A9B861FAC46B900029BD2 /* SystemConfiguration.framework in Frameworks */,
+				163A9B8A1FAC46D400029BD2 /* libz.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		163A9B841FAC46AC00029BD2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				163A9B8B1FAC46DC00029BD2 /* libc++.tbd */,
+				163A9B891FAC46D400029BD2 /* libz.tbd */,
+				163A9B871FAC46C400029BD2 /* Security.framework */,
+				163A9B851FAC46AC00029BD2 /* SystemConfiguration.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		163B8DAF1FBD998300031C7F /* thirdLib */ = {
+			isa = PBXGroup;
+			children = (
+				163B8DB01FBD998300031C7F /* Bugly.framework */,
+			);
+			path = thirdLib;
+			sourceTree = "<group>";
+		};
+		167F4E511FA6DA260084082D = {
+			isa = PBXGroup;
+			children = (
+				163B8DAF1FBD998300031C7F /* thirdLib */,
+				167F4E7F1FA6DA7B0084082D /* libs */,
+				167F4E5C1FA6DA270084082D /* WaWaJiClient */,
+				167F4E5B1FA6DA260084082D /* Products */,
+				163A9B841FAC46AC00029BD2 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		167F4E5B1FA6DA260084082D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				167F4E5A1FA6DA260084082D /* WaWaJiClient.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		167F4E5C1FA6DA270084082D /* WaWaJiClient */ = {
+			isa = PBXGroup;
+			children = (
+				167F4E741FA6DA6C0084082D /* ZegoRoomViewController.h */,
+				167F4E731FA6DA6C0084082D /* ZegoRoomViewController.m */,
+				167F4E791FA6DA6D0084082D /* ZegoPlayViewController.h */,
+				167F4E7A1FA6DA6D0084082D /* ZegoPlayViewController.m */,
+				167F4E781FA6DA6D0084082D /* ZegoLogTableViewController.h */,
+				167F4E771FA6DA6D0084082D /* ZegoLogTableViewController.m */,
+				167F4E751FA6DA6C0084082D /* ZegoManager.h */,
+				167F4E761FA6DA6C0084082D /* ZegoManager.mm */,
+				1641B0681FA7705200EF478E /* ZegoSetting.h */,
+				1641B0691FA7705300EF478E /* ZegoSetting.mm */,
+				16B0A2341FAA3E3000F93361 /* ZegoCommand.h */,
+				16B0A2351FAA3E3000F93361 /* ZegoCommand.m */,
+				16A431CB1FB04F8E00D5C861 /* ZegoRoomInfo.h */,
+				16A431CC1FB04F8E00D5C861 /* ZegoRoomInfo.m */,
+				16084C0E1FB340E800976890 /* ZegoResultView.h */,
+				16084C0F1FB340E800976890 /* ZegoResultView.m */,
+				16084C0C1FB33FBE00976890 /* ZegoResultView.xib */,
+				16B4AA731FB5AB9D00C95045 /* ZegoReadyView.h */,
+				16B4AA741FB5AB9D00C95045 /* ZegoReadyView.m */,
+				16B4AA711FB5AB8600C95045 /* ZegoReadyView.xib */,
+				167F4E5D1FA6DA270084082D /* AppDelegate.h */,
+				167F4E5E1FA6DA270084082D /* AppDelegate.m */,
+				167F4E631FA6DA270084082D /* Main.storyboard */,
+				167F4E661FA6DA270084082D /* Assets.xcassets */,
+				167F4E681FA6DA270084082D /* LaunchScreen.storyboard */,
+				167F4E6B1FA6DA270084082D /* Info.plist */,
+				167F4E6C1FA6DA270084082D /* main.m */,
+			);
+			path = WaWaJiClient;
+			sourceTree = "<group>";
+		};
+		167F4E7F1FA6DA7B0084082D /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				163A9BA11FADB2A100029BD2 /* ZegoLiveRoom.framework */,
+			);
+			path = libs;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		167F4E591FA6DA260084082D /* WaWaJiClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 167F4E701FA6DA270084082D /* Build configuration list for PBXNativeTarget "WaWaJiClient" */;
+			buildPhases = (
+				163B8DB21FBDBA4C00031C7F /* Create Framework */,
+				163B8DB31FBDBA5D00031C7F /* Copy Framework */,
+				167F4E561FA6DA260084082D /* Sources */,
+				167F4E571FA6DA260084082D /* Frameworks */,
+				167F4E581FA6DA260084082D /* Resources */,
+				163A9BA01FADB26E00029BD2 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WaWaJiClient;
+			productName = WaWaJiClient;
+			productReference = 167F4E5A1FA6DA260084082D /* WaWaJiClient.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		167F4E521FA6DA260084082D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0900;
+				ORGANIZATIONNAME = zego;
+				TargetAttributes = {
+					167F4E591FA6DA260084082D = {
+						CreatedOnToolsVersion = 9.0.1;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 167F4E551FA6DA260084082D /* Build configuration list for PBXProject "WaWaJiClient" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 167F4E511FA6DA260084082D;
+			productRefGroup = 167F4E5B1FA6DA260084082D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				167F4E591FA6DA260084082D /* WaWaJiClient */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		167F4E581FA6DA260084082D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16B4AA721FB5AB8600C95045 /* ZegoReadyView.xib in Resources */,
+				167F4E6A1FA6DA270084082D /* LaunchScreen.storyboard in Resources */,
+				167F4E671FA6DA270084082D /* Assets.xcassets in Resources */,
+				16084C0D1FB33FBE00976890 /* ZegoResultView.xib in Resources */,
+				167F4E651FA6DA270084082D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		163B8DB21FBDBA4C00031C7F /* Create Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Create Framework";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/usr/bin/env python";
+			shellScript = "import os\nimport subprocess\n\naction = os.getenv('ACTION')\nconfiguration = os.getenv('CONFIGURATION')\nif action == \"install\":\n    exit(0)\nif configuration == \"Release\":\n    exit(0)\n\ncurrent_folder = os.getenv('PROJECT_DIR')\ncopy_framework_path = os.path.join(current_folder, \"..\", \"copy_framework_new.py\")\n\nif os.path.exists(copy_framework_path):\n    log_file = os.path.join(current_folder, \"..\", \"log.txt\")\n    with open(log_file, \"w\") as outfile:\n        arguments = [copy_framework_path, '-repackage']\n        subprocess.call(arguments, stdout=outfile)";
+		};
+		163B8DB31FBDBA5D00031C7F /* Copy Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Framework";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/usr/bin/env python";
+			shellScript = "import os\nimport shutil\n\ncurrent_folder = os.getenv('PROJECT_DIR')\naction = os.getenv('ACTION')\nconfiguration = os.getenv('CONFIGURATION')\n\nif action == \"install\":\n    source_folder = \"iphoneos\"\nelse:\n    source_folder = \"iphoneos_simulator\"\n\nsource_framework_folder = os.path.join(current_folder, \"libs\", \"ZegoLiveRoom-all\", source_folder, \"ZegoLiveRoom.framework\")\ndest_framework_folder = os.path.join(current_folder, \"libs\", \"ZegoLiveRoom.framework\")\n\nif os.path.exists(dest_framework_folder):\n    shutil.rmtree(dest_framework_folder, ignore_errors=True)\n\nif os.path.exists(source_framework_folder):\n    shutil.copytree(source_framework_folder, dest_framework_folder)\n    log_name = os.path.join(current_folder, \"libs\", \"zegoliveroom.version.txt\")\n    with open(log_name, 'w') as f:\n        if action == \"install\":\n            f.write('iphoneos \\n')\n        else:\n            f.write('iphoneos & simulator \\n')\n        f.write(configuration)\n    f.close()\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		167F4E561FA6DA260084082D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16A431CD1FB04F8E00D5C861 /* ZegoRoomInfo.m in Sources */,
+				16B0A2361FAA3E3000F93361 /* ZegoCommand.m in Sources */,
+				167F4E7B1FA6DA6D0084082D /* ZegoRoomViewController.m in Sources */,
+				16B4AA751FB5AB9D00C95045 /* ZegoReadyView.m in Sources */,
+				167F4E7E1FA6DA6D0084082D /* ZegoPlayViewController.m in Sources */,
+				16084C101FB340E800976890 /* ZegoResultView.m in Sources */,
+				167F4E6D1FA6DA270084082D /* main.m in Sources */,
+				167F4E7D1FA6DA6D0084082D /* ZegoLogTableViewController.m in Sources */,
+				167F4E7C1FA6DA6D0084082D /* ZegoManager.mm in Sources */,
+				1641B06A1FA7705300EF478E /* ZegoSetting.mm in Sources */,
+				167F4E5F1FA6DA270084082D /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		167F4E631FA6DA270084082D /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				167F4E641FA6DA270084082D /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		167F4E681FA6DA270084082D /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				167F4E691FA6DA270084082D /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		167F4E6E1FA6DA270084082D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		167F4E6F1FA6DA270084082D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		167F4E711FA6DA270084082D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3WR2G89LR2;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)/libs/release/iphoneos",
+					"$(PROJECT_DIR)/thirdLib",
+				);
+				INFOPLIST_FILE = WaWaJiClient/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.zego.WaWaJiClient;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = all;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		167F4E721FA6DA270084082D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3WR2G89LR2;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)/libs/release/iphoneos",
+					"$(PROJECT_DIR)/thirdLib",
+				);
+				INFOPLIST_FILE = WaWaJiClient/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.zego.WaWaJiClient;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = all;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		167F4E551FA6DA260084082D /* Build configuration list for PBXProject "WaWaJiClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				167F4E6E1FA6DA270084082D /* Debug */,
+				167F4E6F1FA6DA270084082D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		167F4E701FA6DA270084082D /* Build configuration list for PBXNativeTarget "WaWaJiClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				167F4E711FA6DA270084082D /* Debug */,
+				167F4E721FA6DA270084082D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 167F4E521FA6DA260084082D /* Project object */;
+}

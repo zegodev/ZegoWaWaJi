@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ZegoReadyView"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="ZegoReadyView">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="book-success" translatesAutoresizingMaskIntoConstraints="NO" id="VyO-mn-AN3">
+                    <rect key="frame" x="32.5" y="150" width="310" height="305"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="310" id="1oC-E9-yeN"/>
+                        <constraint firstAttribute="height" constant="305" id="RKW-55-KYr"/>
+                    </constraints>
+                </imageView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vkD-Ze-sIE">
+                    <rect key="frame" x="32.5" y="477" width="146" height="66"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="66" id="7On-Kr-SEI"/>
+                        <constraint firstAttribute="width" constant="146" id="YmN-S8-D0a"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                    <state key="normal" title="放弃" backgroundImage="To give up">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="onClickCancelButton:" destination="-1" eventType="touchUpInside" id="g2x-le-v6I"/>
+                    </connections>
+                </button>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wtH-ow-VO9">
+                    <rect key="frame" x="196.5" y="477" width="146" height="66"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="66" id="UtQ-CJ-hHU"/>
+                        <constraint firstAttribute="width" constant="146" id="kqO-7a-WA7"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
+                    <state key="normal" title="开始游戏(10s)" backgroundImage="Start the game">
+                        <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </state>
+                    <connections>
+                        <action selector="onClickStartButton:" destination="-1" eventType="touchUpInside" id="k9V-HZ-Mqh"/>
+                    </connections>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.69999999999999996" colorSpace="calibratedRGB"/>
+            <constraints>
+                <constraint firstItem="vkD-Ze-sIE" firstAttribute="leading" secondItem="VyO-mn-AN3" secondAttribute="leading" id="2QW-cz-WAc"/>
+                <constraint firstItem="wtH-ow-VO9" firstAttribute="trailing" secondItem="VyO-mn-AN3" secondAttribute="trailing" id="D64-uw-nGI"/>
+                <constraint firstItem="wtH-ow-VO9" firstAttribute="top" secondItem="VyO-mn-AN3" secondAttribute="bottom" constant="22" id="SQh-gW-fG4"/>
+                <constraint firstItem="vkD-Ze-sIE" firstAttribute="top" secondItem="VyO-mn-AN3" secondAttribute="bottom" constant="22" id="nM7-fa-8fc"/>
+                <constraint firstItem="VyO-mn-AN3" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="130" id="xDX-S1-RGw"/>
+                <constraint firstItem="VyO-mn-AN3" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="zF0-ec-agk"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <connections>
+                <outlet property="cancelButton" destination="vkD-Ze-sIE" id="FRP-I1-bod"/>
+                <outlet property="startButton" destination="wtH-ow-VO9" id="akV-sW-uVa"/>
+            </connections>
+        </view>
+    </objects>
+    <resources>
+        <image name="Start the game" width="146" height="66"/>
+        <image name="To give up" width="146" height="66"/>
+        <image name="book-success" width="310" height="305"/>
+    </resources>
+</document>
