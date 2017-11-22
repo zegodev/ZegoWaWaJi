@@ -118,12 +118,12 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom = ((ZegoApplication) getApplication()).getZegoLiveRoom();
         mResolutionText = getResources().getStringArray(R.array.zg_resolutions);
 
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                getNetTime();
-//            }
-//        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getNetTime();
+            }
+        }).start();
 
         mWorkThread = new HandlerThread("worker_thread", Thread.NORM_PRIORITY);
         mWorkThread.start();
@@ -836,7 +836,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         try {
             Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("date -s "+str+"; \n");
+            os.writeBytes("/system/bin/date -s "+str+"; \n");
+            os.writeBytes("clock -w\n");
+            os.writeBytes("exit\n");
+            os.flush();
         } catch (Exception e) {
             Log.d("MainActivity","error=="+e.toString());
             e.printStackTrace();
