@@ -831,14 +831,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
     }
 
+    //https://stackoverflow.com/questions/19496907/set-date-time-using-adb-shell
     public void setSystemDate(String str)
     {
         try {
             Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes("/system/bin/date -s "+str+"; \n");
-            os.writeBytes("clock -w\n");
-            os.writeBytes("exit\n");
+            os.writeBytes("toolbox date -s "+str);
             os.flush();
         } catch (Exception e) {
             Log.d("MainActivity","error=="+e.toString());
