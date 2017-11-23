@@ -5,5 +5,8 @@ package com.zego.wawaji_client;
  */
 
 public class StreamInfo {
+
+    public StreamInfo(){}
+    public StreamInfo(String id){this.stream_id = id;}
     public String stream_id;
 }

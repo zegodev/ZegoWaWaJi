@@ -385,6 +385,7 @@ public class PlayActivity extends AppCompatActivity {
                         }
                     }
                     mIbtnSwitchCamera.setEnabled(true);
+                    start();
                 }
             }
         });
@@ -735,61 +736,62 @@ public class PlayActivity extends AppCompatActivity {
         // 通知服务器，客户端已经收到GameReady指令
         CommandUtil.getInstance().replyRecvGameReady(rspSeq, sessionData);
 
-        if (mDialogConfirmGameReady != null && mDialogConfirmGameReady.isShowing()) {
-            CommandUtil.getInstance().printLog("[handleGameReady], confirm dialog is showing");
-            return;
-        }
-
-        mDialogConfirmGameReady = new AlertDialog.Builder(this).setMessage(getString(R.string.confirm_board, "10")).setTitle("提示").setPositiveButton("上机", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                mCountDownTimerConfirmBoard.cancel();
-
-                // 确认上机
-                CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 1, new CommandUtil.OnCommandSendCallback() {
-                    @Override
-                    public void onSendFail() {
-                        sendCMDFail("ConfirmBoard: 1");
-                    }
-                });
-            }
-        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                mCountDownTimerConfirmBoard.cancel();
-
-                // 放弃上机
-                CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 0, new CommandUtil.OnCommandSendCallback() {
-                    @Override
-                    public void onSendFail() {
-                        sendCMDFail("ConfirmBoard: 0");
-                    }
-                });
-
-                reinitGame();
-            }
-        }).create();
-        mDialogConfirmGameReady.setCanceledOnTouchOutside(false);
-        mDialogConfirmGameReady.show();
-
-        mCountDownTimerConfirmBoard = new CountDownTimer(10000, 500) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    mDialogConfirmGameReady.setMessage(getString(R.string.confirm_board, ((millisUntilFinished / 1000) + 1) + ""));
-                }
-            }
-
-            @Override
-            public void onFinish() {
-                if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    mDialogConfirmGameReady.dismiss();
-                    reinitGame();
-                }
-            }
-        }.start();
+//        if (mDialogConfirmGameReady != null && mDialogConfirmGameReady.isShowing()) {
+//            CommandUtil.getInstance().printLog("[handleGameReady], confirm dialog is showing");
+//            return;
+//        }
+        confirmStartGame(rspSeq,sessionData);
+//
+//        mDialogConfirmGameReady = new AlertDialog.Builder(this).setMessage(getString(R.string.confirm_board, "10")).setTitle("提示").setPositiveButton("上机", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//                mCountDownTimerConfirmBoard.cancel();
+//
+//                // 确认上机
+//                CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 1, new CommandUtil.OnCommandSendCallback() {
+//                    @Override
+//                    public void onSendFail() {
+//                        sendCMDFail("ConfirmBoard: 1");
+//                    }
+//                });
+//            }
+//        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//                mCountDownTimerConfirmBoard.cancel();
+//
+//                // 放弃上机
+//                CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 0, new CommandUtil.OnCommandSendCallback() {
+//                    @Override
+//                    public void onSendFail() {
+//                        sendCMDFail("ConfirmBoard: 0");
+//                    }
+//                });
+//
+//                reinitGame();
+//            }
+//        }).create();
+//        mDialogConfirmGameReady.setCanceledOnTouchOutside(false);
+//        mDialogConfirmGameReady.show();
+//
+//        mCountDownTimerConfirmBoard = new CountDownTimer(10000, 500) {
+//            @Override
+//            public void onTick(long millisUntilFinished) {
+//                if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
+//                    mDialogConfirmGameReady.setMessage(getString(R.string.confirm_board, ((millisUntilFinished / 1000) + 1) + ""));
+//                }
+//            }
+//
+//            @Override
+//            public void onFinish() {
+//                if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
+//                    mDialogConfirmGameReady.dismiss();
+//                    reinitGame();
+//                }
+//            }
+//        }.start();
     }
 
     private void handleConfirmBoardReply(Map<String, Object> data) {
@@ -814,13 +816,14 @@ public class PlayActivity extends AppCompatActivity {
             CommandUtil.getInstance().setCurrentBoardSate(BoardState.Boarding);
             startGame();
 
-            mCountDownTimerBoarding = new CountDownTimer(30000, 500) {
+            mCountDownTimerBoarding = new CountDownTimer(30000, 900) {
                 @Override
                 public void onTick(long millisUntilFinished) {
                     if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.Boarding) {
                         mTvBoardingCountDown.setVisibility(View.VISIBLE);
                         mTvBoardingCountDown.setText(((millisUntilFinished / 1000) + 1) + "s");
                     }
+                    autoOperiation(((millisUntilFinished / 1000) + 1));
                 }
 
                 @Override
@@ -875,20 +878,22 @@ public class PlayActivity extends AppCompatActivity {
         } else {
             message = getString(R.string.grub_failed);
         }
-
-        AlertDialog dialog = new AlertDialog.Builder(this).setMessage(message).setTitle("提示").setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        }).create();
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.show();
+        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
+//
+//        AlertDialog dialog = new AlertDialog.Builder(this).setMessage(message).setTitle("提示").setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//            }
+//        }).create();
+//        dialog.setCanceledOnTouchOutside(false);
+//        dialog.show();
 
         reinitGame();
 
         // 从 ZEGO 服务器切换到 CDN 拉流，节约成本
         switchPlaySource(false);
+        start();
     }
 
     /**
@@ -1034,5 +1039,36 @@ public class PlayActivity extends AppCompatActivity {
         activity.startActivity(intent);
     }
 
+    //-----------------------------
+    private void start(){
+        if (CommandUtil.getInstance().getCurrentBoardSate() == BoardState.Ended) {
+            CommandUtil.getInstance().apply(new CommandUtil.OnCommandSendCallback() {
+                @Override
+                public void onSendFail() {
+                    sendCMDFail("Apply");
+                }
+            });
+        }
+    }
+
+    private void confirmStartGame(int rspSeq,String sessionData){
+//        mCountDownTimerConfirmBoard.cancel();
+
+        // 确认上机
+        CommandUtil.getInstance().confirmBoard(rspSeq, sessionData, 1, new CommandUtil.OnCommandSendCallback() {
+            @Override
+            public void onSendFail() {
+                sendCMDFail("ConfirmBoard: 1");
+            }
+        });
+    }
+
+    private void autoOperiation(long i){
+        if(i%4 == 2) {
+            CommandUtil.getInstance().moveRight();
+        }else if(i%4 == 0) {
+            CommandUtil.getInstance().moveForward();
+        }
+    }
 
 }

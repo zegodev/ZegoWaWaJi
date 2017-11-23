@@ -111,6 +111,13 @@ public class MainActivity extends AppCompatActivity {
                         mRoomList.add(room);
                     }
                 }
+                Room roomInfo = new Room();
+                roomInfo.roomID = "WWJ_ZEGO_7d643eb105d85b5c";
+                roomInfo.roomName="leio";
+                roomInfo.streamList = new ArrayList<String>();
+                roomInfo.streamList.add("WWJ_ZEGO_STREAM_7d643eb105d85b5c");
+                roomInfo.streamList.add("WWJ_ZEGO_STREAM_7d643eb105d85b5c_2");
+                mRoomList.add(roomInfo);
 
                 mHandler.post(new Runnable() {
                     @Override
