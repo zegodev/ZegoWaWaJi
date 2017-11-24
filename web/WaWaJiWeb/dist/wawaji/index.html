@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"><meta http-equiv="x-dns-prefetch-control" content="on"><meta name="keywords" content="深圳即构科技有限公司,ZEGO,互联网语音视频云服务,多人直播,实时语音,多人语音,双人视频,支持连麦,秒开,自动美颜"><meta name="description" content="深圳即构科技有限公司,互联网语音视频云服务,为企业、移动应用开发者提供高品质实时语音、视频云服务,专注于移动语音视频领域，致力提供全世界范围内最清晰稳定实时的语音视频服务。"><link rel="icon" href="/favicon.ico?t=201706023" type="image/x-icon"><link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png"><link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114-precomposed.png"><link rel="apple-touch-icon-precomposed" sizes="72x72" href="/apple-touch-icon-72-precomposed.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57-precomposed.png"><meta name="format-detection" content="telephone=no, email=no"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="renderer" content="webkit"><!--[if lt IE 9]>
+网站在IE8及IE8以下浏览器体验不佳，请更换其他如谷歌、火狐等主流浏览器浏览
+<![endif]--><link rel="stylesheet" href="/static/css/reset.min.css"><title>ZEGO抓娃娃</title><style>* {
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+        }
+        html, body {
+        }
+        body {
+            background: #0d70ff;
+            max-width: 375px;
+            margin: 0 auto;
+            padding-top: .2rem;
+        }
+        #app {
+            position: relative;
+            max-width: 375px;
+            margin: 0 auto;
+        }
+        .btn:hover, .btn:active {
+            background: #0d70ff;
+            color: #fff;
+        }
+        .none {
+            display: none;
+        }</style><link href="/static/css/wawaji/index.f4d5313940c82f5793aa0fb253e0197b.css" rel="stylesheet"></head><body><div id="app" class=""><audio id="audio" src="/static/media/click-voice.mp3"></audio><textarea id="log-view"> </textarea><button id="log-btn">日志</button><div class="view-wrapper front" id="view-wrapper"><div class="anchor-wrapper" id="anchor-wrapper"><div class="anchor" id="anchor">种花人游戏中</div></div><div class="audience-wrapper clearfix"><div class="net-state" id="net-state">在线</div><div id="audience">0</div>人在房间</div><div class="switch-btn" id="switch-btn" data-switch="1"></div><canvas id="frontview"></canvas><canvas id="sideview"></canvas></div><script>var viewWrapper = document.getElementById('view-wrapper');
+            var viewWidth = viewWrapper.clientWidth;
+            var viewHeight = viewWidth * 1.33;
+            viewWrapper.style.height = viewHeight + 'px';</script><div class="appointment-wrapper" id="appointment-wrapper"><div class="apply-wrapper" id="apply-wrapper"><div class="btn cancel" id="cancel">取消预约</div><div class="btn apply" id="apply">预约抓娃娃</div></div><div class="line-up-wrapper"><div class="before-queue" id="before-queue"><span><em>当前排队：</em><em id="before-queueNum">0</em>人</span></div><div class="after-queue" id="after-queue"><span><em>预约成功，你排在第</em><em id="after-queueNum">0</em>位</span></div></div></div><div class="upornot-wrapper" id="upornot-wrapper"><div class="mask"></div><div class="icon"></div><div class="upornot-cancel" id="upornot-cancel">放弃</div><div class="upornot-confirm" id="upornot-confirm">开始游戏(<em id="upornot-count-down">10</em>s)</div></div><div class="operate-wrapper clearfix" id="operate-wrapper"><div class="action-wrapper"><div class="count-down-wrapper" id="count-down-wrapper"><em id="count-down">30</em>S</div><div class="btn go" id="go"></div></div><div class="direct-wrapper front" id="direct-wrapper"><div class="top"><div class="btn-mask"></div><div class="btn opr-btn" id="front-up" onmousedown="tapEvent(event, 'front-up')" ontouchstart="tapEvent(event, 'front-up')"></div><div class="btn opr-btn side-btn" id="side-up" onmousedown="tapEvent(event, 'side-up')" ontouchstart="tapEvent(event, 'side-up')"></div></div><div class="left"><div class="btn-mask"></div><div class="btn opr-btn" id="front-left" onmousedown="tapEvent(event, 'front-left')" ontouchstart="tapEvent(event, 'front-left')"></div><div class="btn opr-btn side-btn" id="side-left" onmousedown="tapEvent(event, 'side-left')" ontouchstart="tapEvent(event, 'side-left')"></div></div><div class="right"><div class="btn-mask"></div><div class="btn opr-btn" id="front-right" onmousedown="tapEvent(event, 'front-right')" ontouchstart="tapEvent(event, 'front-right')"></div><div class="btn opr-btn side-btn" id="side-right" onmousedown="tapEvent(event, 'side-right')" ontouchstart="tapEvent(event, 'side-right')"></div></div><div class="bottom"><div class="btn-mask"></div><div class="btn opr-btn" id="front-down" onmousedown="tapEvent(event, 'front-down')" ontouchstart="tapEvent(event, 'front-down')"></div><div class="btn opr-btn side-btn" id="side-down" onmousedown="tapEvent(event, 'side-down')" ontouchstart="tapEvent(event, 'side-down')"></div></div></div></div><div class="result-wrapper" id="result-wrapper"><div class="mask"></div><div class="successful"></div><div class="failure"></div><div class="back" id="back">返回娃娃机(<em id="back-count-down">10</em>s)</div></div></div><script src="/static/js/jquery-1.11.3.min.js"></script><script src="/static/js/jZego-1.0.0.js"></script><script type="text/javascript" src="/static/js/assets/manifest.06ea5416e403300b60e7.js"></script><script type="text/javascript" src="/static/js/assets/common.847aff05fd3f845755e9.js"></script><script type="text/javascript" src="/static/js/assets/wawaji/index.2fec2db5b661c3c06b6e.js"></script></body></html>
