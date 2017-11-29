@@ -42,7 +42,10 @@ public class TcpSocket {
      * 发送数据
      */
     public void sendMessage(String msg) {
-        Log.i("---", "isBound" + socket.isBound() + " isConnected：" + socket.isConnected());
+        if(socket == null){
+            return;
+        }
+        Log.i("---", "isBound" + socket.isBound() + " isConnected：" + socket.isConnected()+",msg");
 
         try {
             Log.i("---","sendMessage try 1");
@@ -61,13 +64,10 @@ public class TcpSocket {
             InputStream inputStream = s.getInputStream();
             DataInputStream input = new DataInputStream(inputStream);
             byte[] b = new byte[10000];
-            while(true)
-            {
-                int length = input.read(b);
-                String Msg = new String(b, 0, length, "gb2312");
-                Log.v("---","receive:"+Msg);
-                close();
-            }
+            int length = input.read(b);
+            String Msg = new String(b, 0, length, "gb2312");
+            Log.v("---","receive:"+Msg);
+            close();
         }catch(Exception ex)
         {
             ex.printStackTrace();
