@@ -28,12 +28,14 @@ public class GuardService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d("ZEGO_WWJ","GuardService onCreate");
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d("ZEGO_WWJ","GuardService onBind");
         if (mApi == null) {
+            Log.d("ZEGO_WWJ","GuardService onBind mApi == null");
             mApi = new RemoteApiImpl();
         }
         return mApi;
@@ -44,9 +46,11 @@ public class GuardService extends Service {
 
         @Override
         public void join(IBinder token) throws RemoteException {
+            Log.d("ZEGO_WWJ","RemoteApiImpl : join");
             mRecipient = new DeathRecipient() {
                 @Override
                 public void binderDied() {
+                    Log.d("ZEGO_WWJ","RemoteApiImpl : join binderDied");
                     startMainActivityDelay();
                 }
             };
@@ -63,6 +67,7 @@ public class GuardService extends Service {
         }
 
         private void startMainActivityDelay() {
+            Log.d("ZEGO_WWJ","RemoteApiImpl : startMainActivityDelay");
             mMainHandler.removeCallbacksAndMessages(null);
 
             mMainHandler.postDelayed(new Runnable() {

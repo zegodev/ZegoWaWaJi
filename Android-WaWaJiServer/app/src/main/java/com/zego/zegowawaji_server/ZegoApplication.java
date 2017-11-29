@@ -3,6 +3,7 @@ package com.zego.zegowawaji_server;
 import android.app.Application;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.tencent.bugly.crashreport.CrashReport;
@@ -61,6 +62,10 @@ public class ZegoApplication extends Application {
         initCrashReport();  // second
 
         setupZegoSDK(); // last
+
+        Thread.getDefaultUncaughtExceptionHandler();
+        //设置该CrashHandler为程序的默认处理器
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler());
     }
 
     private void initUserInfo() {
@@ -161,5 +166,15 @@ public class ZegoApplication extends Application {
 
         liveRoom.setAVConfig(config);
         liveRoom.setAVConfig(config, ZegoConstants.PublishChannelIndex.AUX);
+    }
+
+    public class CrashHandler implements Thread.UncaughtExceptionHandler {
+
+        @Override
+        public void uncaughtException(Thread thread, Throwable throwable) {
+            Log.e("CrashHandler","CrashHandler");
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(1);
+        }
     }
 }

@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -140,6 +141,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
 
         bindGuardService();
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                String str = null;
+//                str.length();
+//            }
+//        },5000);
     }
 
     @Override
@@ -725,10 +733,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("ZEGO_WWJ","ServiceConnection : onServiceConnected");
             mRemoteApi = IRemoteApi.Stub.asInterface(service);
             try {
                 mRemoteApi.join(mBinder);   // 此处为 UI 进程异常退出时能重启的关键
+                Log.d("ZEGO_WWJ","ServiceConnection : onServiceConnected join success");
             } catch (RemoteException e) {
+                Log.d("ZEGO_WWJ","ServiceConnection : onServiceConnected join failed");
                 e.printStackTrace();
             }
         }
@@ -738,7 +749,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             if (mRemoteApi != null) {
                 try {
                     mRemoteApi.leave(mBinder);
+                    Log.d("ZEGO_WWJ","ServiceConnection : onServiceDisconnected leave success");
                 } catch (RemoteException e) {
+                    Log.d("ZEGO_WWJ","ServiceConnection : onServiceDisconnected leave failed");
                     e.printStackTrace();
                 }
             }
