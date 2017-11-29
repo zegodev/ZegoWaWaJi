@@ -42,6 +42,7 @@ import android.widget.Toast;
 import com.zego.base.utils.AppLogger;
 import com.zego.base.utils.ByteSizeUnit;
 import com.zego.base.utils.DeviceIdUtil;
+import com.zego.base.utils.FileUtil;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.widget.CustomSeekBar;
 import com.zego.zegoliveroom.ZegoLiveRoom;
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 //                str.length();
 //            }
 //        },5000);
+        FileUtil.writeLogFile(this,"111");
     }
 
     @Override

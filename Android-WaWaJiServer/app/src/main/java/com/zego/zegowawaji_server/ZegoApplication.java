@@ -1,18 +1,27 @@
 package com.zego.zegowawaji_server;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Build;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.tencent.bugly.crashreport.CrashReport;
 import com.zego.base.utils.AppLogger;
+import com.zego.base.utils.FileUtil;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.utils.TimeUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
 import com.zego.zegoliveroom.constants.ZegoConstants;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -172,9 +181,20 @@ public class ZegoApplication extends Application {
 
         @Override
         public void uncaughtException(Thread thread, Throwable throwable) {
-            Log.e("CrashHandler","CrashHandler");
-            android.os.Process.killProcess(android.os.Process.myPid());
-            System.exit(1);
+            StringBuffer sb = new StringBuffer();
+            if (throwable.getStackTrace() != null) {
+                for (int i = 0; i < throwable.getStackTrace().length; i++) {
+                    sb.append(throwable.getStackTrace()[i].getClassName() + "\n");
+                    sb.append(throwable.getStackTrace()[i].getFileName() + "\n");
+                    sb.append(throwable.getStackTrace()[i].getLineNumber() + "\n");
+                    sb.append(throwable.getStackTrace()[i].getMethodName());
+                    sb.append("-----------------------------------\n");
+                }
+                Log.e("CrashHandler", throwable.getMessage() + "\n" + sb.toString());
+                FileUtil.writeLogFile(sInstance,sb.toString());
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
+            }
         }
     }
 }
