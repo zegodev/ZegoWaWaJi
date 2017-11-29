@@ -508,6 +508,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     handleGameOverInWorkThread(result, fromUserId, fromUserName);
                 } else {    // 已经通过超时逻辑返回游戏结果了 
                     AppLogger.getInstance().writeLog("[HandlerImpl_doGrab] no MSG_WAIT_RECEIVE_DEVICE_RESULT, userName: %s", fromUserName);
+                    int result = win ? 1 : 0;
+                    handleGameOverInWorkThread(result, fromUserId, fromUserName);
                 }
             }
         });
