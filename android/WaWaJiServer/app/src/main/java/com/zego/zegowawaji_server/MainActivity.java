@@ -49,11 +49,12 @@ import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoUser;
-import com.zego.zegowawaji_server.callback.ZegoIMCallack;
+import com.zego.zegowawaji_server.callback.ZegoIMCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback2;
 import com.zego.zegowawaji_server.callback.ZegoRoomCallback;
 import com.zego.zegowawaji_server.manager.CommandSeqManager;
+import com.zego.zegowawaji_server.manager.DeviceManager;
 import com.zego.zegowawaji_server.service.GuardService;
 import com.zego.zegowawaji_server.service.IRemoteApi;
 
@@ -89,6 +90,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private TextView mQueueUserView;
     private TextView mCurrentOperatorView;
 
+    private TextView mCurrentDeviceStateView;
+
     private String[] mResolutionText;
 
     private ZegoLiveRoom mZegoLiveRoom;
@@ -98,10 +101,19 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
     private Handler mRetryHandler;
 
+    private Handler mHeartBeatHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent startIntent = getIntent();
+        String from = startIntent.getStringExtra("start_from");
+        if (TextUtils.isEmpty(from)) {
+            from = "main";
+        }
+        AppLogger.getInstance().writeLog("*** MainActivity.onCreate() from %s  ***", from);
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -116,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mRetryHandler = new RetryHandler(Looper.getMainLooper());
 
+        mHeartBeatHandler = new HeartBitHandler(Looper.getMainLooper());
+
         initCtrls();
 
         if (checkOrRequestPermission()) {
@@ -124,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
 
         bindGuardService();
+
+        checkDeviceState();
     }
 
     @Override
@@ -141,6 +157,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
             case R.id.action_leave:
                 onBackPressed();
+                return true;
+
+            case R.id.action_test:
+                gotoTestActivity();
                 return true;
 
             default:
@@ -197,12 +217,21 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
     }
 
+    private void gotoTestActivity() {
+        Intent intent = new Intent(this, TestActivity.class);
+        startActivity(intent);
+    }
+
     /**
      * 通过绑定 Service 达到监听 UI 进程是否异常退出的目的
      */
     private void bindGuardService() {
         Intent intent = new Intent(this, GuardService.class);
+        startService(intent);   // *必须*先使用 startService 确保 service 的生命周期不绑定至该 Context 的生命周期
+
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+
+        mHeartBeatHandler.sendEmptyMessageDelayed(1, 60 * 1000);
     }
 
     /**
@@ -218,6 +247,31 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
 
         unbindService(mServiceConnection);
+
+        mHeartBeatHandler.removeCallbacksAndMessages(null);
+    }
+
+    /**
+     * 检查下位机状态
+     */
+    private void checkDeviceState() {
+        DeviceManager.getInstance().checkDeviceStatus(new DeviceManager.OnDeviceBreakdown() {
+            @Override
+            public void onDeviceBreakdown(final int errorCode) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing()) return;
+
+                        if (errorCode == -1) {
+                            mCurrentDeviceStateView.setText(Html.fromHtml(getString(R.string.zg_text_device_error)));
+                        } else {
+                            mCurrentDeviceStateView.setText(getString(R.string.zg_text_current_device_state, errorCode));
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void initCtrls() {
@@ -245,8 +299,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mResolutionView.setMax(ZegoAvConfig.VIDEO_BITRATES.length - 1);
         mResolutionView.setProgress(defaultResolution);
         mResolutionView.setOnSeekBarChangeListener(mSeekBarChangeListener);
-        mResolutionDescView = (TextView) findViewById(R.id.tv_resolution);
-        mResolutionDescView.setText(getString(R.string.resolution_prefix, mResolutionText[defaultResolution]));
+        mResolutionDescView = (TextView) findViewById(R.id.tv_encode_resolution);
+        mResolutionDescView.setText(getString(R.string.encode_resolution_prefix, mResolutionText[defaultResolution]));
 
         int defaultFPS = PrefUtil.getInstance().getLiveQualityFps();
         mFPSView = (CustomSeekBar) findViewById(R.id.sb_fps);
@@ -272,6 +326,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mCurrentOperatorView = (TextView) findViewById(R.id.zg_current_operator);
         mCurrentOperatorView.setText(getString(R.string.zg_text_current_no_player));
+
+        mCurrentDeviceStateView = (TextView) findViewById(R.id.zg_current_device_state);
+        mCurrentDeviceStateView.setText(getString(R.string.zg_text_current_device_state, 0));
     }
 
     private boolean checkOrRequestPermission() {
@@ -289,18 +346,21 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void startPreview() {
         mZegoLiveRoom.enableMic(false);
 
-        mZegoLiveRoom.enableCamera(true);
-        mZegoLiveRoom.setFrontCam(true);
         mZegoLiveRoom.enablePreviewMirror(false);
         mZegoLiveRoom.setPreviewView(mMainPreviewView);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill);
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
+        mZegoLiveRoom.enableCamera(true);
+        mZegoLiveRoom.setFrontCam(true);
         mZegoLiveRoom.startPreview();
 
         int channelIndex = ZegoConstants.PublishChannelIndex.AUX;
-        mZegoLiveRoom.enableCamera(true, channelIndex);
-        mZegoLiveRoom.setFrontCam(false, channelIndex);
+
         mZegoLiveRoom.setPreviewView(mSecondPreviewView, channelIndex);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill, channelIndex);
+//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, channelIndex);
+        mZegoLiveRoom.enableCamera(true, channelIndex);
+        mZegoLiveRoom.setFrontCam(false, channelIndex);
         mZegoLiveRoom.startPreview(channelIndex);
 
         AppLogger.getInstance().writeLog("Start preview");
@@ -333,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
             // 对娃娃机名做特殊处理以区分是即构的还是开发者的
             if (deviceId.startsWith("12345_5432")) {
-                int deviceNo = Integer.valueOf(deviceId.substring(deviceId.length() - 1));
+                String deviceNo = deviceId.substring(deviceId.length() - 4);
                 String roomName = getString(R.string.zg_text_wawaji_name_template, deviceNo);
                 PrefUtil.getInstance().setRoomName(roomName);
             } else {
@@ -381,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.setZegoLivePublisherCallback(new ZegoLivePublisherCallback(this));
         mZegoLiveRoom.setZegoLivePublisherCallback2(new ZegoLivePublisherCallback2(this));
         mZegoLiveRoom.setZegoRoomCallback(new ZegoRoomCallback(this, this));
-        mZegoLiveRoom.setZegoIMCallback(new ZegoIMCallack(this, this));
+        mZegoLiveRoom.setZegoIMCallback(new ZegoIMCallback(this, this));
     }
 
     private void publishStream(int channelIndex) {
@@ -496,6 +556,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             mWorkThread.quit();
         }
 
+        DeviceManager.getInstance().exitDevice();
 
         unbindGuardService();
 
@@ -562,10 +623,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                         }
                     }
                 });
-
-                // 更新流信息
-                String streamExtraInfo = generateStreamExtraInfo();
-                mZegoLiveRoom.updateStreamExtraInfo(streamExtraInfo);
 
                 // 广播通知房间内其他用户，不检查是否发送成功
                 ZegoUser[] allMembers = new ZegoUser[mTotalUsers.size()];
@@ -671,6 +728,11 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mCurrentPlayer.userName = userName;
     }
 
+    @Override
+    public ZegoUser getCurrentPlayer() {
+        return mCurrentPlayer;
+    }
+
     /**
      * override from IRoomClient
      * @return
@@ -706,13 +768,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            if (mRemoteApi != null) {
-                try {
-                    mRemoteApi.leave(mBinder);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
+            AppLogger.getInstance().writeLog("onServiceDisconnected");
         }
     };
 
@@ -721,7 +777,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
             switch (seekBar.getId()) {
                 case R.id.sb_resolution:
-                    mResolutionDescView.setText(getString(R.string.resolution_prefix, mResolutionText[progress]));
+                    mResolutionDescView.setText(getString(R.string.encode_resolution_prefix, mResolutionText[progress]));
                     PrefUtil.getInstance().setLiveQualityResolution(progress);
                     break;
 
@@ -774,6 +830,26 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                     super.handleMessage(msg);
                     break;
             }
+        }
+    }
+
+    private class HeartBitHandler extends Handler {
+        public HeartBitHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            try {
+                AppLogger.getInstance().writeLog("send heart beat to guard service");
+                mRemoteApi.sendHeartbeat();
+            } catch (RemoteException e) {
+                AppLogger.getInstance().writeLog("send heart beat failed, exception: %s", e);
+            } catch (NullPointerException e) {
+                AppLogger.getInstance().writeLog("send heart beat failed, exception: %s", e);
+            }
+
+            sendEmptyMessageDelayed(1, 60 * 1000);  // 每分钟发送一次心跳
         }
     }
 }

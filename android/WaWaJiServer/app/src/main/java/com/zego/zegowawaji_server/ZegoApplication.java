@@ -7,6 +7,8 @@ import android.widget.Toast;
 
 import com.tencent.bugly.crashreport.CrashReport;
 import com.zego.base.utils.AppLogger;
+import com.zego.base.utils.DeviceIdUtil;
+import com.zego.base.utils.OSUtils;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.utils.TimeUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
@@ -50,13 +52,17 @@ public class ZegoApplication extends Application {
 
         sInstance = this;
 
-        AppLogger.getInstance().writeLog("******* Application onCreate *******");
+        boolean isMainProcess = OSUtils.isMainProcess(this);
 
-        initUserInfo(); // first
+        AppLogger.getInstance().writeLog("******* Application (%s) onCreate *******", (isMainProcess ? "main" : "guard"));
 
-        initCrashReport();  // second
+        initCrashReport(isMainProcess);
 
-        setupZegoSDK(); // last
+        if (isMainProcess) {    // 仅在主进程中才初始化
+            initUserInfo();
+
+            setupZegoSDK();
+        }
     }
 
     private void initUserInfo() {
@@ -71,13 +77,23 @@ public class ZegoApplication extends Application {
         }
     }
 
-    private void initCrashReport() {
-        CrashReport.initCrashReport(this, BUGLY_APP_KEY, false);
-        CrashReport.setUserId(PrefUtil.getInstance().getUserId());
+    private void initCrashReport(boolean isMainProcess) {
+        CrashReport.setSdkExtraData(this, "zego_liveroom_version", ZegoLiveRoom.version());
+        CrashReport.setSdkExtraData(this, "zego_ve_version", ZegoLiveRoom.version2());
+        CrashReport.setUserId(DeviceIdUtil.generateDeviceId(this));
+
+        CrashReport.UserStrategy strategy = new CrashReport.UserStrategy(this);
+        strategy.setBuglyLogUpload(isMainProcess);
+        CrashReport.initCrashReport(this, BUGLY_APP_KEY, false, strategy);
+
+
     }
 
     private void setupZegoSDK() {
-        ZegoLiveRoom.setUser(PrefUtil.getInstance().getUserId(), PrefUtil.getInstance().getUserName());
+        String userId = PrefUtil.getInstance().getUserId();
+        String userName = PrefUtil.getInstance().getUserName();
+        AppLogger.getInstance().writeLog("set userId & userName with : %s, %s", userId, userName);
+        ZegoLiveRoom.setUser(userId, userName);
         ZegoLiveRoom.requireHardwareEncoder(true);
         ZegoLiveRoom.requireHardwareDecoder(true);
 
@@ -142,16 +158,15 @@ public class ZegoApplication extends Application {
         String resolutionText = getResources().getStringArray(R.array.zg_resolutions)[resolutionLevel];
         String[] strWidthHeight = resolutionText.split("x");
 
-        int height = Integer.parseInt(strWidthHeight[0].trim());
-        int width = Integer.parseInt(strWidthHeight[1].trim());
-        config.setVideoEncodeResolution(width, height);
-
-        if (width <= 720 && height <= 1280) {
-            // 默认使用 720 * 1280 采集分辨率以达到最佳推流质量
+        int width = Integer.parseInt(strWidthHeight[0].trim());
+        int height = Integer.parseInt(strWidthHeight[1].trim());
+        // 默认使用 720 * 1280 采集分辨率以达到最大可视角度及最佳推流质量，再高的采集分辨率，目前所使用的摄像头不支持
+        if (width < height) {
             config.setVideoCaptureResolution(720, 1280);
         } else {
-            config.setVideoCaptureResolution(width, height);
+            config.setVideoCaptureResolution(1280, 720);
         }
+        config.setVideoEncodeResolution(width, height);
 
         liveRoom.setAVConfig(config);
         liveRoom.setAVConfig(config, ZegoConstants.PublishChannelIndex.AUX);

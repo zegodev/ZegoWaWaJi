@@ -55,6 +55,25 @@ public abstract class WawajiDevice extends SerialPort {
 
     abstract public boolean checkDeviceState();
 
+    /**
+     * 释放Device资源
+     */
+    public void quit() {
+        try {
+            if (mFileInputStream != null) {
+                mFileInputStream.close();
+            }
+
+            if (mFileOutputStream != null) {
+                mFileOutputStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        this.close();
+    }
+
     protected boolean sendCommandData(byte[] data) {
         if (mFileOutputStream == null) {
             AppLogger.getInstance().writeLog("mOutputStream is null, can't send command");
@@ -83,15 +102,7 @@ public abstract class WawajiDevice extends SerialPort {
     protected void finalize() throws Throwable {
         super.finalize();
 
-        if (mFileInputStream != null) {
-            mFileInputStream.close();
-        }
-
-        if (mFileOutputStream != null) {
-            mFileOutputStream.close();
-        }
-
-        this.close();
+        quit();
     }
 
 }

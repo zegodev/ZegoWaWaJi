@@ -1,6 +1,11 @@
 package com.zego.zegowawaji_server;
 
 /**
+ * 信令通信指令格式定义。
+ *
+ * v1: 基本通信指令协议
+ * v2: 增加获取游戏信息指令替代更新流扩展信息
+ *
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
  *
  * @author realuei on 30/10/2017.
@@ -40,6 +45,7 @@ public class Constants {
          *             "id": "userId",
          *             "name": "userName"
          *         },
+         *         "game_time": 30,
          *         "time_stamp'": 12345
          *     },
          *     "session_data": {}
@@ -112,6 +118,31 @@ public class Constants {
         /**
          * {
          *     "seq": 1,
+         *     "cmd": 275,
+         *     "data": {
+         *         "total": 0,
+         *         "queue": [
+         *             {
+         *                 "id": "userId",
+         *                 "name": "userName"
+         *             },
+         *         ],
+         *         "player": {
+         *             "id": "userId",
+         *             "name": "userName",
+         *             "left_time":10
+         *         },
+         *         "game_time":30,
+         *         "time_stamp":12345,
+         *         "seq": 1
+         *     }
+         * }
+         */
+        static final public int CMD_GET_GAME_INFO_REPLY = 0x113;    // 回复获取房间信息指令，包括总人数，排队列表，当前谁在玩，单局游戏时长（Server-->Client）
+
+        /**
+         * {
+         *     "seq": 1,
          *     "cmd": 513,
          *     "data": {
          *         "time_stamp": 12345
@@ -171,6 +202,18 @@ public class Constants {
          * }
          */
         static final public int CMD_GAME_RESULT_REPLY = 0x205;  // 回复收到游戏结果（Client-->Server）
+
+        /**
+         * {
+         *     "seq": 1,
+         *     "cmd": 518,
+         *     "data": {
+         *         "time_stamp": 12345
+         *     }
+         *     "session_data": {}
+         * }
+         */
+        static final public int CMD_GET_GAME_INFO = 0x206;  // 获取游戏信息，包括总人数，排队列表，当前谁在玩，单局游戏时长（Client-->Server）
 
         /**
          * {
@@ -249,10 +292,13 @@ public class Constants {
 
         static final public String KEY_USER_QUEUE = "queue";    // 当前排队人员列表
         static final public String KEY_QUEUE_NUMBER = "queue_number";   // 当前排队人数
+        static final public String KEY_GAME_TIME = "game_time";     // 单局游戏时长（单位：秒）
+        static final public String KEY_LEFT_TIME = "left_time";     // 某人剩余游戏时长（单位：秒，主要用于H5断开重连时可以继续上一次游戏）
 
         static final public String KEY_RESULT = "result";  // 0: OK； 1： Failed
         static final public String KEY_CONFIRM = "confirm"; // 0: 确认；1：拒绝/放弃
 
         static final public String KEY_TIME_STAMP = "time_stamp";   // 时间戳 System.currentMillSeconds()
+
     }
 }

@@ -1,0 +1,179 @@
+package com.zego.zegowawaji_server;
+
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import com.zego.base.utils.AppLogger;
+import com.zego.zegowawaji_server.manager.DeviceManager;
+
+import java.util.List;
+
+/**
+ * <p>Copyright © 2017 Zego. All rights reserved.</p>
+ *
+ * @author realuei on 25/11/2017.
+ */
+
+public class TestActivity extends AppCompatActivity {
+
+    private AppLogger.OnLogChangedListener mLogDataChangedListener;
+
+    private Button btnInit;
+    private Button btnLeft;
+    private Button btnRight;
+    private Button btnForward;
+    private Button btnBackward;
+    private Button btnGrab;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_test);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // enable the up button
+        ActionBar ab = getSupportActionBar();
+        ab.setDisplayHomeAsUpEnabled(true);
+
+        initCtrls();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        AppLogger.getInstance().unregisterLogChangedListener(mLogDataChangedListener);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void initCtrls() {
+        btnInit = (Button) findViewById(R.id.init);
+        btnInit.setOnClickListener(mOperationListener);
+
+        btnLeft = (Button) findViewById(R.id.left);
+        btnLeft.setOnClickListener(mOperationListener);
+
+        btnRight = (Button) findViewById(R.id.right);
+        btnRight.setOnClickListener(mOperationListener);
+
+        btnForward = (Button) findViewById(R.id.forward);
+        btnForward.setOnClickListener(mOperationListener);
+
+        btnBackward = (Button) findViewById(R.id.backward);
+        btnBackward.setOnClickListener(mOperationListener);
+
+        btnGrab = (Button) findViewById(R.id.grab);
+        btnGrab.setOnClickListener(mOperationListener);
+
+        updateCtrlsState(0);
+
+        final TextView logView = (TextView) findViewById(R.id.log);
+
+        mLogDataChangedListener = new AppLogger.OnLogChangedListener() {
+            @Override
+            public void onLogDataChanged() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        StringBuilder sb = new StringBuilder();
+                        List<String> logs = AppLogger.getInstance().getAllLog();
+                        int size = logs.size();
+                        for (int i = 0; i < size; i++) {
+                            sb.append(logs.get(i)).append("\r\n");
+                        }
+                        logView.setText(sb.toString());
+                    }
+                });
+            }
+        };
+        AppLogger.getInstance().registerLogChangedListener(mLogDataChangedListener);
+    }
+
+    private void updateCtrlsState(int state) {
+        boolean canOperation = false;
+        boolean shouldInit = true;
+
+        if (state == 0) {   // init
+            // default state
+        } else if (state == 1) {    // init success
+            canOperation = true;
+            shouldInit = false;
+        } else if (state == 2) {    // waiting result
+            canOperation = false;
+            shouldInit = false;
+        }
+
+        btnLeft.setEnabled(canOperation);
+        btnRight.setEnabled(canOperation);
+        btnForward.setEnabled(canOperation);
+        btnBackward.setEnabled(canOperation);
+        btnGrab.setEnabled(canOperation);
+        btnInit.setEnabled(shouldInit);
+    }
+
+    private View.OnClickListener mOperationListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.init: {
+                    DeviceManager.getInstance().sendBeginCmd(0.5f);
+
+                    updateCtrlsState(1);
+                }
+                    break;
+
+                case R.id.left:
+                    DeviceManager.getInstance().sendLeftCmd();
+                    break;
+
+                case R.id.right:
+                    DeviceManager.getInstance().sendRightCmd();
+                    break;
+
+                case R.id.forward:
+                    DeviceManager.getInstance().sendForwardCmd();
+                    break;
+
+                case R.id.backward:
+                    DeviceManager.getInstance().sendBackwardCmd();
+                    break;
+
+                case R.id.grab:
+                    updateCtrlsState(2);
+
+                    DeviceManager.getInstance().sendDownCmd(new DeviceManager.OnGameOverObserver() {
+                        @Override
+                        public void onGameOver(boolean win) {
+                            AppLogger.getInstance().writeLog("game result, win? %s ", win);
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateCtrlsState(0);
+                                }
+                            });
+                        }
+                    });
+                    break;
+            }
+        }
+    };
+}

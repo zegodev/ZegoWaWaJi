@@ -14,9 +14,10 @@ import java.util.Random;
  * @author realuei on 07/11/2017.
  */
 
-public class XueBaoWawaji extends WawajiDevice {
+public class XWawaji extends WawajiDevice {
     static final private int BAUD_RATE = 115200;
 
+    static final private byte[] CMD_BYTE_CHECK = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x09, (byte) 0x34, (byte) 0x3d };
     static final private byte[] CMD_BYTE_BEGIN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x00, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1d};
 //    static final private byte[] CMD_BYTE_BEGIN_GET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x10, (byte) 0x31, (byte) 0x3c, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x1e};
     static final private byte[] CMD_BYTE_FORWARD = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x00, (byte) 0x2c, (byte) 0x01, (byte) 0x07};
@@ -27,12 +28,14 @@ public class XueBaoWawaji extends WawajiDevice {
 
     private DeviceStateListener mListener;
 
-    public XueBaoWawaji(DeviceStateListener listener) throws SecurityException, IOException {
+    private Thread mReadThread;
+
+    public XWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
         mListener = listener;
 
-        Thread readThread = new ReadThread("xuebao-reader");
-        readThread.start();
+        mReadThread = new ReadThread("xuebao-reader");
+        mReadThread.start();
     }
 
     /**
@@ -93,7 +96,16 @@ public class XueBaoWawaji extends WawajiDevice {
 
     @Override
     public boolean checkDeviceState() {
-        return false;
+        return sendCommandData(CMD_BYTE_CHECK);
+    }
+
+    @Override
+    public void quit() {
+        if (mReadThread != null) {
+            mReadThread.interrupt();
+        }
+
+        super.quit();
     }
 
     private byte[] updateSequence(byte[] data, int seq) {
@@ -121,6 +133,11 @@ public class XueBaoWawaji extends WawajiDevice {
             boolean win = (data[8] == (byte) 0x01);
             if (mListener != null) {
                 mListener.onGameOver(win);
+            }
+        } else if (data[7] == (byte)0x34 || data[7] == (byte)0x37) {
+            int errorCode = data[8] & 0xff;
+            if (errorCode >= 101 && errorCode <= 109) {
+                mListener.onDeviceBreakdown(errorCode);
             }
         }
     }

@@ -6,4 +6,5 @@ package com.zego.zegowawaji_server.service;
 interface IRemoteApi {
     void join(IBinder token);
     void leave(IBinder token);
+    void sendHeartbeat();
 }

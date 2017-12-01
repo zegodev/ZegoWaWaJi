@@ -33,8 +33,9 @@ public class AppLogger {
     static final private int MSG_ID_CLEAR_LOG = 2;
 
     static final private int SINGLE_LOG_FILE_MAX_SIZE = 10 * 1024 * 1024;   // 10M
-    static final private String LOG_FILE_NAME = "wawaji_server_business.log";
-    static final private String LOG_FILE_NAME_BAK = "wawaji_server_business_2.log";
+
+    static private String LOG_FILE_NAME = "wawaji_server_business.log";
+    static private String LOG_FILE_NAME_BAK = "wawaji_server_business_2.log";
 
     static private AppLogger sInstance;
 
@@ -115,6 +116,11 @@ public class AppLogger {
                 }
             }
         };
+    }
+
+    static public void setLogFileName(String logName, String bakLogName) {
+        LOG_FILE_NAME = logName;
+        LOG_FILE_NAME_BAK = bakLogName;
     }
 
     static public AppLogger getInstance() {

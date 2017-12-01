@@ -1,9 +1,10 @@
 package com.zego.zegowawaji_server.manager;
 
+import com.zego.base.utils.AppLogger;
 import com.zego.zegowawaji_server.BuildConfig;
-import com.zego.zegowawaji_server.device.SuruiWawaji;
+import com.zego.zegowawaji_server.device.SWawaji;
 import com.zego.zegowawaji_server.device.WawajiDevice;
-import com.zego.zegowawaji_server.device.XueBaoWawaji;
+import com.zego.zegowawaji_server.device.XWawaji;
 
 import java.io.IOException;
 import java.util.Random;
@@ -17,6 +18,7 @@ import java.util.Random;
 public class DeviceManager {
     private WawajiDevice mWawajiDevice;
     private OnGameOverObserver mGameOverObserver;
+    private OnDeviceBreakdown mOnDeviceBreakdown;
     private Random mRandom;
 
     static private DeviceManager sInstance;
@@ -27,22 +29,22 @@ public class DeviceManager {
         void onGameOver(boolean win);
     }
 
+    public interface OnDeviceBreakdown {
+        void onDeviceBreakdown(int errorCode);
+    }
+
     static public DeviceManager getInstance() {
         if (sInstance == null) {
             synchronized (DeviceManager.class) {
                 if (sInstance == null) {
-                    try {
-                        sInstance = new DeviceManager();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    sInstance = new DeviceManager();
                 }
             }
         }
         return sInstance;
     }
 
-    private DeviceManager() throws SecurityException, IOException {
+    private DeviceManager() {
         WawajiDevice.DeviceStateListener listener = new WawajiDevice.DeviceStateListener() {
             @Override
             public void onGameOver(boolean win) {
@@ -53,15 +55,35 @@ public class DeviceManager {
 
             @Override
             public void onDeviceBreakdown(int errorCode) {
-
+                // 此处需要通知业务服务器并报警，通知维护人员
+                AppLogger.getInstance().writeLog("the wawaji has break down, errorCode: %d", errorCode);
+                if (mOnDeviceBreakdown != null) {
+                    mOnDeviceBreakdown.onDeviceBreakdown(errorCode);
+                }
             }
         };
 
         mRandom = new Random();
-        if (BuildConfig.DEVICE_BRAND_NAME.toLowerCase().contains("xuebao")) {
-            mWawajiDevice = new XueBaoWawaji(listener);
-        } else if (BuildConfig.DEVICE_BRAND_NAME.toLowerCase().contains("surui")) {
-            mWawajiDevice = new SuruiWawaji(listener);
+
+        try {
+            if (BuildConfig.DEVICE_BRAND_NAME.equals("XWawaji")) {
+                mWawajiDevice = new XWawaji(listener);
+            } else if (BuildConfig.DEVICE_BRAND_NAME.equals("SWawaji")) {
+                mWawajiDevice = new SWawaji(listener);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void checkDeviceStatus(OnDeviceBreakdown observer) {
+        mOnDeviceBreakdown = observer;
+        if (mWawajiDevice == null) {
+            if (observer != null) {
+                observer.onDeviceBreakdown(-1);
+            }
+        } else {
+            mWawajiDevice.checkDeviceState();
         }
     }
 
@@ -113,12 +135,20 @@ public class DeviceManager {
         return (mRandom.nextInt(1000) % (100 / (100 * probability)) + 1) == 1;
     }
 
+    /**
+     * 退出设备，释放资源
+     */
+    public void exitDevice() {
+        if (mWawajiDevice != null) {
+            mWawajiDevice.quit();
+        }
+        mWawajiDevice = null;
+    }
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
 
-        if (mWawajiDevice != null) {
-            mWawajiDevice.close();
-        }
+        exitDevice();
     }
 }

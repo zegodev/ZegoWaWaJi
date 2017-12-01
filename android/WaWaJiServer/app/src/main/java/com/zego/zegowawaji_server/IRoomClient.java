@@ -18,6 +18,8 @@ public interface IRoomClient {
 
     void updateCurrentPlayerInfo(String userId, String userName);
 
+    ZegoUser getCurrentPlayer();
+
     ZegoLiveRoom getZegoLiveRoom();
 
     void runOnWorkThread(Runnable task);

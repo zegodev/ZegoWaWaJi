@@ -7,6 +7,7 @@ import com.zego.base.utils.AppLogger;
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -14,17 +15,18 @@ import java.util.Random;
  * @author realuei on 07/11/2017.
  */
 
-public class SuruiWawaji extends WawajiDevice {
+public class SWawaji extends WawajiDevice {
     static final private int BAUD_RATE = 9600;
 
-    static final private byte[] CMD_BYTE_START = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x06, (byte)0x06, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x2a };    // 第3位控制时间，第13位控制是否抓中
+    static final private byte[] CMD_BYTE_START = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x05, (byte)0x05, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x2a };    // 第3位控制时间，第13位控制是否抓中
 //    static final private byte[] CMD_BYTE_START_GET = { (byte)0x23, (byte)0xaa, (byte)0x28, (byte)0x23, (byte)0x23, (byte)0x0c, (byte)0x0c, (byte)0x06, (byte)0x06, (byte)0x06, (byte)0x00, (byte)0x30, (byte)0x01, (byte)0x00, (byte)0x00, (byte)0x2a };
     static final private byte[] CMD_BYTE_MOVE = {(byte)0x23, (byte)0x01, (byte)0x00, (byte)0x2a};   // 第三位控制方向
+    static final private byte[] CMD_BYTE_STOP = {(byte)0x23, (byte)0x01, (byte)0x00, (byte)0x2a};
     static final private byte[] CMD_BYTE_HEART_BIT = {(byte)0x23, (byte)0x02, (byte)0x00, (byte)0x2a};
 
     private DeviceStateListener mListener;
 
-    public SuruiWawaji(DeviceStateListener listener) throws SecurityException, IOException {
+    public SWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
         mListener = listener;
 
@@ -41,37 +43,55 @@ public class SuruiWawaji extends WawajiDevice {
     @Override
     public boolean sendBeginCommand(boolean hit, int seq) {
         CMD_BYTE_START[12] = hit ? (byte) 1: (byte) 0;
-        return sendCommandData(CMD_BYTE_START);
+        boolean success = sendCommandData(CMD_BYTE_START);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
     public boolean sendForwardCommand(int seq) {
-        CMD_BYTE_MOVE[2] = (byte)0x00;
-        return sendCommandData(CMD_BYTE_MOVE);
+        CMD_BYTE_MOVE[2] = (byte)0x02;
+        boolean success = sendCommandData(CMD_BYTE_MOVE);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
     public boolean sendBackwardCommand(int seq) {
         CMD_BYTE_MOVE[2] = (byte)0x01;
-        return sendCommandData(CMD_BYTE_MOVE);
+        boolean success = sendCommandData(CMD_BYTE_MOVE);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
     public boolean sendLeftCommand(int seq) {
-        CMD_BYTE_MOVE[2] = (byte)0x02;
-        return sendCommandData(CMD_BYTE_MOVE);
+        CMD_BYTE_MOVE[2] = (byte)0x04;
+        boolean success = sendCommandData(CMD_BYTE_MOVE);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
     public boolean sendRightCommand(int seq) {
-        CMD_BYTE_MOVE[2] = (byte)0x04;
-        return sendCommandData(CMD_BYTE_MOVE);
+        CMD_BYTE_MOVE[2] = (byte)0x08;
+        boolean success = sendCommandData(CMD_BYTE_MOVE);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
     public boolean sendGrabCommand(int seq) {
-        CMD_BYTE_MOVE[2] = (byte)0x08;
-        return sendCommandData(CMD_BYTE_MOVE);
+        CMD_BYTE_MOVE[2] = (byte)0x10;
+        boolean success = sendCommandData(CMD_BYTE_MOVE);
+        sleep(300);
+        success |= sendCommandData(CMD_BYTE_STOP);
+        return success;
     }
 
     @Override
@@ -109,6 +129,14 @@ public class SuruiWawaji extends WawajiDevice {
                     }
                 }
                 break;
+        }
+    }
+
+    private void sleep(int millionSeconds) {
+        try {
+            Thread.sleep(millionSeconds);
+        } catch (InterruptedException e) {
+
         }
     }
 

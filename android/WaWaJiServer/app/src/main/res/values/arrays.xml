@@ -11,11 +11,11 @@
     </string-array>
 
     <string-array name="zg_resolutions" translatable="false">
-        <item >320 x 180</item>
-        <item >480 x 270</item>
-        <item >640 x 480</item>
-        <item >960 x 540</item>
-        <item >1280 x 720</item>
-        <item >1920 x 1080</item>
+        <item >240 x 320</item>
+        <item >360 x 480</item>
+        <item >480 x 640</item>
+        <item >720 x 960</item>
+        <item >720 x 1280</item>
+        <item >1280 x 1920</item>
     </string-array>
 </resources>

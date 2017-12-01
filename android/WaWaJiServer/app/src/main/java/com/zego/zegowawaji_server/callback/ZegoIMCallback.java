@@ -21,12 +21,12 @@ import java.util.List;
  * @author realuei on 30/10/2017.
  */
 
-public class ZegoIMCallack implements IZegoIMCallback {
+public class ZegoIMCallback implements IZegoIMCallback {
 
     private IRoomClient mRoomClient;
     private IStateChangedListener mListener;
 
-    public ZegoIMCallack(IRoomClient client, IStateChangedListener listener) {
+    public ZegoIMCallback(IRoomClient client, IStateChangedListener listener) {
         mRoomClient = client;
         mListener = listener;
     }
@@ -48,8 +48,6 @@ public class ZegoIMCallack implements IZegoIMCallback {
                 }
             }
         }
-
-        mListener.onRoomStateUpdate();
     }
 
     /**
@@ -168,6 +166,8 @@ public class ZegoIMCallack implements IZegoIMCallback {
                 if (member != null) {
                     AppLogger.getInstance().writeLog("remove a member from queue, userName: %s", state.userName);
                     queueMembers.remove(member);
+
+                    mListener.onRoomStateUpdate();  // 预约队列发生改变，需要发送广播通知
                 } else {
                     AppLogger.getInstance().writeLog("can't found the will be remove user in queue: %s", state.userName);
                 }

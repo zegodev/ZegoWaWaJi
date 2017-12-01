@@ -11,4 +11,9 @@
         android:id="@+id/action_leave"
         android:title="@string/vt_menu_action_leave"
         app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_test"
+        android:title="@string/vt_menu_action_test"
+        app:showAsAction="collapseActionView"/>
 </menu>

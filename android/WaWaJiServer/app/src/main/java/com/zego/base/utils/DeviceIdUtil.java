@@ -23,7 +23,11 @@ public class DeviceIdUtil {
     static final private String INVALID_SERIAL_NUMBER = "12345678900";
 
     static final public String generateDeviceId(Context context) {
-        String deviceId;
+        String deviceId = getEthernetMac();
+        if (!TextUtils.isEmpty(deviceId) && !Build.UNKNOWN.equals(deviceId)) {
+            return deviceId;
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             deviceId = Build.getSerial();
         } else {
@@ -49,11 +53,6 @@ public class DeviceIdUtil {
         deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (!"9774d56d682e549c".equals(deviceId) && !INVALID_SERIAL_NUMBER.equals(deviceId)
                 && !TextUtils.isEmpty(deviceId) && deviceId.length() > 6) {
-            return deviceId;
-        }
-
-        deviceId = getEthernetMac();
-        if (!TextUtils.isEmpty(deviceId) && !Build.UNKNOWN.equals(deviceId)) {
             return deviceId;
         }
 

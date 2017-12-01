@@ -14,6 +14,13 @@
  * limitations under the License. 
  */
 
+/**
+ * 特别注意：
+ *
+ * 如果使用 Demo 中提供的 libserial_port_api.so，请不要修改此文件的包名，否则会导致串口通信异常。
+ * 如果你想使用自定义的包名甚至类名，请自行修改并编译 src/main/cpp 中的代码。
+ */
+
 package com.zego.base;
 
 import java.io.File;
@@ -21,8 +28,6 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import android.util.Log;
 
@@ -54,14 +59,14 @@ public class SerialPort {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				throw new SecurityException();
+				throw new SecurityException("can't open serial port on " + device.getAbsolutePath());
 			}
 		}
 
 		mFd = open(device.getAbsolutePath(), baudrate, flags);
 		if (mFd == null) {
 			Log.e(TAG, "native open returns null");
-			throw new IOException();
+			throw new IOException("native open returns null");
 		}
 		mFileInputStream = new FileInputStream(mFd);
 		mFileOutputStream = new FileOutputStream(mFd);
@@ -69,7 +74,8 @@ public class SerialPort {
 
 	// JNI
 	private native static FileDescriptor open(String path, int baudrate, int flags);
-	public native void close();
+	protected native void close();
+
 	static {
 		System.loadLibrary("serial_port_api");
 	}

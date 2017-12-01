@@ -10,15 +10,15 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++11 -frtti -fexceptions"
-            }
-        }
+//        externalNativeBuild {
+//            cmake {
+//                cppFlags "-std=c++11 -frtti -fexceptions"
+//            }
+//        }
 
         ndk {
             //设置支持的SO库架构
-            abiFilters 'armeabi-v7a', 'x86'//, 'arm64-v8a', 'armeabi'
+            abiFilters 'armeabi-v7a'//, 'x86', 'arm64-v8a', 'armeabi'
         }
     }
 
@@ -28,11 +28,11 @@ android {
         }
     }
 
-    externalNativeBuild {
-        cmake {
-            path "CMakeLists.txt"
-        }
-    }
+//    externalNativeBuild {
+//        cmake {
+//            path "CMakeLists.txt"
+//        }
+//    }
 
     signingConfigs {
         release {
@@ -52,12 +52,12 @@ android {
     }
 
     productFlavors {
-        xuebao {
-            buildConfigField("String", "DEVICE_BRAND_NAME", "\"XueBaoWawaji\"")
+        xwawaji {
+            buildConfigField("String", "DEVICE_BRAND_NAME", "\"XWawaji\"")
         }
 
-        surui {
-            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SuruiWawaji\"")
+        swawaji {
+            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SWawaji\"")
         }
     }
 }

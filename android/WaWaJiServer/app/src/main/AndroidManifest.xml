@@ -40,10 +40,13 @@
         </activity>
 
         <activity android:name=".LogActivity">
-
         </activity>
 
-        <receiver android:name=".BootCompletedReceiver">
+        <activity android:name=".TestActivity">
+        </activity>
+
+        <receiver android:name=".BootCompletedReceiver"
+            android:process=":guard">
             <intent-filter android:priority="1000" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
