@@ -16,10 +16,14 @@
 
 /** 视频缓冲区类型 */
 typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
-    ZegoVideoBufferTypeUnknown = 0,                     /**< 未知 */
-    ZegoVideoBufferTypeAsyncPixelBuffer = 1 << 1,       /**< 异步 */
-    ZegoVideoBufferTypeSyncPixelBuffer = 1 << 2,        /**< 同步 */
-    ZegoVideoBufferTypeAsyncI420PixelBuffer = 1 << 7,   /**< 异步I420 */
+    /** 未知 */
+    ZegoVideoBufferTypeUnknown = 0,
+    /** 异步 */
+    ZegoVideoBufferTypeAsyncPixelBuffer = 1 << 1,
+    /** 同步 */
+    ZegoVideoBufferTypeSyncPixelBuffer = 1 << 2,
+    /** 异步I420 */
+    ZegoVideoBufferTypeAsyncI420PixelBuffer = 1 << 7,
 };
 
 /** 外部滤镜内存池协议（用于 SDK 与开发者间相互传递外部滤镜数据） */
@@ -32,7 +36,7 @@ typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
  @param height 宽度
  @param stride 视频帧数据每一行字节数
  @return CVPixelBufferRef CVPixelBufferRef 对象
- @attention 开发者调用此 API 向 SDK 返回 CVPixelBufferRef 对象，用于保存视频帧数据
+ @discussion 开发者调用此 API 向 SDK 返回 CVPixelBufferRef 对象，用于保存视频帧数据
  */
 - (nullable CVPixelBufferRef)dequeueInputBuffer:(int)width height:(int)height stride:(int)stride;
 
@@ -41,7 +45,7 @@ typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
  
  @param pixel_buffer 视频帧数据
  @param timestamp_100n 当前时间戳
- @attention 开发者在此 API 中获取采集的视频帧数据
+ @discussion 开发者在此 API 中获取采集的视频帧数据
  */
 - (void)queueInputBuffer:(nonnull CVPixelBufferRef)pixel_buffer timestamp:(unsigned long long)timestamp_100n;
 
@@ -121,9 +125,12 @@ typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
 
 @interface ZegoExternalVideoFilter : NSObject
 
-/// \brief 设置外部滤镜模块
-/// \param factory 工厂对象
-/// \note 必须在 Init 前调用，并且不能置空
+/**
+ 设置外部滤镜模块
+
+ @param factory 工厂对象
+ @param idx 必须在 Init 前调用，并且不能置空
+ */
 + (void)setVideoFilterFactory:(nullable id<ZegoVideoFilterFactory>)factory channelIndex:(ZegoAPIPublishChannelIndex)idx;
 
 @end
@@ -131,6 +138,11 @@ typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
 
 @interface ZegoDefaultVideoFilterFactory : NSObject<ZegoVideoFilterFactory>
 
+/**
+ 获取滤镜工厂单例
+
+ @return 单例对象
+ */
 + (nonnull instancetype)sharedInstance;
 
 /**
@@ -144,7 +156,7 @@ typedef NS_ENUM(NSInteger, ZegoVideoBufferType) {
  是否启用默认滤镜工厂
 
  @param enable true 启用，false 关闭
- @attention 必须在创建主 SDK 接口对象前，或销毁主 SDK 接口对象后调用
+ @discussion 必须在创建主 SDK 接口对象前，或销毁主 SDK 接口对象后调用
  */
 - (void)enableFilter:(bool)enable;
 

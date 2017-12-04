@@ -175,7 +175,7 @@
  @param streamID 播放流 ID
  @param active true 接收，false 不接收
  @return 0 成功，否则失败
- @attention 仅拉 UDP 流有效
+ @discussion 仅拉 UDP 流有效
  */
 - (int)activateAudioPlayStream:(NSString *)streamID active:(bool)active;
 
@@ -185,7 +185,7 @@
  @param streamID 播放流 ID
  @param active true 接收，false 不接收
  @return 0 成功，否则失败
- @attention 仅拉 UDP 流有效
+ @discussion 仅拉 UDP 流有效
  */
 - (int)activateVedioPlayStream:(NSString *)streamID active:(bool)active;
 

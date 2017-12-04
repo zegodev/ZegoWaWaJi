@@ -31,20 +31,11 @@
     }
 }
 
-
 - (void)setStartButtonTitle:(NSString *)title {
     if (_startButtonTitle != title) {
         _startButtonTitle = title;
         [self.startButton setTitle:_startButtonTitle forState:UIControlStateNormal];
     }
 }
-
-/*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect {
-    // Drawing code
-}
-*/
 
 @end

@@ -33,9 +33,13 @@ ZEGO_EXTERN NSString *const kZegoConfigKeepAudioSesionActive;  ///< AudioSession
 
 typedef unsigned int	uint32;
 
+/** 配置返回错误类型 */
 typedef enum {
+    /** 分辨率 */
     FLAG_RESOLUTION = 0x1,
+    /** 帧率 */
     FLAG_FPS = 0x2,
+    /** 比特率 */
     FLAG_BITRATE = 0x4
 } SetConfigReturnType;
 
@@ -49,21 +53,27 @@ typedef enum {
     ZegoVideoViewModeScaleToFill        = 2,
 } ZegoVideoViewMode;
 
-
+/** 采集旋转角度，逆时针旋转 */
 typedef enum {
+    /** 旋转 0 度 */
     CAPTURE_ROTATE_0    = 0,
+    /** 旋转 90 度 */
     CAPTURE_ROTATE_90   = 90,
+    /** 旋转 180 度 */
     CAPTURE_ROTATE_180  = 180,
+    /** 旋转 270 度 */
     CAPTURE_ROTATE_270  = 270
 } CAPTURE_ROTATE;
 
-
+/** 远程视图序号 */
 typedef enum {
+    /** 第一个远程视图 */
     RemoteViewIndex_First = 0,
+    /** 第二个远程视图 */
     RemoteViewIndex_Second = 1,
+    /** 第三个远程视图 */
     RemoteViewIndex_Third = 2
 } RemoteViewIndex;
-
 
 /** 滤镜特性 */
 typedef enum : NSUInteger {
@@ -153,7 +163,7 @@ typedef enum : NSUInteger {
 @property int outputBitrate;
 /**  输出分辨率 */
 @property CGSize outputResolution;
-/**  音频编码 */
+/**  音频编码，默认为 0 */
 @property int outputAudioConfig;
 /**  输入流列表 */
 @property (strong) NSMutableArray<ZegoMixStreamInfo*> *inputStreamList;
@@ -161,16 +171,21 @@ typedef enum : NSUInteger {
 @property NSData* userData;
 /** 混流声道数，默认为单声道*/
 @property int channels;
-
+/** 混流背景颜色，前三个字节为 RGB，即 0xRRGGBBxx */
+@property int outputBackgroundColor;
 @end
 
-
+/** 发布直播的模式 */
 enum ZegoAPIVideoEncoderRateControlStrategy
 {
-    ZEGOAPI_RC_ABR = 0, ///< 恒定码率
-    ZEGOAPI_RC_CBR,     ///< 恒定码率
-    ZEGOAPI_RC_VBR,     ///< 恒定质量
-    ZEGOAPI_RC_CRF,     ///< 恒定质量
+    /** 恒定码率 */
+    ZEGOAPI_RC_ABR = 0,
+    /** 恒定码率 */
+    ZEGOAPI_RC_CBR,
+    /** 恒定质量 */
+    ZEGOAPI_RC_VBR,
+    /** 恒定质量 */
+    ZEGOAPI_RC_CRF,
 };
 
 /** 发布直播的模式 */
@@ -193,13 +208,18 @@ enum ZegoAPIModuleType
 
 typedef struct
 {
-    double fps;             ///< 视频帧率
-    double kbps;            ///< 视频码率(kb/s)
-    double akbps;           ///< 音频码率(kb/s)
-    int rtt;                ///< 延时(ms)
-    int pktLostRate;        ///< 丢包率(0~255)
-    
-    int quality;            ///< 质量(0~3)
+    /** 视频帧率 */
+    double fps;
+    /** 视频码率(kb/s) */
+    double kbps;
+    /** 音频码率(kb/s) */
+    double akbps;
+    /** 延时(ms) */
+    int rtt;
+    /** 丢包率(0~255) */
+    int pktLostRate;
+    /** 质量(0~3) */
+    int quality;
     
 } ZegoAPIPublishQuality;
 
@@ -255,10 +275,8 @@ typedef struct
 {
     /** 启用音频源选择，参考 ZegoAVAPIAudioRecordMask */
     unsigned int mask;
-    
     /** 采样率 8000, 16000, 22050, 24000, 32000, 44100, 48000 */
     int sampleRate;
-    
     /** 声道数 1(单声道) 或 2(双声道) */
     int channels;
     

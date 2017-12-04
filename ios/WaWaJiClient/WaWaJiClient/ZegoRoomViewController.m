@@ -16,6 +16,8 @@ static NSString *cellIdentifier = @"RoomCellID";
 @implementation ZegoRoomCell
 
 - (void)awakeFromNib {
+    [super awakeFromNib];
+    
     self.playStatusLabel.layer.cornerRadius = 2;
     self.playStatusLabel.layer.masksToBounds = YES;
     self.coverView.layer.borderWidth = 1.0;
@@ -46,7 +48,7 @@ static NSString *cellIdentifier = @"RoomCellID";
     [self.refreshControl addTarget:self action:@selector(handleRefresh:) forControlEvents:UIControlEventValueChanged];
     [self.roomView insertSubview:self.refreshControl atIndex:0];
     self.roomView.alwaysBounceVertical = YES;
-    
+
     if ([[[UIDevice currentDevice] systemVersion] floatValue] < 11.0)  {
         self.automaticallyAdjustsScrollViewInsets = NO;
     } else {
@@ -105,7 +107,7 @@ static NSString *cellIdentifier = @"RoomCellID";
             }
             
             // 非 ZEGO 娃娃机，没有 WWJ_ZEGO 开头的流就取前面 2 条流
-            if (![self.selectedRoom.roomID hasPrefix:@"WWJ_ZEGO_12345"] && streamIDs.count == 0) {
+            if (![self.selectedRoom.roomID hasPrefix:@"WWJ_ZEGO_STREAM"] && streamIDs.count == 0) {
                 if (self.selectedRoom.streamInfo.count <= 2) {
                     [streamIDs addObjectsFromArray:self.selectedRoom.streamInfo];
                 } else {
@@ -307,28 +309,18 @@ static NSString *cellIdentifier = @"RoomCellID";
 }
 
 - (void)showAlert:(NSString *)message title:(NSString *)title {
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] < 8.0) {
-        // 兼容 iOS 8.0 及以下系统版本
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title
-                                                            message:message
-                                                           delegate:self
-                                                  cancelButtonTitle:nil
-                                                  otherButtonTitles:NSLocalizedString(@"OK", nil), nil];
-        [alertView show];
-    } else {
-        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
-                                                                                 message:message
-                                                                          preferredStyle:UIAlertControllerStyleAlert];
-        UIAlertAction *confirm = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil)
-                                                          style:UIAlertActionStyleDefault
-                                                        handler:^(UIAlertAction * _Nonnull action) {
-                                                            
-                                                        }];
-        
-        [alertController addAction:confirm];
-        
-        [self presentViewController:alertController animated:YES completion:nil];
-    }
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                             message:message
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *confirm = [UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil)
+                                                      style:UIAlertActionStyleDefault
+                                                    handler:^(UIAlertAction * _Nonnull action) {
+                                                        
+                                                    }];
+    
+    [alertController addAction:confirm];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 #pragma mark - UICollectionViewDataSource
@@ -350,7 +342,7 @@ static NSString *cellIdentifier = @"RoomCellID";
     
     ZegoRoomInfo *roomInfo = self.roomList[indexPath.item];
     
-    if (![roomInfo.roomID hasPrefix:@"WWJ_ZEGO_12345_"]) {
+    if (![roomInfo.roomID hasPrefix:@"WWJ_ZEGO_00d20"]) {
         [cell.roomImageView setImage:[UIImage imageNamed:@"customer"]];
     } else {
         [cell.roomImageView setImage:[UIImage imageNamed:[NSString stringWithFormat:@"0%ld", indexPath.item % 6 + 1]]];

@@ -386,9 +386,6 @@
                                         <state key="normal" image="left">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <connections>
-                                            <action selector="goLeftward:" destination="4ST-oD-Cdq" eventType="touchUpInside" id="6PD-tP-HOv"/>
-                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GeJ-hp-saD">
                                         <rect key="frame" x="64" y="89" width="61" height="61"/>
@@ -399,9 +396,6 @@
                                         <state key="normal" image="down">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <connections>
-                                            <action selector="goBackward:" destination="4ST-oD-Cdq" eventType="touchUpInside" id="E6k-9E-wN0"/>
-                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tIH-6R-nMm">
                                         <rect key="frame" x="64" y="3" width="61" height="61"/>
@@ -412,9 +406,6 @@
                                         <state key="normal" image="up">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <connections>
-                                            <action selector="goForward:" destination="4ST-oD-Cdq" eventType="touchUpInside" id="okv-gy-2HG"/>
-                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nWH-va-jcy">
                                         <rect key="frame" x="128" y="46" width="61" height="61"/>
@@ -425,9 +416,6 @@
                                         <state key="normal" image="right">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <connections>
-                                            <action selector="goRightward:" destination="4ST-oD-Cdq" eventType="touchUpInside" id="v82-IW-cWY"/>
-                                        </connections>
                                     </button>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="29s" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="La0-AU-eS8">
                                         <rect key="frame" x="214" y="-5" width="65" height="42"/>

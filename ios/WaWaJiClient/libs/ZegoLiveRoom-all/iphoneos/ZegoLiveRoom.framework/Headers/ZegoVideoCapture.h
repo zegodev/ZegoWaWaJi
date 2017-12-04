@@ -22,7 +22,7 @@
 
  @param framerate 帧率
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setFrameRate:(int)framerate;
 
@@ -32,7 +32,7 @@
  @param width 宽
  @param height 高
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setWidth:(int)width andHeight:(int)height;
 
@@ -41,7 +41,7 @@
 
  @param bFront true 表示前摄像头，false 表示后摄像头
  @return 0 切换成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setFrontCam:(int)bFront;
 
@@ -51,7 +51,7 @@
 
  @param view 载体视图
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setView:(UIView* _Nullable )view;
 #elif TARGET_OS_OSX
@@ -61,7 +61,7 @@
 
  @param view 载体视图
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setView:(NSView* _Nullable )view;
 #endif
@@ -71,7 +71,7 @@
 
  @param mode 预览模式
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setViewMode:(int)mode;
 
@@ -80,7 +80,7 @@
 
  @param rotation 旋转角度
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setViewRotation:(int)rotation;
 
@@ -89,7 +89,7 @@
 
  @param rotaion 旋转角度
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_setCaptureRotation:(int)rotaion;
 
@@ -97,7 +97,7 @@
  启动预览回调
 
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_startPreview;
 
@@ -105,7 +105,7 @@
  停止预览回调
 
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_stopPreview;
 
@@ -114,7 +114,7 @@
 
  @param enable true 开启，false 不开启
  @return 0 设置成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_enableTorch:(bool)enable;
 
@@ -122,7 +122,7 @@
  对采集预览进行截图回调
 
  @return 0 截图成功，其他值失败
- @attention 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
+ @discussion 调用 SDK 相关接口设置成功后，会通过此 API 通知调用者
  */
 - (int)zego_takeSnapshot;
 

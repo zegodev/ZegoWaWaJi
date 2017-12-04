@@ -19,29 +19,41 @@
 
 #import "zego-api-defines-oc.h"
 
+/** 视频填充模式 */
 typedef enum : NSUInteger {
+    /** 等比缩放，可能有黑边 */
     ZegoVideoFillModeBlackBar,
+    /** 裁剪 */
     ZegoVideoFillModeCrop,
+    /** 拉伸 */
     ZegoVideoFillModeStretch,
 } ZegoVideoFillMode;
 
 /** 视频采集设备输出格式 */
 typedef enum : NSUInteger {
-    ZegoVideoCaptureDeviceOutputBufferTypeCVPixelBuffer,    /** CVImageBufferRef */
-    ZegoVideoCaptureDeviceOutputBufferTypeGlTexture2D,      /** GLuint */
-    ZegoVideoCaptureDeviceOutputBufferTypeEncodedFrame,     /** EncodedFrame */
+    /** CVImageBufferRef */
+    ZegoVideoCaptureDeviceOutputBufferTypeCVPixelBuffer,
+    /** GLuint */
+    ZegoVideoCaptureDeviceOutputBufferTypeGlTexture2D,
+    /** EncodedFrame */
+    ZegoVideoCaptureDeviceOutputBufferTypeEncodedFrame,
 } ZegoVideoCaptureDeviceOutputBufferType;
 
 /** 视频编码器格式 */
 typedef enum : NSUInteger {
-    ZegoVideoCodecTypeAVCAVCC    = 0,   /** AVC_AVCC 格式 */
-    ZegoVideoCodecTypeAVCANNEXB  = 1,   /** AVC_ANNEXB 格式 */
+    /** AVC_AVCC 格式 */
+    ZegoVideoCodecTypeAVCAVCC    = 0,
+    /** AVC_ANNEXB 格式 */
+    ZegoVideoCodecTypeAVCANNEXB  = 1,
 } ZegoVideoCodecType;
 
 /** 视频编码配置 */
 typedef struct {
+    /** 编码宽度 */
     int width;
+    /** 编码高度 */
     int height;
+    /** 编码格式 */
     ZegoVideoCodecType codecType;
 } ZegoVideoCodecConfig;
 
@@ -53,7 +65,7 @@ typedef struct {
  
  @param image 采集到的视频数据
  @param time 采集时间戳
- @attention 设置成功视频外部采集对象，并启动采集后，在此通知中获取视频帧数据
+ @discussion 设置成功视频外部采集对象，并启动采集后，在此通知中获取视频帧数据
  */
 - (void)onIncomingCapturedData:(nonnull CVImageBufferRef)image withPresentationTimeStamp:(CMTime)time;
 
@@ -94,7 +106,7 @@ typedef struct {
 /**
  销毁
  
- @attention 调用者需要在此 API 中进行相关的销毁操作
+ @discussion 调用者需要在此 API 中进行相关的销毁操作
  */
 - (void)destroy;
 
@@ -121,14 +133,14 @@ typedef struct {
  初始化采集使用的资源（例如启动线程等）回调
  
  @param client SDK 实现回调的对象，一定要保存
- @attention 第一次调用开始预览／推流／拉流时调用
+ @discussion 第一次调用开始预览／推流／拉流时调用
  */
 - (void)zego_allocateAndStart:(nonnull id<ZegoVideoCaptureClientDelegate>) client;
 
 /**
  停止并且释放采集占用的资源
  
- @attention 在此之后，不能再调用 client 对象的接口
+ @discussion 在此之后，不能再调用 client 对象的接口
  */
 - (void)zego_stopAndDeAllocate;
 
@@ -136,7 +148,7 @@ typedef struct {
  启动采集，采集的数据通过 [client -onIncomingCapturedData:withPresentationTimeStamp:] 通知 SDK
  
  @return 0 表示成功，其他是错误
- @attention 一定要实现，不要做丢帧逻辑，SDK内部已经包含了丢帧策略
+ @discussion 一定要实现，不要做丢帧逻辑，SDK内部已经包含了丢帧策略
  */
 - (int)zego_startCapture;
 
@@ -144,7 +156,7 @@ typedef struct {
  停止采集
  
  @return 0 表示成功，其它是错误
- @attention 一定要实现
+ @discussion 一定要实现
  */
 - (int)zego_stopCapture;
 
@@ -154,7 +166,7 @@ typedef struct {
  支持的 buffer 类型
  
  @return 支持的 buffer 类型
- @attention 如果不实现，则为 ZegoVideoCaptureDeviceOutputBufferTypeCVPixelBuffer
+ @discussion 如果不实现，则为 ZegoVideoCaptureDeviceOutputBufferTypeCVPixelBuffer
  */
 - (ZegoVideoCaptureDeviceOutputBufferType)zego_supportBufferType;
 
@@ -170,7 +182,7 @@ typedef struct {
  
  @param deviceId 设备 Id
  @return 采集设备实例
- @attention 一定要实现
+ @discussion 一定要实现
  */
 - (nonnull id<ZegoVideoCaptureDevice>)zego_create:(nonnull NSString*)deviceId;
 
@@ -178,7 +190,7 @@ typedef struct {
  销毁采集设备
  
  @param device zego_create返回的采集设备实例
- @attention 一定要实现
+ @discussion 一定要实现
  */
 - (void)zego_destroy:(nonnull id<ZegoVideoCaptureDevice>)device;
 

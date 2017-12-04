@@ -17,14 +17,14 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="book-success" translatesAutoresizingMaskIntoConstraints="NO" id="VyO-mn-AN3">
-                    <rect key="frame" x="32.5" y="150" width="310" height="305"/>
+                    <rect key="frame" x="32.5" y="86" width="310" height="305"/>
                     <constraints>
                         <constraint firstAttribute="width" constant="310" id="1oC-E9-yeN"/>
                         <constraint firstAttribute="height" constant="305" id="RKW-55-KYr"/>
                     </constraints>
                 </imageView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="vkD-Ze-sIE">
-                    <rect key="frame" x="32.5" y="477" width="146" height="66"/>
+                    <rect key="frame" x="32.5" y="413" width="146" height="66"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="66" id="7On-Kr-SEI"/>
                         <constraint firstAttribute="width" constant="146" id="YmN-S8-D0a"/>
@@ -38,7 +38,7 @@
                     </connections>
                 </button>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wtH-ow-VO9">
-                    <rect key="frame" x="196.5" y="477" width="146" height="66"/>
+                    <rect key="frame" x="196.5" y="413" width="146" height="66"/>
                     <constraints>
                         <constraint firstAttribute="height" constant="66" id="UtQ-CJ-hHU"/>
                         <constraint firstAttribute="width" constant="146" id="kqO-7a-WA7"/>
@@ -58,7 +58,7 @@
                 <constraint firstItem="wtH-ow-VO9" firstAttribute="trailing" secondItem="VyO-mn-AN3" secondAttribute="trailing" id="D64-uw-nGI"/>
                 <constraint firstItem="wtH-ow-VO9" firstAttribute="top" secondItem="VyO-mn-AN3" secondAttribute="bottom" constant="22" id="SQh-gW-fG4"/>
                 <constraint firstItem="vkD-Ze-sIE" firstAttribute="top" secondItem="VyO-mn-AN3" secondAttribute="bottom" constant="22" id="nM7-fa-8fc"/>
-                <constraint firstItem="VyO-mn-AN3" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="130" id="xDX-S1-RGw"/>
+                <constraint firstItem="VyO-mn-AN3" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="66" id="xDX-S1-RGw"/>
                 <constraint firstItem="VyO-mn-AN3" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="zF0-ec-agk"/>
             </constraints>
             <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>

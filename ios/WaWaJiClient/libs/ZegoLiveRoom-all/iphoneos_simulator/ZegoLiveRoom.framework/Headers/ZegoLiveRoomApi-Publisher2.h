@@ -66,6 +66,20 @@
 - (bool)startPublishing2:(NSString *)streamID title:(NSString *)title flag:(int)flag extraInfo:(NSString *)extraInfo channelIndex:(ZegoAPIPublishChannelIndex)index;
 
 /**
+ 开始发布直播
+ 
+ @param streamID 流 ID
+ @param title 直播名称，可选，默认为主播用户名
+ @param flag 直播属性，参考 ZegoApiPublishFlag 定义
+ @param extraInfo 流附加信息
+ @param params 推流参数
+ @param index 推流 channel Index
+ @return true 成功，false 失败
+ @discussion 发布直播成功后，等待 [ZegoLivePublisherDelegate -onPublishStateUpdate:streamID:streamInfo:] 通知
+ */
+- (bool)startPublishing2:(NSString *)streamID title:(NSString *)title flag:(int)flag extraInfo:(NSString *)extraInfo params:(NSString *)params channelIndex:(ZegoAPIPublishChannelIndex)index;
+
+/**
  更新流附加信息
  
  @param extraInfo 流附加信息

@@ -5,7 +5,7 @@
 #include "zego-api-defines-oc.h"
 
 
-/** 混流不存在的流名，值为 NSString* */
+/** 混流不存在的流名，值为 NSArray<NSString*>* */
 ZEGO_EXTERN NSString *const kZegoMixNonExistsStreamIDKey;
 /** 混流请求 seq，值为 @(int) */
 ZEGO_EXTERN NSString *const kZegoMixStreamReqSeqKey;

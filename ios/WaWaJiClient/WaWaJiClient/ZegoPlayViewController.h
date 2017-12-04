@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+extern BOOL g_isGrabed;
+
 @interface ZegoPlayViewController : UIViewController
 
 @property (nonatomic, copy) NSString *roomID;

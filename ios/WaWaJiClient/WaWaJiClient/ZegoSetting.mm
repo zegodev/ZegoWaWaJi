@@ -192,7 +192,8 @@ static ZegoSetting *_settingInstance;
 #ifdef I18N
             return 3322882036;   // 国际版临时用
 #else
-            return 3177435262;  // 娃娃机专用
+//            return 3177435262;  // 娃娃机专用
+            return 3671502238;  // 内部开发专用
 #endif
             
             break;
