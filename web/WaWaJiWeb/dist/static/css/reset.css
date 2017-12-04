@@ -1,0 +1,256 @@
+html {
+    margin: 0;
+    padding: 0;
+    font-family: 'PingFangSC-Light', 'Helvetica Neue', 'Hiragino Sansgb', 'Arial', 'Microsoft Yahei', 'Microsoft Yahei ui', 'Simsun', 'Sans-serif';
+}
+
+body,
+div,
+span,
+i,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+font,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font-family: 'PingFangSC-Light', 'Helvetica Neue', 'Hiragino Sansgb', 'Arial', 'Microsoft Yahei', 'Microsoft Yahei ui', 'Simsun', 'Sans-serif';
+    vertical-align: baseline;
+    outline: 0;
+    word-break: break-all;
+    /* word-break: break-word; */
+    word-wrap: break-word;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+img {
+    border: 0;
+}
+
+a {
+    text-decoration: none;
+    color: #333;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    outline-offset: 0px;
+}
+
+a:hover,
+a:active,
+a:link,
+a:visited,
+a:focus {
+    text-decoration: none;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    outline-offset: 0px;
+}
+
+var,
+em,
+strong {
+    font-style: normal;
+}
+
+em,
+i,
+strong,
+th,
+var {
+    font-style: inherit;
+    font-weight: inherit;
+}
+
+li {
+    list-style: none;
+}
+
+caption,
+th {
+    text-align: left;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-size: 100%;
+    font-weight: normal;
+}
+
+input,
+button,
+textarea,
+select,
+optgroup,
+option {
+    font-family: inherit;
+    font-size: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    appearance: none;
+}
+
+input,
+button,
+textarea,
+select {
+    *font-size: 100%;
+}
+
+.clearfix {
+    *zoom: 1;
+}
+
+.clearfix:after {
+    content: '\200B';
+    clear: both;
+    display: block;
+    height: 0px;
+}
+
+
+/* ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    padding: 5px;
+    margin: 5px;
+    background-color: rgba(255, 255, 255, 1);
+}
+
+::-webkit-scrollbar-track-piece {
+    border-left: 1px solid rgba(125, 125, 125, .7);
+    background-color: rgba(255, 255, 255, 1);
+    padding: 5px;
+    margin: 5px;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    height: 5px;
+    background-color: rgba(125, 125, 125, 0.7);
+    -webkit-border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    width: 5px;
+    background-color: rgba(125, 125, 125, 0.7);
+    -webkit-border-radius: 6px;
+} */
+
+body {
+    -webkit-text-size-adjust: 100%!important;
+    -moz-text-size-adjust: !important;
+    text-size-adjust: !important;
+    /*-webkit-transform-style: preserve-3d;*/
+}
+
+* {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    box-sizing: border-box;
+}
+
+html,
+body {
+    position: relative;
+    height: 100%;
+    margin: 0 auto;
+    max-width: 750px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    line-height: 1;
+}
+body {
+    max-height: 1200px;
+    background: #0d70ff;
+}
+/*重置bootstrap按钮样式*/
+
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus,
+.btn.focus,
+.btn:active.focus,
+.btn.active.focus {
+    outline: none;
+    outline-offset: 0px;
+}
+
+.btn:hover,
+.btn:focus,
+.btn.focus {
+    color: inherit;
+}
+
+.btn:active,
+.btn.active {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
