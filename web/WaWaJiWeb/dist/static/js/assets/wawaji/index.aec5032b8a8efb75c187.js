@@ -880,9 +880,10 @@ window.onload = function () {
                 util.showElement([$cancel, $afterQueue]);
 
                 $afterQueueNum.innerHTML = custom_content.data.index;
-                sessionID = custom_content.data.session_id;
-                util.setLocal('sessionID', sessionID);
+                
             }
+	    sessionID = custom_content.data.session_id;
+            util.setLocal('sessionID', sessionID);
         }
 
         // 收到预约回复，清除不断尝试预约的计时器
