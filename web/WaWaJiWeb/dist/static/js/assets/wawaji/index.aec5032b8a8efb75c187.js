@@ -310,8 +310,8 @@ window.onload = function () {
                 // 设置两路视频分别对应的canvas渲染容器
                 // 比如现在有两条流
                 // stream_id分别为
-                // r9sljdkfjslfjslkjfosdfksowsdjf这是我随便写的字符串ssfjklsdjfl_lowA
-                // r9sljdkfjslfjslkjfosdfksowsdjf这是我随便写的字符串ssfjklsdjfl_lowB
+                // r9sljdkfjslfjslkjfosdfksowsdjf这是我随便写的字符串ssfjklsdjfl_2
+                // r9sljdkfjslfjslkjfosdfksowsdjf这是我随便写的字符串ssfjklsdjfl
 
                 // 每一个stream_id对应一条流
 
