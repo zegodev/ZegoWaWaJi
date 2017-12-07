@@ -745,17 +745,18 @@ window.onload = function () {
 
     // 服务端主动推过来的 流的  创建/删除事件  updateType :“Added”||”Deleted”
     zg.onStreamUpdated = function (type, streamList) {
+	var tempStreamList;
         // code 业务逻辑
         // console.log('客户端-onStreamUpdated = ', type, streamList);
         if (type == ENUM_STREAM_UPDATE_TYPE.added) {
             console.log("streamupdate add");
-            useLocalStreamList = updateStreamInfo(streamList);
+            tempStreamList = updateStreamInfo(streamList);
             var useFlag = true,
                 streamInfo;
-            if (useLocalStreamList) {
-                for (var i = useLocalStreamList.length - 1; i >= 0; i--) {
+            if (tempStreamList) {
+                for (var i = tempStreamList.length - 1; i >= 0; i--) {
                     useFlag = false;
-                    streamInfo = useLocalStreamList[i];
+                    streamInfo = tempStreamList[i];
                     for (var j = 0; j < useLocalStreamList.length; j++) {
                         if (useLocalStreamList[j].stream_id === streamInfo.stream_id) {
                             useFlag = true;
