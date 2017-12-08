@@ -6,10 +6,6 @@ webpackJsonp([2],{
 /*eslint-disable no-console */
 __webpack_require__(14);
 
-document.addEventListener("DOMContentLoaded", function () {
-   // app.className = app.className.replace(/none/g, '');
-}, false);
-
 /***/ }),
 
 /***/ 14:
@@ -61,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /***/ }),
 
-/***/ 21:
+/***/ 18:
 /***/ (function(module, exports) {
 
 /*
