@@ -189,13 +189,18 @@ static ZegoSetting *_settingInstance;
         case ZegoAppTypeUDP:
 //            return 1739272706;  // UDP版
             
-#ifdef I18N
-            return 3322882036;   // 国际版临时用
-#else
-//            return 3177435262;  // 娃娃机专用
-            return 3671502238;  // 内部开发专用
+#ifdef OLD
 #endif
             
+#ifdef SHOW
+#endif
+            
+#ifdef DEBUG_OUTER
+            return 3671502238;  // 外部调试
+#endif
+            
+#ifdef DEBUG_INNER
+#endif
             break;
         case ZegoAppTypeI18N:
             return 3322882036;  // 国际版

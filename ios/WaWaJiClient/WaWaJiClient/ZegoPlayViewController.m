@@ -136,6 +136,7 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
 @property (nonatomic, assign) int continueChoice;    // 1 继续玩，0 不继续玩
 @property (nonatomic, assign) BOOL isGrabed;
 @property (nonatomic, assign) BOOL isStartGameDirectly;   // 非再来一次玩游戏
+@property (nonatomic, assign) int confirmCheckResult;     // CONFIRM 时，后台返回的校验结果
 
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 
@@ -286,6 +287,9 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     
     self.isGrabed = NO;
     
+    // 进入页面后，默认从服务器拉流
+    [ZegoLiveRoomApi setConfig:@"prefer_play_ultra_source=1"];
+    
     [self addLog:[NSString stringWithFormat:NSLocalizedString(@"用户ID: %@，用户名: %@", nil), [ZegoSetting sharedInstance].userID, [ZegoSetting sharedInstance].userName]];
 }
 
@@ -361,7 +365,9 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     if (streamID.length) {
         [[ZegoManager api] startPlayingStream:streamID inView:view];
         [[ZegoManager api] setViewMode:ZegoVideoViewModeScaleAspectFit ofStream:streamID];
-        [[ZegoManager api] setPlayVolume:100 ofStream:streamID];
+        
+        // 如果娃娃机控制端推流不推声音，则不需要设置音量
+//        [[ZegoManager api] setPlayVolume:100 ofStream:streamID];
     }
 }
 
@@ -369,7 +375,9 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     if (streamID.length) {
         [[ZegoManager api] startPlayingStream:streamID inView:view];
         [[ZegoManager api] setViewMode:ZegoVideoViewModeScaleAspectFit ofStream:streamID];
-        [[ZegoManager api] setPlayVolume:0 ofStream:streamID];
+        
+        // 如果娃娃机控制端推流不推声音，则不需要设置音量
+//        [[ZegoManager api] setPlayVolume:0 ofStream:streamID];
     }
 }
 
@@ -712,7 +720,7 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
             NSLog(@"%@", [NSString stringWithFormat:@"[COMMAND] CMD_APPLY 调用结果：%d(1成功)，第 %ld 次发送", invokeSuccess, (current - self.applyTimestamp) / 2 + 1]);
         }
     } else {
-        [self addLog: NSLocalizedString(@"预约后收到预约确认 reply，停止发送预约命令，等待上机", nil)];
+        [self addLog: NSLocalizedString(@"预约后收到预约回复，停止发送预约命令，等待上机", nil)];
         [self addLog:@"停止 apply 定时器"];
         [self.applyTimer invalidate];
         self.applyTimer = nil;
@@ -782,24 +790,31 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     
     if ([self.receivedReplyCounts[confirmKey] integerValue]) {
         if (self.confirm) {
-            // 收到回复且上机成功，才能进行操作
-            if (self.isOperating) {
+            if (self.confirmCheckResult == 0) {
                 [self.confirmTimer invalidate];
                 self.confirmTimer = nil;
-            
-                // 开始上机，更新界面
-                [self addLog: NSLocalizedString(@"用户开始上机，更新界面为可操作", nil)];
                 
-                if (self.loginRoomSucceed) {
-                    self.state = ZegoClientStateGamePlaying;
+                // 收到回复且上机校验通过，才能进行操作
+                if (self.isOperating) {
+                    // 准备操作，更新界面
+                    [self addLog: NSLocalizedString(@"用户开始游戏，更新界面为可操作", nil)];
                     
-                    [self setControlViewVisible:YES];
-                    
-                    // 确认上机，启动游戏计时器
-                    if (self.serverUser) {
-                        [self startPlayTimer];
+                    if (self.loginRoomSucceed) {
+                        self.state = ZegoClientStateGamePlaying;
+                        
+                        [self setControlViewVisible:YES];
+                        
+                        // 确认上机，启动游戏计时器
+                        if (self.serverUser) {
+                            [self startPlayTimer];
+                        }
                     }
                 }
+            } else {
+                [self.confirmTimer invalidate];
+                self.confirmTimer = nil;
+                
+                [self showAlert:[NSString stringWithFormat: NSLocalizedString(@"后台校验上机不通过（错误码：%d）\n请检查加密是否正确", nil), self.confirmCheckResult] title:NSLocalizedString(@"提示", nil)];
             }
         } else {
             [self.confirmTimer invalidate];
@@ -826,11 +841,15 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
         }
     } else {
         if (![self.receivedReplyCounts[confirmKey] integerValue]) {
-            BOOL invokeSuccess = [self.command sendCommandToServer:self.serverUser content:confirm completion:^(int errorCode, NSString *roomID) {
-                NSLog(@"%@", [NSString stringWithFormat:@"[COMMAND] CMD_GAME_CONFIRM 发送结果：%d(0成功)，第 %ld 次发送", errorCode, (current - self.confirmTimestamp) / 2 + 1]);
-            }];
-            
-            NSLog(@"%@", [NSString stringWithFormat:@"[COMMAND] CMD_GAME_CONFIRM 调用结果：%d(1成功)，第 %ld 次发送", invokeSuccess, (current - self.confirmTimestamp) / 2 + 1]);
+            if (confirm) {
+                BOOL invokeSuccess = [self.command sendCommandToServer:self.serverUser content:confirm completion:^(int errorCode, NSString *roomID) {
+                    NSLog(@"%@", [NSString stringWithFormat:@"[COMMAND] CMD_GAME_CONFIRM 发送结果：%d(0成功)，第 %ld 次发送", errorCode, (current - self.confirmTimestamp) / 2 + 1]);
+                }];
+                
+                NSLog(@"%@", [NSString stringWithFormat:@"[COMMAND] CMD_GAME_CONFIRM 调用结果：%d(1成功)，第 %ld 次发送", invokeSuccess, (current - self.confirmTimestamp) / 2 + 1]);
+            } else {
+                [self addLog: NSLocalizedString(@"客户端获取加密 config 失败，上机失败", nil)];
+            }
         } else {
             [self addLog: NSLocalizedString(@"客户端收到用户上机与否 reply，停止发送用户上机与否信息", nil)];
         }
@@ -958,36 +977,6 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     [self.prepareButton setBackgroundImage:[UIImage imageNamed:@"start"] forState:UIControlStateNormal];
 }
 
-- (void)onBoard {
-    [ZegoLiveRoomApi setConfig:@"prefer_play_ultra_source=1"];
-    [self switchStream];
-}
-
-- (void)offBoard {
-    [ZegoLiveRoomApi setConfig:@"prefer_play_ultra_source=0"];
-}
-
-- (void)switchStream {
-    // 停止播放所有的流
-    if (self.firstStreamID.length) {
-        [[ZegoManager api] stopPlayingStream:self.firstStreamID];
-//        [self.firstPlayView setBackgroundColor:[UIColor whiteColor]];
-    }
-    
-    if (self.secondStreamID.length) {
-        [[ZegoManager api] stopPlayingStream:self.secondStreamID];
-//        [self.secondPlayView setBackgroundColor:[UIColor whiteColor]];
-    }
-    
-    if (self.currentVisibleStreamIndex == 1) {
-        [self playVisibleStream:self.firstStreamID inView:self.firstPlayView];
-        [self playInvisibleStream:self.secondStreamID inView:self.secondPlayView];
-    } else {
-        [self playVisibleStream:self.secondStreamID inView:self.secondPlayView];
-        [self playInvisibleStream:self.firstStreamID inView:self.firstPlayView];
-    }
-}
-
 #pragma mark - Event response
 
 - (IBAction)onNetworkButton:(id)sender {
@@ -1107,9 +1096,6 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
 
 - (void)stopPlayGame {
     g_isGrabed = self.isGrabed;
-    
-    // 切换拉流源
-    [self offBoard];
     
     [[ZegoManager api] stopPlayingStream:self.firstStreamID];
     [[ZegoManager api] stopPlayingStream:self.secondStreamID];
@@ -1406,7 +1392,7 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
     if ([roomID isEqualToString:self.roomID]) {
         [self disableOperationButton:YES];
         self.prepareButton.enabled = NO;
-        [self showAlert:[NSString stringWithFormat:NSLocalizedString(@"与服务器断开连接，错误码：%d，请检查网络", nil), errorCode] title:NSLocalizedString(@"提示", nil)];
+        [self showAlert:[NSString stringWithFormat:NSLocalizedString(@"与服务器断开连接（错误码：%d）\n请检查网络是否正常", nil), errorCode] title:NSLocalizedString(@"提示", nil)];
     }
 }
 
@@ -1509,7 +1495,8 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
         NSString *userId = response[playerIdKey];
         NSInteger seq = [response[seqKey] integerValue];
         NSInteger index = [response[indexKey] integerValue];
-        self.sessionId = response[sessionIdKey];
+        self.sessionId = response[sessionIdInnerKey];
+        NSLog(@">>>>>applyReply 更新 sessionId：%@", self.sessionId);
         
         // 去重后台回复的多条同一 seq 的 apply reply
         NSInteger repeat = [self.receivedReplyCounts[applyReceivedKey] integerValue];
@@ -1519,18 +1506,14 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
                 self.receivedReplyCounts[applyReceivedKey] = @1;
                 
                 if (result == 0) {
-                    [self addLog: @"客户端收到预约申请 reply，预约成功"];
-                    
                     self.state = ZegoClientStateGameWaiting;
                     
                     // 当前正在游戏的人，也在排队之列
                     [self updatePrepareButtonToApplyStatus:[NSString stringWithFormat:NSLocalizedString(@"取消预约\n前面 %d 人", nil), index] isCancel:YES];
                     self.prepareButton.enabled = YES;
                 } else {
-                    [self addLog: @"客户端收到预约申请 reply，预约失败"];
-                    
                     if (self.state == ZegoClientStateApplying) {
-                        [self showAlert:NSLocalizedString(@"预约失败，请稍后重试", nil) title:NSLocalizedString(@"提示", nil)];
+                        [self showAlert:[NSString stringWithFormat: NSLocalizedString(@"预约失败（错误码：%d）\n请稍后重试", nil), result] title:NSLocalizedString(@"提示", nil)];
                     }
                     
                     self.state = ZegoClientStateInitial;
@@ -1555,7 +1538,13 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
 
 - (void)handleGameReady:(NSDictionary *)response {
     // ready 先于 apply reply 收到
+    
     if (self.state == ZegoClientStateApplying) {
+        [self addLog: NSLocalizedString(@"客户端先收到 gameready，仍然更新 sessionId，抛弃 apply reply", nil)];
+        
+        self.sessionId = response[sessionIdOuterKey];
+        NSLog(@">>>>>gameReady，更新 sessionId：%@", self.sessionId);
+        
         self.state = ZegoClientStateGameWaiting;
         
         // 不再发送 apply
@@ -1615,6 +1604,7 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
 
 - (void)handleConfirmReply:(NSDictionary *)response {
     NSInteger seq = [response[seqKey] intValue];
+    self.confirmCheckResult = [response[resultKey] intValue];
     
     if (self.state == ZegoClientStateGameConfirming && ![self.replyTimeout[confirmKey] intValue]) {
         // 去重后台回复的多条同一 seq 的 apply reply
@@ -1714,7 +1704,6 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
                                                                     handler:^(UIAlertAction * _Nonnull action) {
                                                                         if (self.loginRoomSucceed) {
                                                                             if (!self.isOperating) {
-                                                                                [self onBoard];
                                                                                 self.isOperating = YES;
                                                                             }
                                                                         }
@@ -1870,10 +1859,8 @@ static const NSString *resultReceivedKey =      @"receivedResultReply";
         
         self.state = ZegoClientStateGameConfirming;
         
-        // 点击确认就开始切换拉流，而不是等到收到 confirm reply，否则太慢
         if (self.loginRoomSucceed) {
             if (!self.isOperating) {
-                [self onBoard];
                 self.isOperating = YES;
             }
         }

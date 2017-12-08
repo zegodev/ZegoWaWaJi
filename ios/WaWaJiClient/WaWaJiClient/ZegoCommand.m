@@ -8,8 +8,12 @@
 
 #import "ZegoCommand.h"
 #import "ZegoManager.h"
+#import "ZegoSetting.h"
 
 @implementation ZegoCommand
+{
+    NSString *_config;
+}
 
 - (NSString *)apply:(int)clientSeq sessionId:(NSString *)sessionId continueChoice:(int)choice {
     NSTimeInterval timestamp = [self timestamp];
@@ -17,7 +21,6 @@
                            cmdKey : @513,
                            sessionIdKey : sessionId ? : @"",
                            dataKey : @{timestampKey : [NSNumber numberWithInteger:timestamp],
-                                       configKey : applyConfigSecret,
                                        continueKey : [NSNumber numberWithInt:choice]
                                        }
                            };
@@ -46,14 +49,37 @@
 }
 
 - (NSString *)gameConfirm:(int)confirm clientSeq:(int)clientSeq sessionId:(NSString *)sessionId {
+    _config = nil;
     NSTimeInterval timestamp = [self timestamp];
-    NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
-                           cmdKey : @515,
-                           sessionIdKey : sessionId ? : @"",
-                           dataKey : @{confirmKey: [NSNumber numberWithInteger:confirm],
-                                        timestampKey: [NSNumber numberWithInteger:timestamp]}
-                           };
-    return [self encodeDictionaryToJSON:dict];
+    
+    // 先从后台获取加密配置。本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取。
+    [self fetchEncryptedConfig:confirm payType:@"type" price:5 sessionId:sessionId timestamp:timestamp];
+    
+    NSTimeInterval beginTime = [self timestamp];
+    while(!_config) {
+        NSTimeInterval currentTime = [self timestamp];
+        
+        // 从后台获取加密配置超时
+        if (currentTime - beginTime > RETRY_DURATION * 1000) {
+            NSLog(@"获取后台加密配置超时");
+            break;
+        }
+    }
+
+    if (_config) {
+        NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
+                               cmdKey : @515,
+                               sessionIdKey : sessionId ? : @"",
+                               dataKey : @{confirmKey: [NSNumber numberWithInteger:confirm],
+                                           configKey: _config,
+                                           timestampKey: [NSNumber numberWithInteger:timestamp]}
+                               };
+
+        return [self encodeDictionaryToJSON:dict];
+    } else {
+        NSLog(@"获取后台加密配置失败");
+        return nil;
+    }
 }
 
 - (NSString *)moveLeft:(int)clientSeq sessionId:(NSString *)sessionId {
@@ -161,18 +187,16 @@
     
     parsedDict[seqKey] = dict[seqKey];                                      // 返回seq，必须
     parsedDict[cmdKey] = dict[cmdKey];                                      // 返回cmd，必须
+    parsedDict[sessionIdOuterKey] = dict[sessionIdKey] ? : @"" ;            // data 外的 session_id
     
     NSDictionary *data = dict[dataKey];
+    parsedDict[sessionIdInnerKey] = data[sessionIdKey] ? : @"" ;            // data 里的 session_id
     parsedDict[timestampKey] = data[timestampKey];                          // 返回时间戳，必须
-    
     parsedDict[resultKey] = data[resultKey] ? : @-1;                        // 预约回复、游戏结果——>成功/失败
-    
     parsedDict[playerIdKey] = data[playerKey][idKey] ? : @"" ;              // 预约上机回复、准备上机、游戏结果、获取用户信息、用户信息更新——>当前玩家Id
     parsedDict[playerNameKey] = data[playerKey][nameKey] ? : @"" ;          // 预约上机回复、准备上机、游戏结果、获取用户信息、用户信息更新——>当前玩家Id
     parsedDict[leftTimeKey] = data[playerKey][leftTimeKey] ? : @-1 ;        // 获取用户信息——>当前玩家剩余游戏时间
-    
     parsedDict[indexKey] = data[indexKey] ? : @-1 ;                         // 预约上机回复——>当前排在x位
-    parsedDict[sessionIdKey] = data[sessionIdKey] ? : @"" ;                 // 预约上机回复——>娃娃机Server返回的sessionId，后续请求都要带上
     parsedDict[gameTimeKey] = data[gameTimeKey] ? : @-1 ;                   // 准备上机、用户信息更新——>游戏总时长
     parsedDict[encryptedResultKey] = data[encryptedResultKey] ? : @"" ;     // 游戏结果——>结果校验串
     parsedDict[queueKey] = data[queueKey] ? : @[];                          // 获取用户信息、用户信息更新——>当前排队的玩家数组
@@ -221,6 +245,39 @@
         NSLog(@"自定义信令发送对象为空");
     }
     return NO;
+}
+
+// !!!本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取
+- (void)fetchEncryptedConfig:(int)confirm payType:(NSString *)payType price:(int)price sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp {
+    NSString *baseUrl = [NSString stringWithFormat:@"http://wsliveroom%u-api.zego.im:8181/pay?", [ZegoSetting sharedInstance].appID];
+    NSString *param = [NSString stringWithFormat:@"app_id=%u&id_name=%@&session_id=%@&confirm=%d&time_stamp=%ld&item_type=%@&item_price=%d", [ZegoSetting sharedInstance].appID, [ZegoSetting sharedInstance].userID, sessionId, confirm, timestamp, payType, price];
+    
+    NSString *requestUrl = [NSString stringWithFormat:@"%@%@", baseUrl, param];
+    NSLog(@"fetch encrypted config url: %@", requestUrl);
+    
+    NSURL *URL = [NSURL URLWithString:requestUrl];
+    NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+    
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    configuration.timeoutIntervalForRequest = 10;
+    
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration];
+    NSURLSessionTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData * data, NSURLResponse * response, NSError * error) {
+        if (error) {
+            NSLog(@"fetch encrypted config error: %@", error);
+            return;
+        }
+        
+        if (!data.length) {
+            NSLog(@"fetch encrypted config without data ");
+            return;
+        }
+        
+        _config = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSLog(@"fetch encrypted config: %@", _config);
+    }];
+    
+    [task resume];
 }
 
 @end

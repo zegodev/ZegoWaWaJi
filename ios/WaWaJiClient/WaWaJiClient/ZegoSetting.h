@@ -16,7 +16,11 @@
 
 #endif
 
-//#define I18N  // 切换到国际版宏
+// 以下环境宏，只能同时一个生效
+//#define OLD                 // 老的环境，办公室门口机器
+//#define SHOW                // 演示环境，工厂机器，蒲公英 demo & 对外 apk
+#define DEBUG_OUTER         // 外部调试环境
+//#define DEBUG_INNER         // 内部调试环境，大会议室
 
 // 房间模式
 typedef NS_ENUM(NSUInteger, ZegoRoomType)

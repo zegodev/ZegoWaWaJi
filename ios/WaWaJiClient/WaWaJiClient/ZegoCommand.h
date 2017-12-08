@@ -38,11 +38,13 @@ static const int CMD_MOVE_STOP =          0x215;   // 停止移动
 
 static const int RETRY_DURATION =         10;
 static const int PLAY_DURATION =          30;
-static const int RESULT_DURATION =        15;       // FIXME: 启动抓娃娃后，爪子回位需要花时间，先算进去
+static const int RESULT_DURATION =        20;       // FIXME: 启动抓娃娃后，爪子回位需要花时间，先算进去
 
 static const NSString *seqKey =             @"seq";
 static const NSString *cmdKey =             @"cmd";
 static const NSString *dataKey =            @"data";
+static const NSString *sessionIdInnerKey =  @"session_id_inner";
+static const NSString *sessionIdOuterKey =  @"session_id_outer";
 static const NSString *sessionIdKey =       @"session_id";
 static const NSString *timestampKey =       @"time_stamp";
 static const NSString *playerKey =          @"player";
@@ -62,9 +64,6 @@ static const NSString *playerNameKey =      @"playerName";
 static const NSString *confirmKey =         @"confirm";
 static const NSString *continueKey =        @"continue";
 static const NSString *configKey =          @"config";
-
-static const NSString *applyConfigSecret =       @"+W7TSJ/Vm9ohaDL9SmeA2CJ9RTNdZj7LJk7VV56MlM6u3lV0s/S7gCrWe89ZWmseTjWYmnD6HouF1CERwkXMQ73UCwnpaLyCnlX+2glnqB4gWdS5FlgtaRlIwmCY9tOZguaRTOkMDHEgtKAw9LcDjOnZ30n213zNt8mo9KuStyU=";
-static const NSString *resultConfigSecret =       @"+W7TSJ/Vm9ohaDL9SmeA2CJ9RTNdZj7LJk7VV56MlM6u3lV0s/S7gCrWe89ZWmseTjWYmnD6HouF1CERwkXMQ73UCwnpaLyCnlX+2glnqB4gWdS5FlgtaRlIwmCY9tOZguaRTOkMDHEgtKAw9LcDjOnZ30n213zNt8mo9KuStyU=";
 
 @interface ZegoCommand : NSObject
 

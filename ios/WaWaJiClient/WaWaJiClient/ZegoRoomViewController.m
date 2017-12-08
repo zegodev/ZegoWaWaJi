@@ -11,7 +11,11 @@
 #import "ZegoRoomInfo.h"
 #import "ZegoSetting.h"
 
-static NSString *cellIdentifier = @"RoomCellID";
+static const NSString *cellIdentifier = @"RoomCellID";
+
+static NSString *machine1 = @"00d11eca1001";
+static NSString *machine2 = @"00d200ce17bf";
+static NSString *machine3 = @"00d200ce17bf";   // 这里还要修改，临时写成 machine2
 
 @implementation ZegoRoomCell
 
@@ -264,40 +268,18 @@ static NSString *cellIdentifier = @"RoomCellID";
                         [self.roomList addObject:info];
                     }
                     
-                    NSMutableArray *tmp = [NSMutableArray arrayWithCapacity:1];
+                    NSMutableArray *zegoMachine = [NSMutableArray arrayWithCapacity:1];
                     NSMutableArray *tmpRoom = [NSMutableArray arrayWithArray:self.roomList];
                     
                     for (ZegoRoomInfo *info in self.roomList) {
-                        if ([info.roomID hasPrefix:@"WWJ_ZEGO_12345_5432"]) {
+                        if ([info.roomID hasSuffix:machine1] || [info.roomID hasSuffix:machine2] || [info.roomID hasSuffix:machine3]) {
                             [tmpRoom removeObject:info];
-                            [tmp addObject:info];
+                            [zegoMachine addObject:info];
                         }
                     }
                     
-                     if (tmp.count == 2) {
-                        ZegoRoomInfo *info0 = tmp[0];
-                        ZegoRoomInfo *info1 = tmp[1];
-                        if (![info0.roomID hasSuffix:@"54321"] && ![info1.roomID hasSuffix:@"54322"]) {
-                            [tmp exchangeObjectAtIndex:0 withObjectAtIndex:1];
-                        }
-                    } else if (tmp.count == 3) {
-                        for (int i = 0; i < tmp.count ; i++) {
-                            ZegoRoomInfo *info = tmp[i];
-                            if ([info.roomID hasSuffix:@"54321"]) {
-                                [tmp exchangeObjectAtIndex:0 withObjectAtIndex:i];
-                                continue;
-                            } else if ([info.roomID hasSuffix:@"54322"]) {
-                                [tmp exchangeObjectAtIndex:1 withObjectAtIndex:i];
-                                continue;
-                            } else {
-                                [tmp exchangeObjectAtIndex:2 withObjectAtIndex:i];
-                                continue;
-                            }
-                        }
-                    }
-                    
-                    [tmp addObjectsFromArray:tmpRoom];
-                    self.roomList = tmp;
+                    [zegoMachine addObjectsFromArray:tmpRoom];
+                    self.roomList = zegoMachine;
 
                     [self.roomView reloadData];
                 }
@@ -342,11 +324,17 @@ static NSString *cellIdentifier = @"RoomCellID";
     
     ZegoRoomInfo *roomInfo = self.roomList[indexPath.item];
     
-    if (![roomInfo.roomID hasPrefix:@"WWJ_ZEGO_00d20"]) {
-        [cell.roomImageView setImage:[UIImage imageNamed:@"customer"]];
-    } else {
+#ifdef SHOW
+    // 演示环境里都是 zego 的机器
+    [cell.roomImageView setImage:[UIImage imageNamed:[NSString stringWithFormat:@"0%ld", indexPath.item % 6 + 1]]];
+#else
+    if ([roomInfo.roomID hasSuffix:machine1] || [roomInfo.roomID hasSuffix:machine2] || [roomInfo.roomID hasSuffix:machine3]) {
         [cell.roomImageView setImage:[UIImage imageNamed:[NSString stringWithFormat:@"0%ld", indexPath.item % 6 + 1]]];
+    } else {
+        [cell.roomImageView setImage:[UIImage imageNamed:@"customer"]];
     }
+#endif
+    
     
     cell.roomTitleLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
     if (roomInfo.roomName.length > 0) {
