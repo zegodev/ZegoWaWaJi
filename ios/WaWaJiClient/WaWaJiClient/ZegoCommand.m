@@ -10,10 +10,16 @@
 #import "ZegoManager.h"
 #import "ZegoSetting.h"
 
+static NSString *payType = @"type";
+static int price = 5;
+
+@interface ZegoCommand()
+
+typedef void(^completionBlock)(NSString *encryptedConfig);
+
+@end
+
 @implementation ZegoCommand
-{
-    NSString *_config;
-}
 
 - (NSString *)apply:(int)clientSeq sessionId:(NSString *)sessionId continueChoice:(int)choice {
     NSTimeInterval timestamp = [self timestamp];
@@ -49,37 +55,29 @@
 }
 
 - (NSString *)gameConfirm:(int)confirm clientSeq:(int)clientSeq sessionId:(NSString *)sessionId {
-    _config = nil;
     NSTimeInterval timestamp = [self timestamp];
     
+    __block NSString *confirmCommand = nil;
     // 先从后台获取加密配置。本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取。
-    [self fetchEncryptedConfig:confirm payType:@"type" price:5 sessionId:sessionId timestamp:timestamp];
+    [self fetchEncryptedConfig:confirm payType:payType price:price sessionId:sessionId timestamp:timestamp completion:^(NSString *encryptedConfig) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
+                                   cmdKey : @515,
+                                   sessionIdKey : sessionId ? : @"",
+                                   dataKey : @{confirmKey: [NSNumber numberWithInteger:confirm],
+                                               configKey: encryptedConfig,
+                                               timestampKey: [NSNumber numberWithInteger:timestamp]}
+                                   };
+            confirmCommand = [self encodeDictionaryToJSON:dict];
+        });
+    }];
     
-    NSTimeInterval beginTime = [self timestamp];
-    while(!_config) {
-        NSTimeInterval currentTime = [self timestamp];
-        
-        // 从后台获取加密配置超时
-        if (currentTime - beginTime > RETRY_DURATION * 1000) {
-            NSLog(@"获取后台加密配置超时");
-            break;
-        }
+    if (!confirmCommand) {
+        NSLog(@"等待后台返回加密 config");
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:RETRY_DURATION / 2.0]];
     }
-
-    if (_config) {
-        NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
-                               cmdKey : @515,
-                               sessionIdKey : sessionId ? : @"",
-                               dataKey : @{confirmKey: [NSNumber numberWithInteger:confirm],
-                                           configKey: _config,
-                                           timestampKey: [NSNumber numberWithInteger:timestamp]}
-                               };
-
-        return [self encodeDictionaryToJSON:dict];
-    } else {
-        NSLog(@"获取后台加密配置失败");
-        return nil;
-    }
+    
+    return confirmCommand;
 }
 
 - (NSString *)moveLeft:(int)clientSeq sessionId:(NSString *)sessionId {
@@ -248,7 +246,7 @@
 }
 
 // !!!本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取
-- (void)fetchEncryptedConfig:(int)confirm payType:(NSString *)payType price:(int)price sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp {
+- (void)fetchEncryptedConfig:(int)confirm payType:(NSString *)payType price:(int)price sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp completion:(completionBlock)block {
     NSString *baseUrl = [NSString stringWithFormat:@"http://wsliveroom%u-api.zego.im:8181/pay?", [ZegoSetting sharedInstance].appID];
     NSString *param = [NSString stringWithFormat:@"app_id=%u&id_name=%@&session_id=%@&confirm=%d&time_stamp=%ld&item_type=%@&item_price=%d", [ZegoSetting sharedInstance].appID, [ZegoSetting sharedInstance].userID, sessionId, confirm, timestamp, payType, price];
     
@@ -273,8 +271,12 @@
             return;
         }
         
-        _config = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        NSLog(@"fetch encrypted config: %@", _config);
+        NSString *config;
+        config = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSLog(@"fetch encrypted config: %@", config);
+        if (block) {
+            block(config);
+        }
     }];
     
     [task resume];
