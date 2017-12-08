@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="300dp"
+              android:layout_height="150dp"
+              android:gravity="center"
+              android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/grub_successfully"
+        android:textColor="@color/text_black"
+        android:textSize="16sp"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_give_up"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="返回娃娃机"
+            android:textSize="14sp"
+            />
+
+        <Button
+            android:id="@+id/btn_continue"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="再来一局"
+            android:textSize="14sp"
+            />
+    </LinearLayout>
+
+</LinearLayout>

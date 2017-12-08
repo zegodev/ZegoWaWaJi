@@ -1,0 +1,69 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+    defaultConfig {
+        applicationId "com.zego.wawaji_client"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            //设置支持的SO库架构
+            abiFilters 'armeabi-v7a'
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("../../config/your_app_key.jks")
+            storePassword "your_keystore_password"
+            keyAlias "your_key_alias"
+            keyPassword "your_key_password"
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            versionNameSuffix "-debug"
+            jniDebuggable true
+        }
+        release {
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            versionNameSuffix "-release"
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            debuggable true
+            jniDebuggable true
+            renderscriptDebuggable true
+            pseudoLocalesEnabled true
+            minifyEnabled false
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:recyclerview-v7:26.0.0-alpha1'
+    compile 'com.android.support:cardview-v7:26.0.0-alpha1'
+    compile 'com.google.code.gson:gson:2.7'
+    compile 'com.tencent.bugly:crashreport:2.2.2'
+    compile 'com.tencent.bugly:nativecrashreport:3.0'
+    compile 'eu.the4thfloor.volley:com.android.volley:2015.05.28'
+}
