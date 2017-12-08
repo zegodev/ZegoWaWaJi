@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="zg_resolution_types">
+        <item>@string/zg_text_resolution_type_lowest</item>
+        <item>@string/zg_text_resolution_type_Low</item>
+        <item>@string/zg_text_resolution_type_Standard</item>
+        <item>@string/zg_text_resolution_type_High</item>
+        <item>@string/zg_text_resolution_type_Higher</item>
+        <item>@string/zg_text_resolution_type_Highest</item>
+        <item>@string/zg_text_resolution_type_Customize</item>
+    </string-array>
+
+    <string-array name="zg_resolutions" translatable="false">
+        <item >240 x 320</item>
+        <item >360 x 480</item>
+        <item >480 x 640</item>
+        <item >720 x 960</item>
+        <item >720 x 1280</item>
+        <item >1280 x 1920</item>
+    </string-array>
+</resources>
