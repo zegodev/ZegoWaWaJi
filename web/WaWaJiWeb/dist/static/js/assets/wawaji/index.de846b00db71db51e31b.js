@@ -183,7 +183,7 @@ window.onload = function () {
     function doLogin() {
         console.log("start doLogin");
         // 2.  登陆
-        zg.login(roomID, 1, loginToken, function (streamList) {
+        zg.login(roomID, 2, loginToken, function (streamList) {
             console.log('login sucess - data = ', streamList);
             // 缓存新的流
             useLocalStreamList = updateStreamInfo(streamList) || [];
