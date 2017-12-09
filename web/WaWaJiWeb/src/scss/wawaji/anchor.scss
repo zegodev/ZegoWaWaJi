@@ -1,0 +1,32 @@
+/* 左上角当前主播名字 */
+.anchor-wrapper {
+    // display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2rem;
+    height: .6rem;
+    padding: 0 .1rem 0 .57rem;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    font-size: .24rem;
+    line-height: .65rem;
+    border-radius: .07rem 0 .07rem 0 / .07rem 0 .07rem 0;
+    z-index: 10;
+    &:before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: .2rem;
+        width: .27rem;
+        height: .28rem;
+        background: url('../../static/images/wawaji/gou.png') no-repeat;
+        background-size: 100%;
+        transform: translate3d(0, -50%, 0);
+    }
+    .anchor {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

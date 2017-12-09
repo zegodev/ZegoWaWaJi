@@ -1,0 +1,12 @@
+/* 视角切换按钮*/
+.switch-btn {
+    position: absolute;
+    right: .16rem;
+    top: 50%;
+    width: 1.02rem;
+    height: 1.02rem;
+    background: url('../../static/images/wawaji/switch@2x.png') no-repeat;
+    background-size: 100%;
+    transform: translate3d(0, -50%, 0);
+    z-index: 10;
+}

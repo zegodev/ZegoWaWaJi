@@ -1,0 +1,65 @@
+/*操作按钮开始*/
+.operate-wrapper {
+    display: none;
+    position: absolute;
+    bottom: .2rem;
+    height: 2.96rem;
+    z-index: 10;
+}
+/*操作按钮结束*/
+
+/*方向按钮开始*/
+.direct-wrapper {
+    position: relative;
+    float: left;
+    width: 3.8rem;
+    height: 100%;
+    margin: 0 1.27rem 0 0.5rem;
+    .top, .left, .right, .bottom {
+        position: absolute;
+        width: 1.22rem;
+        height: 1.22rem;
+    }
+    .top, .bottom {
+        left: 50%;
+        transform: translate3d(-50%, 0, 0);
+    }
+    .top {
+        top: 0;
+        background: url('../../static/images/wawaji/up@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .bottom {
+        bottom: 0;
+        background: url('../../static/images/wawaji/down@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .left, .right {
+        top: 50%;
+        transform: translate3d(0, -50%, 0);
+    }
+    .left {
+        left: 0;
+        background: url('../../static/images/wawaji/left@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .right {
+        right: 0;
+        background: url('../../static/images/wawaji/right@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .opr-btn, .btn-mask {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background-color: transparent;
+    }
+    &.front .side-btn {
+        z-index: 0;
+    }
+    &.disabled .btn-mask {
+        z-index: 2;
+    }
+}
+/*方向按钮结束*/

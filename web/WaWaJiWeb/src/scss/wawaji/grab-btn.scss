@@ -1,0 +1,25 @@
+/*抓按钮开始*/
+.action-wrapper {
+	position: relative;
+    float: right;
+    height: 100%;
+    /* 游戏倒计时 */
+	.count-down-wrapper {
+	    // display: none;
+	    position: absolute;
+	    width: 1.4rem;
+	    height: .6rem;
+	    color: #fff;
+	    font-size: .7rem;
+	    text-shadow: 2px 2px 5px #000;
+	    z-index: 110;
+	}
+	.go {
+	    width: 1.42rem;
+	    height: 1.42rem;
+	    margin-top: 1.17rem;
+	    background: url('../../static/images/wawaji/go@2x.png') no-repeat;
+	    background-size: 100%;
+	}
+}
+/*抓按钮结束*/

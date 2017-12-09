@@ -1,0 +1,74 @@
+/*视频视图开始*/
+.result-wrapper {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    z-index: 110;
+    &.success {
+        display: block;
+        .successful {
+            display: block;
+        }
+    }
+    &.fail {
+        display: block;
+        .failure {
+            display: block;
+        }
+    }
+    .mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, .7);
+    }
+    .successful, .failure {
+        display: none;
+        position: relative;
+        width: 6.2rem;
+        height: 6.1rem;
+        margin: 1.7rem auto .34rem;
+        z-index: 1;
+    }
+    .successful {
+        background: url('../../static/images/wawaji/successful@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .failure {
+        display: none;
+        background: url('../../static/images/wawaji/failure@2x.png') no-repeat;
+        background-size: 100%;
+    }
+    .back, .play-again {
+        display: inline-block;
+        position: relative;
+        width: 3rem;
+        height: 1.2rem;
+        margin: 0 auto;
+        color: #fff;
+        font-size: .34rem;
+        line-height: 1.15rem;
+        text-align: center;
+        z-index: 1;
+    }
+    .back {
+        background: url('../../static/images/wawaji/return@2x.png') no-repeat;
+        background-size: 100% 100%;
+    }
+    .play-again {
+        margin-left: .3rem;
+        background: url('../../static/images/wawaji/start-the-game@2x.png') no-repeat;
+        background-size: 100% 100%;
+        &.disabled {
+            background: skyblue;
+            border-radius: .5rem;
+        }
+    }
+}
+/*视频视图结束*/

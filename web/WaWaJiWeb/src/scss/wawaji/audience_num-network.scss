@@ -1,0 +1,34 @@
+/* 房间人数/ 网络状态 */
+.audience-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2.52rem;
+    height: .6rem;
+    padding-left: .2rem;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    font-size: .22rem;
+    line-height: .65rem;
+    border-radius: 0 .07rem 0 .07rem / 0 .07rem 0 .07rem;
+    z-index: 10;
+    & > * {
+        float: left;
+    }
+    .net-state {
+        position: relative;
+        margin-right: .2rem;
+        padding-left: .2rem;
+        &:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: .14rem;
+            height: .14rem;
+            background: #5ae264;
+            border-radius: 50%;
+            transform: translate3d(0, -50%, 0);
+        }
+    }
+}

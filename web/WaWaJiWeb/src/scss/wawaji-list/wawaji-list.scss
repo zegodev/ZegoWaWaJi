@@ -1,0 +1,69 @@
+#app {
+    padding-bottom: .2rem;
+    background: #0d70ff;
+    min-height: 100%;
+}
+.wawaji-list {
+    margin: .3rem .24rem;
+    padding-top: .68rem;
+    padding-bottom: .4rem;
+    background: #fff;
+    text-align: center;
+    border-radius: .07rem;
+    .list-item {
+        float: left;
+        width: 2.74rem;
+        margin: 0 0 .48rem .57rem;
+        .hd {
+            display: block;
+            position: relative;
+            height: 2.74rem;
+            border: 1px solid #b3b3b3;
+            .icon {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 1.16rem;
+                height: 1.16rem;
+                background: url('../../static/images/roomlist/list-icon/01@2x.png') center no-repeat;
+                background-size: 100%;
+                transform: translate3d(-50%, -50%, 0);
+            }
+            .ft-msg {
+                position: absolute;
+                bottom: .08rem;
+                width: 100%;
+                height: .32rem;
+                padding: 0 .14rem;
+                font-size: .22rem;
+                line-height: .32rem;
+                .name {
+                    float: left;
+                    width: .82rem;
+                    height: 100%;
+                    color: #fff;
+                    text-align: center;
+                    border-radius: .04rem;
+                    &.playing {
+                        background: #ffa10d;
+                    }
+                    &.free {
+                        background: #5ae264;
+                    }
+                }
+                .money {
+                    float: right;
+                }
+            }
+        }
+        .room-title {
+            overflow: hidden;
+            margin-top: .1rem;
+            font-size: .26rem;
+            line-height: .32rem;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}

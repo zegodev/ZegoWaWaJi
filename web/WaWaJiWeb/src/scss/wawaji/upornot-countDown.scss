@@ -1,0 +1,49 @@
+/*倒计时开始*/
+.upornot-wrapper {
+	display: none;
+    position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	text-align: center;
+	z-index: 110;
+	.mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, .7);
+		z-index: 100;
+	}
+	.icon {
+		position: relative;
+		width: 6.2rem;
+		height: 6.1rem;
+		margin: 2rem auto .5rem;
+		background: url('../../static/images/wawaji/book-success@2x.png') no-repeat;
+		background-size: 100%;
+		z-index: 101;
+	}
+	.upornot-cancel, .upornot-confirm {
+		position: relative;
+		display: inline-block;
+		width: 2.92rem;
+		height: 1.32rem;
+		color: #fff;
+		font-size: .34rem;
+		line-height: 1.32rem;
+		z-index: 101;
+	}
+	.upornot-cancel {
+		background: url('../../static/images/wawaji/to-give-up@2x.png') no-repeat;
+		background-size: 100%;
+	}
+	.upornot-confirm {
+		margin-left: .32rem;
+		background: url('../../static/images/wawaji/start-the-game@2x.png') no-repeat;
+		background-size: 100%;
+	}
+}
+/*视频视图结束*/

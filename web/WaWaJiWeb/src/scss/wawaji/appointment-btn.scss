@@ -1,0 +1,55 @@
+/*申请预约开始*/
+.appointment-wrapper {
+    position: absolute;
+    bottom: .38rem;
+    left: 50%;
+    width: 3.72rem;
+    height: 1.38rem;
+    color: #fff;
+    text-align: center;
+    transform: translate3d(-50%, 0, 0);
+    z-index: 11;
+    // 预约/取消预约
+    .apply-wrapper {
+        position: relative;
+        height: 100%;
+        font-size: .34rem;
+        .cancel, .apply {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            padding-top: .30rem;
+            -webkit-user-select: none;
+            z-index: 1;
+        }
+        .apply {
+            background: url('../../static/images/wawaji/book@2x.png') center no-repeat;
+            background-size: 100%;
+        }
+        .cancel {
+            display: none;
+            background: url('../../static/images/wawaji/cancel@2x.png') center no-repeat;
+            background-size: 100%;
+        }
+        &.disabled {
+            .cancel {
+    			z-index: 2;
+    		}
+    	}
+    }
+    // 排队
+    .line-up-wrapper {
+        position: absolute;
+        bottom: .4rem;
+        width: 100%;
+        font-size: .22rem;
+        text-align: center;
+        z-index: 2;
+        -webkit-user-select: none;
+        .after-queue {
+            display: none;
+        }
+    }
+}
+/*申请预约结束*/

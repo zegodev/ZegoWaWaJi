@@ -1,0 +1,39 @@
+/*视频视图开始*/
+
+.view-wrapper {
+    overflow: hidden;
+    position: relative;
+    margin: 0 .14rem .46rem;
+    background: #fff;
+    border-radius: .07rem;
+    &.front {
+        .frontview-wrapper {
+            display: block;
+            z-index: 2;
+        }
+    }
+    .frontview-wrapper,
+    .sideview-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+    .frontview-wrapper {
+        display: none;
+    }
+    #frontview,
+    #sideview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+}
+
+
+/*视频视图结束*/

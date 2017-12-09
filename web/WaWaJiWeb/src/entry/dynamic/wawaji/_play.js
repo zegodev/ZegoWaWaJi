@@ -1,118 +1,120 @@
-webpackJsonp([0],[
-/* 0 */,
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
 /*global ZegoClient*/
 
+
 // 工具函数
-var util = __webpack_require__(16);
+const util = require('./_util.js');
+
 
 // dom元素
 
 /**********************/
 
-var $anchorWrapper = util.getById('anchor-wrapper'); // 主播/正在游戏的昵称盒子
-var $anchor = util.getById('anchor'); // 主播/正在游戏的昵称
+var $anchorWrapper = util.getById('anchor-wrapper');            // 主播/正在游戏的昵称盒子
+var $anchor = util.getById('anchor');                           // 主播/正在游戏的昵称
 
 
-var $audience = util.getById('audience'); // 观众/房间人数
+var $audience = util.getById('audience');                       // 观众/房间人数
 
 
-var $viewWrapper = util.getById('view-wrapper'); // 视频流视图盒子
-var $frontView = util.getById('frontview'); // 正面视图
-var $sideView = util.getById('sideview'); // 侧面视图
+var $viewWrapper = util.getById('view-wrapper');                // 视频流视图盒子
+var $frontView = util.getById('frontview');                     // 正面视图
+var $sideView = util.getById('sideview');                       // 侧面视图
 
 
-var $switchBtn = util.getById('switch-btn'); // 视图切换按钮
+var $switchBtn = util.getById('switch-btn');                    // 视图切换按钮
 
 
-var $appointmentWrapper = util.getById('appointment-wrapper'); // 1.预约和取消预约按钮 以及 2.其下排队信息 的盒子
-var $applyWrapper = util.getById('apply-wrapper'); // 预约和取消预约按钮的盒子
-var $apply = util.getById('apply'); // 预约按钮
-var $cancel = util.getById('cancel'); // 取消预约按钮
-var $beforeQueue = util.getById('before-queue'); // 预约之前的显示块   当前排队人数 xxx 人
-var $beforeQueueNum = util.getById('before-queueNum'); // 预约之前的显示块   当前排队人数 xxx 人  此处为xxx的人数数值
-var $afterQueue = util.getById('after-queue'); // 预约成功之后的显示块   你已预约成功，当前排在第 xxx 位
-var $afterQueueNum = util.getById('after-queueNum'); // 预约成功之后的显示块   你已预约成功，当前排在第 xxx 位，此处为xxx位数值
+var $appointmentWrapper = util.getById('appointment-wrapper');  // 1.预约和取消预约按钮 以及 2.其下排队信息 的盒子
+var $applyWrapper = util.getById('apply-wrapper');              // 预约和取消预约按钮的盒子
+var $apply = util.getById('apply');                             // 预约按钮
+var $cancel = util.getById('cancel');                           // 取消预约按钮
+var $beforeQueue = util.getById('before-queue');                // 预约之前的显示块   当前排队人数 xxx 人
+var $beforeQueueNum = util.getById('before-queueNum');          // 预约之前的显示块   当前排队人数 xxx 人  此处为xxx的人数数值
+var $afterQueue = util.getById('after-queue');                  // 预约成功之后的显示块   你已预约成功，当前排在第 xxx 位
+var $afterQueueNum = util.getById('after-queueNum');            // 预约成功之后的显示块   你已预约成功，当前排在第 xxx 位，此处为xxx位数值
 
 
-var $upornotWrapper = util.getById('upornot-wrapper'); // 上机或者不上机盒子
-var $upornotCountDown = util.getById('upornot-count-down'); // 上机或者不上机盒子倒计时
+var $upornotWrapper = util.getById('upornot-wrapper');          // 上机或者不上机盒子
+var $upornotCountDown = util.getById('upornot-count-down');     // 上机或者不上机盒子倒计时
 
 
-var $operateWrapper = util.getById('operate-wrapper'); // 操作元素  1.上下左右按钮、2.抓取按钮的盒子
-var $directWrapper = util.getById('direct-wrapper'); // 上下左右按钮的盒子
-var $frontUp = util.getById('front-up'); // 正面 上按钮
-var $sideUp = util.getById('side-up'); // 侧面 上按钮
-var $frontDown = util.getById('front-down'); // 正面 下按钮
-var $sideDown = util.getById('side-down'); // 侧面 下按钮
-var $frontLeft = util.getById('front-left'); // 正面 左按钮
-var $sideLeft = util.getById('side-left'); // 侧面 左按钮
-var $frontRight = util.getById('front-right'); // 正面 右按钮
-var $sideRight = util.getById('side-right'); // 侧面 右按钮
-var $go = util.getById('go'); // 抓取按钮
+var $operateWrapper = util.getById('operate-wrapper');          // 操作元素  1.上下左右按钮、2.抓取按钮的盒子
+var $directWrapper = util.getById('direct-wrapper');            // 上下左右按钮的盒子
+var $frontUp = util.getById('front-up');                        // 正面 上按钮
+var $sideUp = util.getById('side-up');                          // 侧面 上按钮
+var $frontDown = util.getById('front-down');                    // 正面 下按钮
+var $sideDown = util.getById('side-down');                      // 侧面 下按钮
+var $frontLeft = util.getById('front-left');                    // 正面 左按钮
+var $sideLeft = util.getById('side-left');                      // 侧面 左按钮
+var $frontRight = util.getById('front-right');                  // 正面 右按钮
+var $sideRight = util.getById('side-right');                    // 侧面 右按钮
+var $go = util.getById('go');                                   // 抓取按钮
 
 
-var $countDownWrapper = util.getById('count-down-wrapper'); // 上机后的游戏倒计时盒子
-var $countDown = util.getById('count-down'); // 上机后的游戏倒计时
+var $countDownWrapper = util.getById('count-down-wrapper');     // 上机后的游戏倒计时盒子
+var $countDown = util.getById('count-down');                    // 上机后的游戏倒计时
 
 
-var $upornotCancel = util.getById('upornot-cancel'); // 取消上机按钮
-var $upornotConfirm = util.getById('upornot-confirm'); // 确认上机按钮
+var $upornotCancel = util.getById('upornot-cancel');            // 取消上机按钮
+var $upornotConfirm = util.getById('upornot-confirm');          // 确认上机按钮
 
 
-var $resultWrapper = util.getById('result-wrapper'); // 游戏结束界面盒子
-var $back = util.getById('back'); // 游戏结束后的返回娃娃机按钮
+
+var $resultWrapper = util.getById('result-wrapper');            // 游戏结束界面盒子
+var $back = util.getById('back');                               // 游戏结束后的返回娃娃机按钮
 
 
 // 游戏结束后，倒计时返回娃娃机
-var $playAgainCountDown = util.getById('play-again-count-down'); // 再来一次按钮
+var $playAgainCountDown = util.getById('play-again-count-down');// 再来一次按钮
 var $playAgain = util.getById('play-again');
 
-var $audio = util.getById('audio'); // 音效
+
+var $audio = util.getById('audio');                             // 音效
 
 
-var $logBtn = util.getById('log-btn'); // 日志
+var $logBtn = util.getById('log-btn');                          // 日志
 var $logViewer = util.getById('log-view');
+
 
 /**********************/
 
+
 var ENUM_STREAM_UPDATE_TYPE = { added: 0, deleted: 1 };
 
-var showLog = false; //日志显示
 
-var appid = 3265350344; //appid
+var showLog = false;                                                            //日志显示
 
-var roomID = ""; //房间id
-var idName = ""; //用户id
-var nickName = ""; //用户昵称
-var anchor_id = ""; //娃娃机主播id
+var appid = 3265350344;                                                         //appid
+                                                         
+var roomID = "";                                                                //房间id
+var idName = "";                                                                //用户id
+var nickName = "";                                                              //用户昵称
+var anchor_id = "";                                                             //娃娃机主播id
 
 
 // 链接websocket
-var server = 'ws://wsliveroom' + appid + '-api.zego.im:8181/ws'; //wawaji接入服务器地址    --- 即构下发的server地址
+var server = 'ws://wsliveroom' + appid + '-api.zego.im:8181/ws';                //wawaji接入服务器地址    --- 即构下发的server地址
 
-var logUrl = ''; //log服务器地址          --- 可填可不填
-var loginTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/token'; //登录token派发地址       --- 业务后台自己的地址
-var payTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/pay'; //支付地址               --- 业务后台自己的地址
+var logUrl = '';                                                                //log服务器地址          --- 可填可不填
+var loginTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/token';    //登录token派发地址       --- 业务后台自己的地址
+var payTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/pay';        //支付地址               --- 业务后台自己的地址
 
 
-var zg; //zegoClient对象
-var clientSeq = 1; //发送客户端请求seq
-var serverSeq = 0; //发送服务端返回seq
+var zg;                                                                         //zegoClient对象
+var clientSeq = 1;                                                              //发送客户端请求seq
+var serverSeq = 0;                                                              //发送服务端返回seq
 
-var playingStatus = false; //是否游戏中状态
-var playCountDownTime = 30; //游戏总时长
-var upornotCountDownTime = 10; //上机确认超时时长
-var countDownTimer; //超时timer
+var playingStatus = false;                                                      //是否游戏中状态
+var playCountDownTime = 30;                                                     //游戏总时长
+var upornotCountDownTime = 10;                                                  //上机确认超时时长
+var countDownTimer;                                                             //超时timer
 
-var isInitApply = true; // 是否是从预约按钮开始预约，还是从结果页开始自动预约
+var isInitApply = true;                                                         // 是否是从预约按钮开始预约，还是从结果页开始自动预约
 
-var loginToken = ""; //登录令牌
-var payToken = ""; //支付令牌
-var itemType = "itme_type1"; //商品类型
-var itemPrice = 6; //商品价格
+var loginToken = "";                                                            //登录令牌
+var payToken = "";                                                              //支付令牌
+var itemType = "itme_type1";                                                    //商品类型
+var itemPrice = 6;                                                              //商品价格
 
 var payTimestamp = 0;
 
@@ -130,10 +132,16 @@ nickName = "u" + idName;
 roomID = window.location.search.slice(1).split('=')[1];
 console.log('roomid = ', roomID, '\n');
 
+
+
+
+
 // 文档加载完毕后执行
-window.onload = function () {
+window.onload = function() {
     zg = window.zg = new ZegoClient();
     console.log('zg = ', zg);
+
+
 
     /*************************************/
 
@@ -149,7 +157,12 @@ window.onload = function () {
         logUrl: logUrl
     });
 
+
+
     /*************************************/
+
+
+
 
     // 2.  登录
     var videoVolumeList = [50, 0];
@@ -164,7 +177,7 @@ window.onload = function () {
     function loadLoginToken() {
         var xmlhttp;
         xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
+        xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4) {
                 if (xmlhttp.status == 200) {
                     console.log("login token succ:" + xmlhttp.responseText);
@@ -183,7 +196,7 @@ window.onload = function () {
     function doLogin() {
         console.log("start doLogin");
         // 2.  登陆
-        zg.login(roomID, 2, loginToken, function (streamList) {
+        zg.login(roomID, 2, loginToken, function(streamList) {
             console.log('login sucess - data = ', streamList);
             // 缓存新的流
             useLocalStreamList = updateStreamInfo(streamList) || [];
@@ -191,7 +204,8 @@ window.onload = function () {
             console.log("stream count:" + useLocalStreamList.length);
             // 登录成功后，马上主动发送获取游戏信息的命令
             getGameInfo();
-        }, function (err) {
+
+        }, function(err) {
             console.log('login error - data = ', err);
         });
     }
@@ -201,7 +215,11 @@ window.onload = function () {
         sendCustomCMD(++clientSeq, 518, operateData);
     }
 
+
+
     /*************************************/
+
+
 
     // 3、拉流
 
@@ -213,7 +231,7 @@ window.onload = function () {
         var useStreamList = [];
         //取主播id
         if (streamList != null || streamList.length !== 0) {
-            streamList.forEach(function (item) {
+            streamList.forEach(function(item) {
                 // 我们这边的demo环境，一个房间中不止两条流，所以用这个方法做了筛选
                 // 如果开发者那边的环境能保证一个房间中只有两条流，就可以不用筛选
                 if (item.anchor_nick_name.indexOf("WWJS") === 0) {
@@ -225,7 +243,7 @@ window.onload = function () {
         console.log('useStreamList = ', useStreamList);
 
         if (useStreamList.length !== 0) {
-            useStreamList.forEach(function (item) {
+            useStreamList.forEach(function(item) {
                 // 设置两路视频分别对应的canvas渲染容器
                 // 比如现在有两条流
                 // stream_id分别为
@@ -285,8 +303,7 @@ window.onload = function () {
                         break;
                     }
                 }
-                if (!playFlag) {
-                    // 不是重用的流可以重新设置播放，重用的不变
+                if (!playFlag) { // 不是重用的流可以重新设置播放，重用的不变
 
                     /* 若使用低延迟视频流播放方案不用设置该项  ----  sdk默认使用低延迟视频流播放
                     播放前可以使用该接口设置播放的视频流类型   ----  0: cdn（有延迟）  1 ：ultra（低延迟）  
@@ -297,7 +314,7 @@ window.onload = function () {
                     zg.setPlayVolume(useStreamList[m].stream_id, useStreamList[m].videoVolume);
 
                     // 该计时器仅供调试使用，帮助开发者了解是否有流地址存在，正式环境可删除掉
-                    setTimeout(function () {
+                    setTimeout(function() {
                         console.log('供播放的流地址 0 = ', zg.streamList[0] && zg.streamList[0].urls_ws);
                         console.log('供播放的流地址 1 = ', zg.streamList[1] && zg.streamList[1].urls_ws);
                     }, 1000);
@@ -310,23 +327,26 @@ window.onload = function () {
     // 视角切换状态
     var viewStatus = 0;
     // 视角切换
-    $switchBtn.addEventListener('click', function (e) {
+    $switchBtn.addEventListener('click', function(e) {
         playAudio();
         viewStatus = e.target.dataset['switch'];
-        if (viewStatus === '1') {
-            // 此时处于正面，切换为侧面
+        if (viewStatus === '1') { // 此时处于正面，切换为侧面
             e.target.dataset['switch'] = '0';
             util.removeClass($viewWrapper, 'front');
             util.removeClass($directWrapper, 'front');
-        } else {
-            // 此时处于侧面，切换为正面
+        } else { // 此时处于侧面，切换为正面
             e.target.dataset['switch'] = '1';
             util.addClass($viewWrapper, 'front');
             util.addClass($directWrapper, 'front');
         }
+
     });
 
+
+
     /*************************************/
+
+
 
     // 4. 发送自定义消息
     var operateData = { // 默认回复信息
@@ -336,20 +356,30 @@ window.onload = function () {
 
     // 抓取 按钮元素
     var directMapObj = {
-        go: $go
+        go: $go,
     };
     // 抓取按钮 绑定的事件
     var directHandler = {
-        go: gotocatch
+        go: gotocatch,
     };
 
     // 阻止默认事件  阻止鼠标/手机长按屏幕 弹出菜单
-    var preventObj = [$frontLeft, $sideLeft, $frontRight, $sideRight, $frontUp, $sideUp, $frontDown, $sideDown];
+    var preventObj = [
+        $frontLeft,
+        $sideLeft,
+        $frontRight,
+        $sideRight,
+        $frontUp,
+        $sideUp,
+        $frontDown,
+        $sideDown,
+    ];
     for (var i = 0; i < preventObj.length; i++) {
-        preventObj[i].addEventListener('contextmenu', function (e) {
+        preventObj[i].addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     }
+
 
     /************** 预约重试 *************/
     // 申请预约
@@ -367,7 +397,7 @@ window.onload = function () {
             clearInterval(appointmentTimer);
         }
         appointment();
-        appointmentTimer = setInterval(function () {
+        appointmentTimer = setInterval(function() {
             appointment();
         }, 2000);
     }
@@ -388,6 +418,7 @@ window.onload = function () {
         sendCustomCMD(++clientSeq, 513, configData);
     }
 
+
     /************** 取消预约重试 *************/
     // 取消预约
     $cancel.addEventListener('click', cancelAppointmentClientHandler);
@@ -403,7 +434,7 @@ window.onload = function () {
             clearInterval(cancelAppointmentTimer);
         }
         cancelAppointment();
-        cancelAppointmentTimer = setInterval(function () {
+        cancelAppointmentTimer = setInterval(function() {
             cancelAppointment();
         }, 2000);
     }
@@ -420,6 +451,7 @@ window.onload = function () {
         console.log('取消预约!');
         sendCustomCMD(++clientSeq, 514, operateData);
     }
+
 
     // 左移动
     function movetoleft(seq) {
@@ -458,7 +490,7 @@ window.onload = function () {
     function gotocatch() {
         playAudio();
         console.log('go!');
-
+        
         //把支付获得的token一起发送给服务器验证
         var catchData = { "time_stamp": operateData.time_stamp, "pay_token": payToken };
         sendCustomCMD(++clientSeq, 532, catchData);
@@ -469,16 +501,23 @@ window.onload = function () {
         tapParams.finish = true;
     }
 
+
+
     // 发送指令
     function sendCustomCMD(seq, cmd, data) {
         console.log('cmd = ', cmd, '  seq = ', seq);
         var custom_msg = assemblyMessage(seq, cmd, data);
         // 4、发送自定义消息/指令
-        zg.sendCustomCommand([anchor_id], custom_msg, function (seq, custom_content) {
-            console.log('sendCustomCommand 成功  success-content', JSON.parse(custom_content));
-        }, function (err, seq, custom_content) {
-            console.log('sendCustomCommand 失败  error-content', JSON.parse(custom_content));
-        });
+        zg.sendCustomCommand(
+            [anchor_id],
+            custom_msg,
+            function(seq, custom_content) {
+                console.log('sendCustomCommand 成功  success-content', JSON.parse(custom_content));
+            },
+            function(err, seq, custom_content) {
+                console.log('sendCustomCommand 失败  error-content', JSON.parse(custom_content));
+            }
+        );
     }
 
     // 组装自定义消息
@@ -487,7 +526,7 @@ window.onload = function () {
             "seq": seq,
             "cmd": cmd,
             "session_id": sessionID,
-            "data": data
+            "data": data,
         };
         var custom_msg = {
             "request_id": idName + '-' + seq,
@@ -499,6 +538,7 @@ window.onload = function () {
         return JSON.stringify(custom_msg);
     }
 
+
     //长按实现
     var tapParams = {
         timer: null,
@@ -507,7 +547,7 @@ window.onload = function () {
         type: 'increment'
     };
 
-    window.clearTapTimer = function () {
+    window.clearTapTimer = function() {
         console.log('鼠标或者手指离开屏幕了!!!');
         clearInterval(tapParams.timer);
         stopmove();
@@ -520,7 +560,7 @@ window.onload = function () {
         tapParams.element.removeEventListener('touchcencel', window.clearTapTimer);
     };
 
-    window.tapEvent = function (aEvent, aType) {
+    window.tapEvent = function(aEvent, aType) {
         ++clientSeq;
         /* 阻止默认事件并解除冒泡 */
         aEvent.preventDefault();
@@ -546,7 +586,7 @@ window.onload = function () {
     };
 
     // 开始不停的发送移动指令
-    window.changeMove = function () {
+    window.changeMove = function() {
         if (tapParams.finish) {
             window.clearTapTimer();
             return;
@@ -566,7 +606,7 @@ window.onload = function () {
     };
 
     // 关闭成功/失败界面，返回娃娃机界面
-    $back.addEventListener('click', function () {
+    $back.addEventListener('click', function() {
         playAudio();
         util.removeClass($resultWrapper, 'success,fail');
 
@@ -574,7 +614,10 @@ window.onload = function () {
         clearInterval(countDownTimer);
     });
 
+
+
     /*************************************/
+
 
     // 5. 登出
     // zg.logout();
@@ -587,6 +630,7 @@ window.onload = function () {
 
 
     /*************************************/
+
 
     // 事件
 
@@ -606,7 +650,7 @@ window.onload = function () {
     };
 
     // 接收服务端主动推过来消息的接口
-    zg.onRecvCustomCommand = function (from_userid, from_idName, custom_content) {
+    zg.onRecvCustomCommand = function(from_userid, from_idName, custom_content) {
         // code 业务逻辑
         console.log('custom_content = ', custom_content);
         var recvCustomContent = {};
@@ -619,34 +663,34 @@ window.onload = function () {
         console.log('客户端-onRecvCustomCommand = ', from_userid, from_idName, recvCustomContent);
         custom_content = JSON.parse(custom_content);
         // 516,517 需要seq   在data里面带服务端的返回的seq
-        if (custom_content.cmd === RECVCMD.broadcast) {
-            // 全员广播
+        if (custom_content.cmd === RECVCMD.broadcast) { // 全员广播
 
             broadcastHandler(custom_content);
-        } else if (custom_content.cmd === RECVCMD.appointment) {
-            // 告知本次预约请求是否成功，预约成功则进入排队阶段，否则失败
+
+        } else if (custom_content.cmd === RECVCMD.appointment) { // 告知本次预约请求是否成功，预约成功则进入排队阶段，否则失败
 
             appointmentHandler(custom_content);
-        } else if (custom_content.cmd === RECVCMD.cancelAppointment) {
-            // 取消本次预约
+
+        } else if (custom_content.cmd === RECVCMD.cancelAppointment) { // 取消本次预约
 
             cancelAppointmentHandler();
-        } else if (custom_content.cmd === RECVCMD.upSelect) {
-            // 收到回应，是否要付费上机
+
+        } else if (custom_content.cmd === RECVCMD.upSelect) { // 收到回应，是否要付费上机
 
             upSelectHandler(custom_content);
-        } else if (custom_content.cmd === RECVCMD.upSelectRsp) {
-            // 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应
+
+        } else if (custom_content.cmd === RECVCMD.upSelectRsp) { // 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应
 
             upSelectRspHandler();
-        } else if (custom_content.cmd === RECVCMD.operateResult) {
-            // 收到本次抓娃娃的结果
+
+        } else if (custom_content.cmd === RECVCMD.operateResult) { // 收到本次抓娃娃的结果
 
             operateResultHandler(custom_content);
-        } else if (custom_content.cmd === RECVCMD.gameInfo) {
-            // 收到本次游戏信息
+
+        } else if (custom_content.cmd === RECVCMD.gameInfo) { // 收到本次游戏信息
 
             gameInfoHandler(custom_content);
+
         }
     };
 
@@ -683,16 +727,13 @@ window.onload = function () {
     // 第二消息类
     // 处理收到的 告知本次预约请求是否成功，预约成功则进入排队阶段，否则失败  272 对应  513 请求预约
     function appointmentHandler(custom_content) {
-        if (custom_content.data.result == 1) {
-            // 失败
+        if (custom_content.data.result == 1) { // 失败
             alert('预约失败！');
             util.showElement([$apply]);
             util.hideElement([$cancel]);
             sessionID = 0;
-        } else {
-            // 成功
-            if (isInitApply) {
-                // 从点击预约按钮后，收到的回应
+        } else { // 成功
+            if (isInitApply) { // 从点击预约按钮后，收到的回应
                 console.log('从点击预约按钮后，收到的回应, 告知本次预约请求是否成功,  isInitApply = ', isInitApply);
                 util.addClass($applyWrapper, 'disabled');
 
@@ -702,6 +743,7 @@ window.onload = function () {
                 util.showElement([$cancel, $afterQueue]);
 
                 $afterQueueNum.innerHTML = custom_content.data.index;
+
             }
             sessionID = custom_content.data.session_id;
             util.setLocal('sessionID', sessionID);
@@ -731,24 +773,23 @@ window.onload = function () {
         playCountDownTime = custom_content.data.game_time;
         sendCustomCMD(serverSeq, 516, replyData);
 
-        if (isInitApply) {
-            // 从点击预约按钮后，收到的回应
+        if (isInitApply) { // 从点击预约按钮后，收到的回应
             console.log('从点击预约按钮后，收到的回应, 是否要付费上机,  isInitApply = ', isInitApply);
 
             util.showElement([$upornotWrapper]);
             // 重置是否上机的倒计时
             $upornotCountDown.innerHTML = upornotCountDownTime;
-            countDown($upornotCountDown, upornotCountDownTime, function () {
+            countDown($upornotCountDown, upornotCountDownTime, function() {
                 util.hideElement([$upornotWrapper]);
                 confirmTocancel();
             });
-        } else {
-            // 结果页发出的预约，收到的回应
+
+        } else { // 结果页发出的预约，收到的回应
             console.log('结果页发出的预约收到的预约回应, isInitApply = ', isInitApply);
             util.removeClass($playAgain, 'disabled');
             // 注册上机事件
             $playAgain.addEventListener('click', pay);
-            countDown($playAgainCountDown, upornotCountDownTime, function () {
+            countDown($playAgainCountDown, upornotCountDownTime, function() {
                 // 倒计时结束，用户还没有点击再来一次，则把按钮置为灰色不可用
                 util.addClass($playAgain, 'disabled');
                 $playAgain.removeEventListener('click', pay);
@@ -761,7 +802,7 @@ window.onload = function () {
     // 回复服务端是否上机 515  confirm 1 上机，  confirm 0放弃
     $upornotConfirm.addEventListener('click', pay); // 确定上机
     $upornotCancel.addEventListener('click', confimTocancelHandler); // 取消上机
-
+    
     //支付  做了两件事  1、请求付款    2、付款成功则上机，否则失败
     function pay() {
         console.log('结果页发出的付款请求, isInitApply = ', isInitApply);
@@ -770,10 +811,9 @@ window.onload = function () {
         }
         var xmlhttp;
         xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function () {
+        xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4) {
-                if (xmlhttp.status == 200) {
-                    // 此处是要业务后台自己写判断逻辑，根据业务后台返回的信息来 断定是否支付成功
+                if (xmlhttp.status == 200) { // 此处是要业务后台自己写判断逻辑，根据业务后台返回的信息来 断定是否支付成功
                     payToken = xmlhttp.responseText;
                     console.log('payToken = ', payToken);
                     upToPlayHandler();
@@ -795,8 +835,7 @@ window.onload = function () {
     var tryUpToPlayMaxCount = 5;
     // 上机函数
     function upToPlayHandler() {
-        if (!isInitApply) {
-            // 从结果页点击再来一次，执行隐藏结果页
+        if (!isInitApply) { // 从结果页点击再来一次，执行隐藏结果页
             util.removeClass($resultWrapper, 'success,fail');
         }
         playAudio();
@@ -805,7 +844,7 @@ window.onload = function () {
             clearInterval(upToPlayTimer);
         }
         upToPlay();
-        upToPlayTimer = setInterval(function () {
+        upToPlayTimer = setInterval(function() {
             upToPlay();
         }, 2000);
     }
@@ -825,6 +864,7 @@ window.onload = function () {
         util.hideElement([$upornotWrapper]);
     }
 
+
     // 放弃尝试
     var giveUpPlayTimer = null;
     var tryGiveUpPlayCount = 0;
@@ -837,7 +877,7 @@ window.onload = function () {
             clearInterval(giveUpPlayTimer);
         }
         confirmTocancel();
-        giveUpPlayTimer = setInterval(function () {
+        giveUpPlayTimer = setInterval(function() {
             confirmTocancel();
         }, 2000);
     }
@@ -858,6 +898,7 @@ window.onload = function () {
         util.showElement([$apply]);
     }
 
+
     // 第五消息类
     // 处理收到的 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应   273  对应   515 上机或放弃
     function upSelectRspHandler() {
@@ -866,7 +907,7 @@ window.onload = function () {
             // alert('确认上机成功');
             util.showElement([$operateWrapper, $countDownWrapper]);
             util.hideElement([$appointmentWrapper]);
-            countDown($countDown, playCountDownTime, function () {
+            countDown($countDown, playCountDownTime, function() {
                 gotocatch();
             });
             util.registerOperateHandler(directMapObj, directHandler);
@@ -884,6 +925,7 @@ window.onload = function () {
             clearInterval(countDownTimer);
         }
         $applyWrapper.className = 'apply-wrapper';
+
     }
 
     // 第六消息类
@@ -915,6 +957,7 @@ window.onload = function () {
         util.removeClass($directWrapper, 'disabled');
         $apply.innerHTML = '预约抓娃娃';
 
+
         // 不管成功或者失败，都移除方向操作和抓取动作的事件
         util.removeAllEventHandler(directMapObj, directHandler);
 
@@ -936,7 +979,7 @@ window.onload = function () {
             clearInterval(appointmentTimer);
         }
         playAgain();
-        appointmentTimer = setInterval(function () {
+        appointmentTimer = setInterval(function() {
             playAgain();
         }, 2000);
     }
@@ -953,7 +996,7 @@ window.onload = function () {
         console.log('发送继续玩指令！');
         var configData = {
             "time_stamp": new Date().getTime(),
-            "continue": 1
+            "continue": 1,
         };
         sendCustomCMD(++clientSeq, 513, configData);
         isInitApply = false;
@@ -986,13 +1029,15 @@ window.onload = function () {
         }
     }
 
-    // 接收房间IM消息
-    zg.onRecvRoomMsg = function (chat_data, server_msg_id, ret_msg_id) {
-        console.log(chat_data, server_msg_id, ret_msg_id);
-    };
 
+
+    // 接收房间IM消息
+    zg.onRecvRoomMsg = function(chat_data, server_msg_id, ret_msg_id) {
+    //    console.log(chat_data, server_msg_id, ret_msg_id);
+    };
+    
     // 服务端主动推过来的 连接断开事件
-    zg.onDisconnect = function (err) {
+    zg.onDisconnect = function(err) {
         // code 业务逻辑
         console.log('客户端-onDisconnect = ', err);
         // alert('您断开连接了,请刷新页面！');
@@ -1000,7 +1045,7 @@ window.onload = function () {
     };
 
     // 服务端主动推过来的 用户被踢掉在线状态事件
-    zg.onKickOut = function (err) {
+    zg.onKickOut = function(err) {
         // code 业务逻辑
         console.log('客户端-onKickOut = ', err);
         // alert('您被踢下线了,请刷新页面！');
@@ -1008,13 +1053,13 @@ window.onload = function () {
     };
 
     // 服务端主动推过来的 流信息中的 ExtraInfo更新事件（暂时不用实现）
-    zg.onStreamExtraInfoUpdated = function (streamList) {
+    zg.onStreamExtraInfoUpdated = function(streamList) {
         // code 业务逻辑
         // console.log('客户端-onStreamExtraInfoUpdated = ', streamList);
     };
 
     // 服务端主动推过来的 流的  创建/删除事件  updateType :“Added”||”Deleted”
-    zg.onStreamUpdated = function (type, streamList) {
+    zg.onStreamUpdated = function(type, streamList) {
         // code 业务逻辑
         // console.log('客户端-onStreamUpdated = ', type, streamList);
         if (type == ENUM_STREAM_UPDATE_TYPE.added) {
@@ -1045,6 +1090,7 @@ window.onload = function () {
                 deleteStreamInfo(streamList);
             }
         }
+
     };
 
     // 服务端推送过来已经删除掉的流   该函数删除本地流列表中对应的需要删除的流
@@ -1056,7 +1102,7 @@ window.onload = function () {
         var delStreamList = [];
         //取主播id
         if (streamList != null || streamList.length !== 0) {
-            streamList.forEach(function (item) {
+            streamList.forEach(function(item) {
                 if (item.anchor_nick_name.indexOf("WWJS") === 0) {
                     delStreamList.push(item);
                 }
@@ -1078,7 +1124,7 @@ window.onload = function () {
     }
 
     // 服务端主动推过来的 流的播放状态, 视频播放状态通知，
-    zg.onPlayStateUpdate = function (type, streamID) {
+    zg.onPlayStateUpdate = function(type, streamID) {
         // code 业务逻辑
         console.log('客户端-onPlayStateUpdate = ', type, streamID);
         if (type === 0) {
@@ -1093,17 +1139,18 @@ window.onload = function () {
     };
 
     // 服务端主动推过来的 流的质量更新（暂时不用实现）
-    zg.onPlayQualityUpdate = function (streamID, streamQuality) {
+    zg.onPlayQualityUpdate = function(streamID, streamQuality) {
         // code 业务逻辑
         // console.log('客户端-onPlayQualityUpdate = ', streamID,  streamQuality);
     };
 
+
     // 日志显示
-    $logBtn.addEventListener('click', function () {
+    $logBtn.addEventListener('click', function() {
         showLog = !showLog;
         logToggle();
     });
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e){
         if (e.target.id != 'log-btn' && e.target.id != 'log-view' && showLog) {
             showLog = !showLog;
             logToggle();
@@ -1123,14 +1170,12 @@ window.onload = function () {
         } else {
             util.hideElement([$logViewer]);
         }
-
-        zg.sendRoomMsg(4, 5, "hello fuck");
     }
 
     // 这个提示框是浏览器运行js发生错误时，弹框出来提示，方便移动端定位问题，如果出现弹框了，可以先自己定位监测下
     var errMaxCount = 5;
     var errCount = 0;
-    window.onerror = function (msg, url, line, col, error) {
+    window.onerror = function(msg, url, line, col, error) {
         errCount++;
         if (errCount <= errMaxCount) {
             //没有URL不上报！上报也不知道错误
@@ -1144,10 +1189,10 @@ window.onload = function () {
             //而离开文章之后的上报对于业务来说是可丢失的
             //所以我把这里的执行流放到异步事件去执行
             //脚本的异常数降低了10倍
-            setTimeout(function () {
+            setTimeout(function() {
                 var data = {};
                 //不一定所有浏览器都支持col参数
-                col = col || window.event && window.event.errorCharacter || 0;
+                col = col || (window.event && window.event.errorCharacter) || 0;
 
                 data.url = url;
                 data.line = line;
@@ -1165,7 +1210,7 @@ window.onload = function () {
                     var f = arguments.callee.caller,
                         c = 3;
                     //这里只拿三层堆栈信息
-                    while (f && --c > 0) {
+                    while (f && (--c > 0)) {
                         ext.push(f.toString());
                         if (f === f.caller) {
                             break; //如果有环
@@ -1181,12 +1226,14 @@ window.onload = function () {
                 //把data上报到后台！
                 console.log('data = ', data);
                 alert('发生错误 = ' + JSON.stringify(data) + ', 请把该错误截图，联系即构客服！');
+
             }, 0);
         }
 
         return true;
     };
 };
+
 
 // 工具函数
 
@@ -1198,7 +1245,7 @@ function countDown(dom, countNum, cb) {
     }
     var innerCountNum = countNum;
     dom.innerHTML = innerCountNum;
-    countDownTimer = setInterval(function () {
+    countDownTimer = setInterval(function() {
         console.log('dom = ', dom);
         console.log('innerCountNum = ', innerCountNum);
         if (innerCountNum === 0) {
@@ -1216,201 +1263,7 @@ function countDown(dom, countNum, cb) {
 }
 // 音效
 function playAudio() {
-    setTimeout(function () {
+    setTimeout(function() {
         $audio.play();
     }, 400);
 }
-
-/***/ }),
-/* 2 */,
-/* 3 */,
-/* 4 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 14 */,
-/* 15 */,
-/* 16 */
-/***/ (function(module, exports) {
-
-// 工具函数
-
-// 通过id获取元素
-function getById(selecotr) {
-    return document.getElementById(selecotr);
-}
-// 移除类名
-function removeClass(dom, className) {
-    // 仿jq写法
-    var rclass = /[\t\r\n\f]/g,
-        j,
-        clazz,
-        curValue,
-        cur;
-    var removeList = className.split(',');
-    curValue = dom.className;
-    cur = (' ' + curValue + ' ').replace(rclass, ' ');
-    if (cur) {
-        j = 0;
-        while (clazz = removeList[j++]) {
-            while (cur.indexOf(' ' + clazz + ' ') > -1) {
-                cur = cur.replace(' ' + clazz + ' ', ' ');
-            }
-        }
-    }
-    dom.className = cur;
-}
-// 添加类名
-function addClass(dom, className) {
-    var addList = className.split(',');
-    addList.forEach(function (item) {
-        dom.className += ' ' + item;
-    });
-}
-// 隐藏元素
-function hideElement(dom) {
-    for (var i = 0; i < dom.length; i++) {
-        dom[i].style.display = 'none';
-    }
-}
-// 显示元素
-function showElement(dom) {
-    for (var i = 0; i < dom.length; i++) {
-        dom[i].style.display = 'block';
-    }
-}
-// 设置本地存储数据
-function setLocal(key, value) {
-    localStorage.setItem(key, value);
-}
-// 获取本地存储数据
-function getLocal(key) {
-    return localStorage.getItem(key);
-}
-// 注册事件
-function registerOperateHandler(domMapObj, eventHandler) {
-    console.log('注册了事件 = ', eventHandler);
-    for (var el in eventHandler) {
-        domMapObj[el].addEventListener('click', eventHandler[el]);
-    }
-}
-// 移除事件
-function removeAllEventHandler(domMapObj, eventHandler) {
-    console.log('移除了事件 = ', eventHandler);
-    for (var el in eventHandler) {
-        domMapObj[el].removeEventListener('click', eventHandler[el]);
-    }
-}
-
-module.exports = {
-    getById: getById,
-    removeClass: removeClass,
-    addClass: addClass,
-    hideElement: hideElement,
-    showElement: showElement,
-    setLocal: setLocal,
-    getLocal: getLocal,
-    registerOperateHandler: registerOperateHandler,
-    removeAllEventHandler: removeAllEventHandler
-};
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/*global*/
-
-// 左上角当前主播状态样式
-__webpack_require__(4);
-
-// 观众
-__webpack_require__(6);
-
-// 视频流视图样式
-__webpack_require__(13);
-
-// 视角切换按钮样式
-__webpack_require__(11);
-
-// 上下左右按钮样式
-__webpack_require__(7);
-
-// 抓取按钮样式
-__webpack_require__(8);
-
-// 预约按钮样式
-__webpack_require__(5);
-
-// 询问是否上机倒计时样式
-__webpack_require__(12);
-
-// 游戏结果样式
-__webpack_require__(10);
-
-// 日志样式
-__webpack_require__(9);
-
-// 响应式js
-__webpack_require__(0);
-
-// 主要逻辑
-__webpack_require__(1);
-
-/***/ })
-],[17]);
