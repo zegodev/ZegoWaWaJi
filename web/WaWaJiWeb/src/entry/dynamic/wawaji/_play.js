@@ -902,6 +902,14 @@ window.onload = function() {
     // 第五消息类
     // 处理收到的 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应   273  对应   515 上机或放弃
     function upSelectRspHandler() {
+        var resultCode = custom_content.data.result;
+        if (resultCode === 1) {
+            console.log('发送确认上机的信息---格式无效！');
+            return;
+        } else if (resultCode === 2) {
+            console.log('发送确认上机的信息---校验失败！');
+            return;
+        }
         console.log('operateStatus', operateStatus);
         if (operateStatus) {
             // alert('确认上机成功');
