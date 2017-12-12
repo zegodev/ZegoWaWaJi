@@ -63,7 +63,7 @@ public class ZegoApplication extends Application {
         super.onCreate();
 
         sInstance = this;
-        ZegoLiveRoom.setTestEnv(false);
+        ZegoLiveRoom.setTestEnv(true);
         AppLogger.getInstance().writeLog("******* Application onCreate *******");
 
         initUserInfo(); // first
@@ -162,16 +162,14 @@ public class ZegoApplication extends Application {
 
         int height = Integer.parseInt(strWidthHeight[0].trim());
         int width = Integer.parseInt(strWidthHeight[1].trim());
-        config.setVideoEncodeResolution(414, 736);
+        config.setVideoEncodeResolution(width, height);
 
-//        if (width <= 720 && height <= 1280) {
-//            // 默认使用 720 * 1280 采集分辨率以达到最佳推流质量
-//            config.setVideoCaptureResolution(720, 1280);
-//        } else {
-//           config.setVideoCaptureResolution(width, height);
-//        }
-        config.setVideoCaptureResolution(414, 736);
-
+        if (width <= 720 && height <= 1280) {
+            // 默认使用 720 * 1280 采集分辨率以达到最佳推流质量
+            config.setVideoCaptureResolution(720, 1280);
+        } else {
+            config.setVideoCaptureResolution(width, height);
+        }
 
         liveRoom.setAVConfig(config);
         liveRoom.setAVConfig(config, ZegoConstants.PublishChannelIndex.AUX);
