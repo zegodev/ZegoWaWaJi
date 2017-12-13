@@ -553,13 +553,13 @@ window.onload = function () {
         }
         console.log("move info:", tapParams);
         if (tapParams.type == "front-left" || tapParams.type == "side-up") {
-            movetoup(clientSeq);
-        } else if (tapParams.type == "side-left" || tapParams.type == "front-down") {
             movetoleft(clientSeq);
-        } else if (tapParams.type == "front-right" || tapParams.type == "side-down") {
+        } else if (tapParams.type == "side-left" || tapParams.type == "front-down") {
             movetodown(clientSeq);
-        } else if (tapParams.type == "side-right" || tapParams.type == "front-up") {
+        } else if (tapParams.type == "front-right" || tapParams.type == "side-down") {
             movetoright(clientSeq);
+        } else if (tapParams.type == "side-right" || tapParams.type == "front-up") {
+            movetoup(clientSeq);
         } else {
             console.log("其他情况");
         }
