@@ -240,11 +240,11 @@ window.onload = function () {
                 // 如果是的话为正面流，并给他赋予正面canvas容器 $frontView
                 // 如果不是的话为侧面面流，并给他赋予侧面canvas容器 $sideView
                 if (item.stream_id.slice(-2) == '_2') {
-                    item.videoView = $frontView;
-                    item.videoVolume = videoVolumeList[0];
-                } else {
                     item.videoView = $sideView;
                     item.videoVolume = videoVolumeList[1];
+                } else {
+                    item.videoView = $frontView;
+                    item.videoVolume = videoVolumeList[0];
                 }
             });
 
@@ -553,13 +553,13 @@ window.onload = function () {
         }
         console.log("move info:", tapParams);
         if (tapParams.type == "front-left" || tapParams.type == "side-up") {
-            movetoleft(clientSeq);
-        } else if (tapParams.type == "side-left" || tapParams.type == "front-down") {
-            movetodown(clientSeq);
-        } else if (tapParams.type == "front-right" || tapParams.type == "side-down") {
-            movetoright(clientSeq);
-        } else if (tapParams.type == "side-right" || tapParams.type == "front-up") {
             movetoup(clientSeq);
+        } else if (tapParams.type == "side-left" || tapParams.type == "front-down") {
+            movetoleft(clientSeq);
+        } else if (tapParams.type == "front-right" || tapParams.type == "side-down") {
+            movetodown(clientSeq);
+        } else if (tapParams.type == "side-right" || tapParams.type == "front-up") {
+            movetoright(clientSeq);
         } else {
             console.log("其他情况");
         }
