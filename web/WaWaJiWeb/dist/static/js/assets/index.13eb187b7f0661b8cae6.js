@@ -47,7 +47,7 @@ window.onload = function () {
                 // Demo这边获取房间的接口返回的结果中，包含了一些不是娃娃机推来的信息，所以做了筛选策略，
                 // 开发者可以根据自己的实际情况来决定，可以不筛选，直接获取所有的房间ID
                 globalData && globalData.data.room_list.forEach(function (item) {
-                    if (item.room_id.indexOf("WWJ_ZEGO") === 0) {
+                    if (item.room_id.indexOf("WWJ_ZEGO") === 0 && item.stream_info && item.stream_info.length !== 0) {
                         roomList.push({
                             roomID: item.room_id,
                             roomName: item.room_name
