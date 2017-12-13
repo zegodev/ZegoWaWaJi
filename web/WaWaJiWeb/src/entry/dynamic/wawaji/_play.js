@@ -868,7 +868,6 @@ window.onload = function() {
         operateStatus = true;
         var replyData = { "confirm": 1, "time_stamp": payTimestamp, "config": payToken };
         sendCustomCMD(++clientSeq, 515, replyData);
-        util.hideElement([$upornotWrapper]);
     }
 
 
@@ -901,8 +900,6 @@ window.onload = function() {
         operateStatus = false;
         var replyData = { "confirm": 0, "time_stamp": new Date().getTime() };
         sendCustomCMD(++clientSeq, 515, replyData);
-        util.hideElement([$upornotWrapper, $cancel]);
-        util.showElement([$apply]);
     }
 
 
@@ -921,7 +918,7 @@ window.onload = function() {
         if (operateStatus) {
             // alert('确认上机成功');
             util.showElement([$operateWrapper, $countDownWrapper]);
-            util.hideElement([$appointmentWrapper]);
+            util.hideElement([$appointmentWrapper, $upornotWrapper]);
             countDown($countDown, playCountDownTime, function() {
                 gotocatch();
             });
@@ -931,7 +928,7 @@ window.onload = function() {
             clearInterval(upToPlayTimer);
         } else {
             // alert('取消上机成功');
-            util.hideElement([$cancel, $afterQueue]);
+            util.hideElement([$cancel, $afterQueue, $upornotWrapper]);
             util.showElement([$apply, $beforeQueue]);
 
             // 收到客户端发送的放弃玩游戏指令的服务端的回应，清除不断尝试放弃玩游戏的计时器
