@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 import com.tencent.bugly.crashreport.CrashReport;
 import com.zego.base.utils.AppLogger;
-import com.zego.base.utils.FileUtil;
+//import com.zego.base.utils.FileUtil;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.utils.TimeUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
@@ -189,7 +189,7 @@ public class ZegoApplication extends Application {
                     sb.append("-----------------------------------\n");
                 }
                 Log.e("CrashHandler", throwable.getMessage() + "\n" + sb.toString());
-                FileUtil.writeLogFile(sInstance,sb.toString());
+//                FileUtil.writeLogFile(sInstance,sb.toString());
                 android.os.Process.killProcess(android.os.Process.myPid());
                 System.exit(1);
             }
