@@ -333,7 +333,7 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    if (mSwitchCameraTimes % 2 == 1) {
+                    if (mSwitchCameraTimes % 2 == 0) {
                         CMDCenter.getInstance().moveLeft();
                     } else {
                         CMDCenter.getInstance().moveForward();
@@ -350,7 +350,7 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    if (mSwitchCameraTimes % 2 == 1) {
+                    if (mSwitchCameraTimes % 2 == 0) {
                         CMDCenter.getInstance().moveForward();
                     } else {
                         CMDCenter.getInstance().moveRight();
@@ -367,7 +367,7 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    if (mSwitchCameraTimes % 2 == 1) {
+                    if (mSwitchCameraTimes % 2 == 0) {
                         CMDCenter.getInstance().moveBackward();
                     } else {
                         CMDCenter.getInstance().moveLeft();
@@ -384,7 +384,7 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    if (mSwitchCameraTimes % 2 == 1) {
+                    if (mSwitchCameraTimes % 2 == 0) {
                         CMDCenter.getInstance().moveRight();
                     } else {
                         CMDCenter.getInstance().moveBackward();
