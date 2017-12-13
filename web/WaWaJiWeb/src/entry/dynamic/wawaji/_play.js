@@ -154,7 +154,8 @@ window.onload = function() {
         nickName: nickName, // 必填，用户自定义昵称
         server: server, // 必填，Websocket连接地址     
         logLevel: 1,
-        logUrl: logUrl
+        logUrl: logUrl,
+        remoteLogLevel: 0,
     });
 
 
@@ -612,6 +613,12 @@ window.onload = function() {
 
         // 关闭再来一次的倒计时
         clearInterval(countDownTimer);
+
+        // 关闭不断尝试从结果页去预约的计时器
+        clearInterval(appointmentTimer);
+
+        // 并且发送取消预约指令
+        cancelAppointmentClientHandler();
     });
 
 
@@ -681,7 +688,7 @@ window.onload = function() {
 
         } else if (custom_content.cmd === RECVCMD.upSelectRsp) { // 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应
 
-            upSelectRspHandler();
+            upSelectRspHandler(custom_content);
 
         } else if (custom_content.cmd === RECVCMD.operateResult) { // 收到本次抓娃娃的结果
 
@@ -901,7 +908,7 @@ window.onload = function() {
 
     // 第五消息类
     // 处理收到的 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应   273  对应   515 上机或放弃
-    function upSelectRspHandler() {
+    function upSelectRspHandler(custom_content) {
         var resultCode = custom_content.data.result;
         if (resultCode === 1) {
             console.log('发送确认上机的信息---格式无效！');

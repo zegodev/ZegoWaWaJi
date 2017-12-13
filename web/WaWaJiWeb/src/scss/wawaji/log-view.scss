@@ -4,19 +4,17 @@
 	top: 50px;
 	left: 50%;
 	width: 100%;
-	height: 80%;
+	height: 70%;
 	transform: translate3d(-50%, 0, 0);
 	z-index: 101;
 }
 #log-btn {
-	position: absolute;
+	position: fixed;
 	right: .16rem;
-    top: 50%;
-    width: 1.02rem;
-    height: 1.02rem;
-    margin-top: -1.3rem;
+    bottom: 3px;
+    width: .7rem;
+    height: .7rem;
     background: url('../../static/images/wawaji/日志@2x.png') no-repeat;
     background-size: 100%;
-    transform: translate3d(0, -50%, 0);
     z-index: 10;
 }

@@ -1,12 +1,126 @@
-webpackJsonp([0],[
-/* 0 */,
+webpackJsonp([1],[
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/*eslint-disable no-console */
+__webpack_require__(1);
+
+/***/ }),
 /* 1 */
+/***/ (function(module, exports) {
+
+!function (window) {
+    var n = document.documentElement,
+        rootfont,
+        isMobile = true,
+        i = document.createElement('style');
+    n.firstElementChild.appendChild(i);
+
+    function infinite() {
+        // var docW = document.documentElement.clientWidth;
+        var docW = window.innerWidth;
+
+        if (!navigator.userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile/i)) {
+            isMobile = false;
+            document.getElementsByTagName('html')[0].style.width = 375 + 'px';
+            document.getElementsByTagName('html')[0].style.maxHeight = 690 + 'px';
+        }
+        if (isMobile) {
+            if (docW < 320) {
+                docW = 320;
+                rootfont = 100 / 750 * docW;
+                i.innerHTML = 'html{font-size:' + rootfont + 'px!important;}';
+            } else if (docW <= 750) {
+                rootfont = 100 / 750 * docW;
+                i.innerHTML = 'html{font-size:' + rootfont + 'px!important;}';
+            } else {
+                i.innerHTML = 'html{font-size:100px!important;}';
+            }
+        } else {
+            i.innerHTML = 'html{font-size:50px!important;}';
+        }
+    }
+    window.addEventListener('resize', function () {
+        infinite();
+    }, !1);
+
+    window.addEventListener('pageshow', function (e) {
+        // pageshow无论这个页面是新打开的还是在往返缓存中的，都会在这个页面显示的时候触发。新打开的会在load后触发。
+        // event对象中有一个persisted属性，是true时代表是从往返缓存中恢复的。
+        // 缓存完全保存了整个页面，包括JS的执行状态，这就意味着不会再触发load事件。
+        // 防止此情况发生，做一个判断，执行字体设置函数
+        e.persisted && infinite();
+    }, !1), infinite();
+}(window);
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*global ZegoClient*/
 
 // 工具函数
-var util = __webpack_require__(16);
+var util = __webpack_require__(17);
 
 // dom元素
 
@@ -146,7 +260,8 @@ window.onload = function () {
         nickName: nickName, // 必填，用户自定义昵称
         server: server, // 必填，Websocket连接地址     
         logLevel: 1,
-        logUrl: logUrl
+        logUrl: logUrl,
+        remoteLogLevel: 0
     });
 
     /*************************************/
@@ -572,6 +687,12 @@ window.onload = function () {
 
         // 关闭再来一次的倒计时
         clearInterval(countDownTimer);
+
+        // 关闭不断尝试从结果页去预约的计时器
+        clearInterval(appointmentTimer);
+
+        // 并且发送取消预约指令
+        cancelAppointmentClientHandler();
     });
 
     /*************************************/
@@ -638,7 +759,7 @@ window.onload = function () {
         } else if (custom_content.cmd === RECVCMD.upSelectRsp) {
             // 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应
 
-            upSelectRspHandler();
+            upSelectRspHandler(custom_content);
         } else if (custom_content.cmd === RECVCMD.operateResult) {
             // 收到本次抓娃娃的结果
 
@@ -860,7 +981,7 @@ window.onload = function () {
 
     // 第五消息类
     // 处理收到的 服务端返回的信息   对客户端发送的确认上机或者放弃玩游戏指令的回应   273  对应   515 上机或放弃
-    function upSelectRspHandler() {
+    function upSelectRspHandler(custom_content) {
         var resultCode = custom_content.data.result;
         if (resultCode === 1) {
             console.log('发送确认上机的信息---格式无效！');
@@ -1228,71 +1349,11 @@ function playAudio() {
 }
 
 /***/ }),
-/* 2 */,
-/* 3 */,
-/* 4 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
+/* 13 */,
 /* 14 */,
 /* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */
 /***/ (function(module, exports) {
 
 // 工具函数
@@ -1377,46 +1438,46 @@ module.exports = {
 };
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*global*/
 
 // 左上角当前主播状态样式
-__webpack_require__(4);
+__webpack_require__(2);
 
 // 观众
-__webpack_require__(6);
+__webpack_require__(4);
 
 // 视频流视图样式
-__webpack_require__(13);
-
-// 视角切换按钮样式
 __webpack_require__(11);
 
+// 视角切换按钮样式
+__webpack_require__(9);
+
 // 上下左右按钮样式
-__webpack_require__(7);
-
-// 抓取按钮样式
-__webpack_require__(8);
-
-// 预约按钮样式
 __webpack_require__(5);
 
-// 询问是否上机倒计时样式
-__webpack_require__(12);
+// 抓取按钮样式
+__webpack_require__(6);
 
-// 游戏结果样式
+// 预约按钮样式
+__webpack_require__(3);
+
+// 询问是否上机倒计时样式
 __webpack_require__(10);
 
+// 游戏结果样式
+__webpack_require__(8);
+
 // 日志样式
-__webpack_require__(9);
+__webpack_require__(7);
 
 // 响应式js
 __webpack_require__(0);
 
 // 主要逻辑
-__webpack_require__(1);
+__webpack_require__(12);
 
 /***/ })
-],[17]);
+],[18]);

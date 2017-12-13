@@ -29,12 +29,12 @@
             display: none;
         }
         
-        img {
+        #frontimg {
             display: block;
         }
         
-        .frontview-wrapper img,
-        .sideview-wrapper img {
+        .frontview-wrapper #frontimg,
+        .sideview-wrapper #frontimg {
             position: relative;
             display: none;
             height: 100%;
@@ -70,7 +70,7 @@
             <div class="frontview-wrapper">
                 <!-- 正面视图 -->
                 <canvas id="frontview"></canvas>
-                <img id="frontimg" src style="background: url(${require('../../static/images/poster.jpeg')}) no-repeat;background-size:100% 100%" alt="">
+                <div id="frontimg" style="background: #fff url(${require('../../static/images/wawaji/Loading@2x.png')}) center center no-repeat;background-size: 100%"></div>
             </div>
             <div class="sideview-wrapper">
                 <!-- 侧面视图 -->
