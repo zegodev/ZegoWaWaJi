@@ -15,7 +15,7 @@ static int price = 5;
 
 @interface ZegoCommand()
 
-typedef void(^completionBlock)(NSString *encryptedConfig);
+typedef void(^completionBlock)(NSInteger errorCode, NSString *encryptedConfig);
 
 @end
 
@@ -56,11 +56,14 @@ typedef void(^completionBlock)(NSString *encryptedConfig);
 
 - (NSString *)gameConfirm:(int)confirm clientSeq:(int)clientSeq sessionId:(NSString *)sessionId {
     NSTimeInterval timestamp = [self timestamp];
-    
+
     __block NSString *confirmCommand = nil;
-    // 先从后台获取加密配置。本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取。
-    [self fetchEncryptedConfig:confirm payType:payType price:price sessionId:sessionId timestamp:timestamp completion:^(NSString *encryptedConfig) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    // ！！！先从后台获取加密配置。本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取。
+    [self fetchEncryptedConfig:confirm payType:payType price:price sessionId:sessionId timestamp:timestamp completion:^(NSInteger errorCode, NSString *encryptedConfig) {
+        if (errorCode == 0) {
             NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
                                    cmdKey : @515,
                                    sessionIdKey : sessionId ? : @"",
@@ -69,13 +72,16 @@ typedef void(^completionBlock)(NSString *encryptedConfig);
                                                timestampKey: [NSNumber numberWithInteger:timestamp]}
                                    };
             confirmCommand = [self encodeDictionaryToJSON:dict];
-        });
+        } else {
+            NSLog(@"获取后台加密 config 失败，错误码：%ld", (long)errorCode);
+        }
+        
+        dispatch_semaphore_signal(semaphore);
     }];
     
-    if (!confirmCommand) {
-        NSLog(@"等待后台返回加密 config");
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:RETRY_DURATION / 2.0]];
-    }
+    NSLog(@"等待后台返回加密 config");
+    dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, (RETRY_DURATION / 2) * NSEC_PER_SEC);
+    dispatch_semaphore_wait(semaphore, time);
     
     return confirmCommand;
 }
@@ -263,19 +269,14 @@ typedef void(^completionBlock)(NSString *encryptedConfig);
     NSURLSessionTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData * data, NSURLResponse * response, NSError * error) {
         if (error) {
             NSLog(@"fetch encrypted config error: %@", error);
-            return;
-        }
-        
-        if (!data.length) {
-            NSLog(@"fetch encrypted config without data ");
-            return;
         }
         
         NSString *config;
         config = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         NSLog(@"fetch encrypted config: %@", config);
+        
         if (block) {
-            block(config);
+            block(error.code, config);
         }
     }];
     
