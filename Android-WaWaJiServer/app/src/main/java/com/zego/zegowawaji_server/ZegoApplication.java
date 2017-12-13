@@ -63,7 +63,7 @@ public class ZegoApplication extends Application {
         super.onCreate();
 
         sInstance = this;
-        ZegoLiveRoom.setTestEnv(true);
+        ZegoLiveRoom.setTestEnv(false);
         AppLogger.getInstance().writeLog("******* Application onCreate *******");
 
         initUserInfo(); // first
