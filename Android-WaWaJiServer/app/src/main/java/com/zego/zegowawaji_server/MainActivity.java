@@ -2,6 +2,7 @@ package com.zego.zegowawaji_server;
 
 import android.Manifest;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -126,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                 getNetTime();
             }
         }).start();
+
+        setIp();
 
         mWorkThread = new HandlerThread("worker_thread", Thread.NORM_PRIORITY);
         mWorkThread.start();
@@ -864,6 +867,25 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             os.flush();
         } catch (Exception e) {
             Log.d("MainActivity","error=="+e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    private void setIp(){
+        ContentResolver cr = this.getContentResolver();
+        try {
+            if (Settings.System.getInt(cr, Settings.System.WIFI_USE_STATIC_IP)==0){
+                Log.d("Demo", "No use Static IP!");
+            } else {
+                Log.d("Demo", "use Static IP and Change IP to 192.168.1.123!");
+                Settings.System.putString(cr, Settings.System.WIFI_STATIC_IP, "10.1.13.125");
+                Settings.System.putString(cr, Settings.System.WIFI_STATIC_GATEWAY, "10.1.1.1");
+                Settings.System.putString(cr, Settings.System.WIFI_STATIC_NETMASK, "255.0.0.0");
+                Settings.System.putString(cr, Settings.System.WIFI_STATIC_DNS1, "140.207.198.6");
+                Settings.System.putString(cr, Settings.System.WIFI_STATIC_DNS2, "202.106.0.20");
+            }
+        } catch (Settings.SettingNotFoundException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
