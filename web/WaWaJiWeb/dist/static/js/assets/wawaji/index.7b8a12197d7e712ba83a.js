@@ -1259,7 +1259,7 @@ window.onload = function () {
         if (errCount <= errMaxCount) {
             //没有URL不上报！上报也不知道错误
             if (msg != "Script error." && !url) {
-                return true;
+                return false;
             }
             //采用异步的方式
             //我遇到过在window.onunload进行ajax的堵塞上报
@@ -1297,18 +1297,17 @@ window.onload = function () {
                         f = f.caller;
                     }
                     ext = ext.join(",");
-                    data.msg = error.stack.toString();
-                    if (data.msg.indexof("Cannot read property 'established' of null") > -1) {
-                        return true;
+                    if (ext) {
+                        data.msg = ext;
                     }
                 }
                 //把data上报到后台！
                 console.log('data = ', data);
-                alert('发生错误 = ' + JSON.stringify(data) + ', 请把该错误截图，联系即构客服！');
+                alert('发生错误 = ' + JSON.stringify(data));
             }, 0);
         }
 
-        return true;
+        return false;
     };
 };
 
