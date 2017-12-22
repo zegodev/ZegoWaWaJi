@@ -16,10 +16,10 @@ ZegoWaWaJi is a delightful software solution for the Grab-Toy game. The content 
 前两个版本使用Tag区分
 开发者可以按照Tag标签定位版本，下载相应源码
 
-> 版本 H5-WaWaJi-1.0.1 <br>
+> Tag H5-WaWaJi-1.0.1 <br>
 对应安卓娃娃机版子第一版协议
 
-> 版本 H5-WaWaJi-1.0.2 <br>
+> Tag H5-WaWaJi-1.0.2 <br>
 对应安卓娃娃机版子第二版协议 <br>
 1、sdk支持UMD加载 <br>
 2、更新发送指令   由发送一次指令移动一次，转为发一次，一直移动，直到收到结束指令 <br>
