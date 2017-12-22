@@ -329,6 +329,13 @@ window.onload = function() {
     var viewStatus = 0;
     // 视角切换
     $switchBtn.addEventListener('click', function(e) {
+        // 测试发送房间消息
+        // 主要前两个参数事纯数字类型，否则发送不成功
+        // zg.sendRoomMsg(2, 1, 'sdfsdf', function(seq, msdid, msgcategory, msgtype, msgcontent){
+        //     console.log(seq, msdid, msgcategory, msgtype, msgcontent);
+        // },function(err, seq, msgcategory, msgtype, msgcontent){
+        //     console.log(err, seq, msgcategory, msgtype, msgcontent);
+        // });
         playAudio();
         viewStatus = e.target.dataset['switch'];
         if (viewStatus === '1') { // 此时处于正面，切换为侧面
@@ -344,10 +351,7 @@ window.onload = function() {
     });
 
 
-
     /*************************************/
-
-
 
     // 4. 发送自定义消息
     var operateData = { // 默认回复信息
@@ -617,8 +621,8 @@ window.onload = function() {
         // 关闭不断尝试从结果页去预约的计时器
         clearInterval(appointmentTimer);
 
-        // 并且发送取消预约指令
-        cancelAppointmentClientHandler();
+        // 并且发送取消上机指令
+        confimTocancelHandler();
     });
 
 
@@ -1045,7 +1049,7 @@ window.onload = function() {
 
     // 接收房间IM消息
     zg.onRecvRoomMsg = function(chat_data, server_msg_id, ret_msg_id) {
-    //    console.log(chat_data, server_msg_id, ret_msg_id);
+        console.log(chat_data, server_msg_id, ret_msg_id);
     };
     
     // 服务端主动推过来的 连接断开事件
@@ -1231,7 +1235,7 @@ window.onload = function() {
                     }
                     ext = ext.join(",");
                     if (ext) {
-                        data.msg = ext;
+                        data.msg = ext.toString();
                     }
                 }
                 //把data上报到后台！
@@ -1257,8 +1261,8 @@ function countDown(dom, countNum, cb) {
     var innerCountNum = countNum;
     dom.innerHTML = innerCountNum;
     countDownTimer = setInterval(function() {
-        console.log('dom = ', dom);
-        console.log('innerCountNum = ', innerCountNum);
+        // console.log('dom = ', dom);
+        // console.log('innerCountNum = ', innerCountNum);
         if (innerCountNum === 0) {
             clearInterval(countDownTimer);
             // 设置为原来的计数
