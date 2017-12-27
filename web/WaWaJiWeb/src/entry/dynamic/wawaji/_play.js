@@ -129,7 +129,8 @@ if (!localIdName) {
 nickName = "u" + idName;
 
 //获取房间id
-roomID = window.location.search.slice(1).split('=')[1];
+roomID = window.location.search.match(/rid=(\w+)?/);
+roomID = roomID ? roomID[1] : '';
 console.log('roomid = ', roomID, '\n');
 
 
