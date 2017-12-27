@@ -18,10 +18,10 @@ JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open
 /*
  * Class:     com_zego_base_SerialPort
  * Method:    close
- * Signature: ()V
+ * Signature: (Ljava/io/FileDescriptor)V
  */
 JNIEXPORT void JNICALL Java_com_zego_base_SerialPort_close
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }

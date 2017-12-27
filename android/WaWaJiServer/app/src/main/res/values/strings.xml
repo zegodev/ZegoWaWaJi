@@ -6,7 +6,8 @@
     <string name="vt_menu_action_leave">下线</string>
     <string name="vt_menu_action_test">测试</string>
 
-    <string name="zg_text_quality_options">直播品质:</string>
+    <string name="zg_text_use_test_env">使用测试环境</string>
+    <string name="zg_text_quality_options">直播品质</string>
     <string name="zg_text_resolution_type_lowest">超低质量</string>
     <string name="zg_text_resolution_type_Low">低质量</string>
     <string name="zg_text_resolution_type_Standard">标准质量</string>
@@ -15,8 +16,7 @@
     <string name="zg_text_resolution_type_Highest">特高质量</string>
     <string name="zg_text_resolution_type_Customize">自定义</string>
 
-    <string name="capture_resolution">采集分辨率&#160;<xliff:g id="value">720 x 1280</xliff:g></string>
-    <string name="encode_resolution_prefix">推流分辨率&#160;<xliff:g id="value">%1$s</xliff:g></string>
+    <string name="encode_resolution_prefix">分辨率&#160;<xliff:g id="value">%1$s</xliff:g></string>
     <string name="fps_prefix">帧率&#160;<xliff:g id="value">%1$s</xliff:g></string>
     <string name="bitrate_prefix">码率&#160;<xliff:g id="value">%1$s</xliff:g></string>
 
@@ -30,12 +30,17 @@
     <string name="zg_toast_permission_denied">获取权限 %1$s 失败</string>
     <string name="zg_toast_load_config_failed">加载配置文件出错，请联系我们的技术支持人员</string>
 
+    <string name="zg_text_current_user_id">当前用户ID: <b>%1$s</b></string>
+    <string name="zg_text_current_room_id">当前房间ID: <b>%1$s</b></string>
     <string name="zg_text_current_total_user">共有 <b>%1$d</b> 人</string>
     <string name="zg_text_current_queue_user">排队人数 <b>%1$d</b></string>
     <string name="zg_text_current_player"><b>%1$s</b> 正在玩</string>
     <string name="zg_text_current_no_player">当前机器空闲</string>
     <string name="zg_text_current_device_state">设备状态&#160;<xliff:g id="value">%1$d</xliff:g></string>
     <string name="zg_text_device_error"><b><font color="#ff0000">设备未连接或者没有权限</font></b></string>
+
+    <string name="zg_text_front_stream_info"><strong>正面摄像头:</strong> %1$s</string>
+    <string name="zg_text_side_stream_info"><strong>侧面摄像头:</strong> %1$s</string>
 
     <string name="zg_text_wawaji_name_template">即构娃娃机%1$s</string>
 </resources>

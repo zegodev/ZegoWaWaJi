@@ -72,9 +72,13 @@ public class SerialPort {
 		mFileOutputStream = new FileOutputStream(mFd);
 	}
 
+	protected void close() {
+		close(mFd);
+	}
+
 	// JNI
 	private native static FileDescriptor open(String path, int baudrate, int flags);
-	protected native void close();
+	private native void close(FileDescriptor fd);
 
 	static {
 		System.loadLibrary("serial_port_api");

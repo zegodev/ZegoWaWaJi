@@ -28,7 +28,7 @@ public abstract class WawajiDevice extends SerialPort {
          * 机器故障
          * @param errorCode 故障码
          */
-        void onDeviceBreakdown(int errorCode);
+        void onDeviceStateChanged(int errorCode);
     }
 
     public WawajiDevice(File devicePath, int baudrate, int flags) throws SecurityException, IOException {
@@ -71,6 +71,8 @@ public abstract class WawajiDevice extends SerialPort {
     abstract public boolean sendStopCommand(int seq);
 
     abstract public boolean sendGrabCommand(int seq);
+
+    abstract public boolean sendResetCommand(int seq);
 
     abstract public boolean checkDeviceState();
 
@@ -116,12 +118,4 @@ public abstract class WawajiDevice extends SerialPort {
 
         return true;
     }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        quit();
-    }
-
 }

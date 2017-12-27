@@ -23,6 +23,7 @@ public class SWawaji extends WawajiDevice {
     static final private byte[] CMD_BYTE_HEART_BIT = {(byte)0x23, (byte)0x02, (byte)0x00, (byte)0x2a};
 
     private DeviceStateListener mListener;
+    private boolean mNoMoveOperation = true;
 
     public SWawaji(DeviceStateListener listener) throws SecurityException, IOException {
         super(new File("/dev/ttyS1"), BAUD_RATE, Context.MODE_PRIVATE);
@@ -44,43 +45,47 @@ public class SWawaji extends WawajiDevice {
      */
     @Override
     public boolean initGameConfig(int gameTime, int grabPower, int upPower, int movePower, int upHeight, int seq) {
-        byte[] cmdData = CMD_BYTE_START;
+        mNoMoveOperation = true;
 
-        if (gameTime < 10 || gameTime > 60) {
+        if (gameTime > 60 || gameTime < 10) {
             gameTime = 30;
         }
 
+        if (grabPower > 100 || grabPower < 1) {
+            grabPower = 67;
+        }
         grabPower = grabPower * 48 / 100;
-        if (grabPower > 48 || grabPower < 1) {
-            grabPower = 32;
+        if (grabPower < 1) {
+            grabPower = 1;
         }
 
+        if (upPower > 100 || upPower < 1) {
+            upPower = 33;
+        }
         upPower = upPower * 48 / 100;
-        if (upPower > 48 || upPower < 1) {
-            upPower = 16;
+        if (upPower < 1) {
+            upPower = 1;
         }
 
+        if (movePower > 100 || movePower < 1) {
+            movePower = 21;
+        }
         movePower = movePower * 48 / 100;
-        if (movePower > 48 || movePower < 1) {
-            movePower = 10;
+        if (movePower < 1) {
+            movePower = 1;
         }
 
+        byte[] cmdData = CMD_BYTE_START;
         cmdData[2] = (byte)gameTime;
         cmdData[3] = (byte) grabPower;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[4] = (byte) upPower;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[4] = (byte) upPower;//(mRandom.nextInt(47) + 1);      // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
         cmdData[5] = (byte) movePower;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
 
         if (grabPower >= 45 && upPower >= 45 && movePower >= 45) {
             cmdData[12] = 1;     // 1: 表示使用系统设定的爪力值
         } else {
-            cmdData[12] = 0;     // 0: 表示使用如下设定的爪力值
+            cmdData[12] = 0;     // 0: 表示使用指令中设定的爪力值
         }
-
-        int sum = 0;
-        for (int i = 6; i < cmdData.length - 1; i++) {
-            sum += (cmdData[i] & 0xff);
-        }
-        cmdData[cmdData.length - 1] = (byte) (sum % 100); // 检验位
 
         return sendCommandData( cmdData );
     }
@@ -89,7 +94,7 @@ public class SWawaji extends WawajiDevice {
      * 初始化指令数据
      *
      * @param hit 控制是否中奖，true：中奖；false：不中奖（概率）
-     * @param gameTime 单局游戏时长，取值范围 [10, 90]
+     * @param gameTime 单局游戏时长，取值范围 [10, 60]
      * @param seq  指令序号
      * @return 初始化指令数据
      *
@@ -98,6 +103,12 @@ public class SWawaji extends WawajiDevice {
     @Deprecated
     @Override
     public boolean initGameConfig(boolean hit, int gameTime, int seq) {
+        mNoMoveOperation = true;
+
+        if (gameTime > 60 || gameTime < 10) {
+            gameTime = 30;
+        }
+
         CMD_BYTE_START[2] = (byte)gameTime;
         CMD_BYTE_START[12] = hit ? (byte) 1: (byte) 0;
         return sendCommandData(CMD_BYTE_START);
@@ -105,24 +116,32 @@ public class SWawaji extends WawajiDevice {
 
     @Override
     public boolean sendForwardCommand(int seq) {
+        mNoMoveOperation = false;
+
         CMD_BYTE_MOVE[2] = (byte)0x02;
         return sendCommandData(CMD_BYTE_MOVE);
     }
 
     @Override
     public boolean sendBackwardCommand(int seq) {
+        mNoMoveOperation = false;
+
         CMD_BYTE_MOVE[2] = (byte)0x01;
         return sendCommandData(CMD_BYTE_MOVE);
     }
 
     @Override
     public boolean sendLeftCommand(int seq) {
+        mNoMoveOperation = false;
+
         CMD_BYTE_MOVE[2] = (byte)0x04;
         return sendCommandData(CMD_BYTE_MOVE);
     }
 
     @Override
     public boolean sendRightCommand(int seq) {
+        mNoMoveOperation = false;
+
         CMD_BYTE_MOVE[2] = (byte)0x08;
         return sendCommandData(CMD_BYTE_MOVE);
     }
@@ -134,8 +153,23 @@ public class SWawaji extends WawajiDevice {
 
     @Override
     public boolean sendGrabCommand(int seq) {
+        if (mNoMoveOperation) { // 初始化后没有移动过天车，需要先移动一次，否则不会下爪
+            sendForwardCommand(seq);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+            }
+            sendStopCommand(seq);
+        }
+
         CMD_BYTE_MOVE[2] = (byte)0x10;
         return sendCommandData(CMD_BYTE_MOVE);
+    }
+
+    @Override
+    public boolean sendResetCommand(int seq) {
+        AppLogger.getInstance().writeLog("not support reset command on swawaji device");
+        return false;
     }
 
     @Override
@@ -159,28 +193,23 @@ public class SWawaji extends WawajiDevice {
                 break;
 
             case (byte) 0x80: {  // 是否抓到应答
-                boolean win = (bufferData[2] == (byte) 0x01);
                 if (mListener != null) {
+                    boolean win = (bufferData[2] == (byte) 0x01);
                     mListener.onGameOver(win);
                 }
             }
                 break;
 
             case (byte) 0x02:   // 查询心跳或者查询心跳应答
-                if (bufferData[2] >= (byte) 0x01 && bufferData[2] <= (byte) 0x09) { // 娃娃机故障
-                    if (mListener != null) {
-                        mListener.onDeviceBreakdown(bufferData[2]);
+                if (mListener != null) {
+                    int errorCode = bufferData[2] & 0xff;
+                    if (errorCode >= 1 && errorCode <= 9) { // 娃娃机故障
+                        mListener.onDeviceStateChanged(bufferData[2]);
+                    } else {
+                        mListener.onDeviceStateChanged(0); // 自检无异常或者出现异常后中途又自动恢复了
                     }
                 }
                 break;
-        }
-    }
-
-    private void sleep(int millionSeconds) {
-        try {
-            Thread.sleep(millionSeconds);
-        } catch (InterruptedException e) {
-
         }
     }
 
@@ -263,7 +292,7 @@ public class SWawaji extends WawajiDevice {
                         }
                     }
                 } catch (IOException e) {
-                    AppLogger.getInstance().writeLog("DeviceManager's ReadThread Exception. e : %s", e);
+                    AppLogger.getInstance().writeLog("SWawaji's ReadThread Exception. e : %s", e);
                     break;
                 }
 
@@ -272,7 +301,7 @@ public class SWawaji extends WawajiDevice {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
-                        AppLogger.getInstance().writeLog("DeviceManager's ReadThread wait Exception. e : ", e);
+                        AppLogger.getInstance().writeLog("SWawaji's ReadThread wait Exception. e : %s", e);
                     }
                 }
             }

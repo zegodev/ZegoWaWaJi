@@ -31,6 +31,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -45,6 +47,7 @@ import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoCustomCommandCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
+import com.zego.zegoliveroom.constants.ZegoBeauty;
 import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
@@ -77,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private TextureView mMainPreviewView;
     private TextureView mSecondPreviewView;
 
+    private CheckBox mUseTestEnvView;
+
     private Spinner mLiveQualityView;
     private TextView mResolutionDescView;
     private CustomSeekBar mResolutionView;
@@ -90,7 +95,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private TextView mTotalUserView;
     private TextView mQueueUserView;
     private TextView mCurrentOperatorView;
-
     private TextView mCurrentDeviceStateView;
 
     private String[] mResolutionText;
@@ -114,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         if (TextUtils.isEmpty(from)) {
             from = "main";
         }
-        AppLogger.getInstance().writeLog("*** MainActivity.onCreate() from %s  ***", from);
+        AppLogger.getInstance().writeLog("*** MainActivity.onCreate() from %s, my hash: %s  ***", from, hashCode());
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -144,6 +148,17 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             bindGuardService();
 
             checkDeviceState();
+        }
+    }
+
+    @Override
+    public void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // 使用 config 中设定的名字显示为页面标题
+        String companyName = ZegoApplication.getAppContext().getCompanyName();
+        if (!TextUtils.isEmpty(companyName)) {
+            getSupportActionBar().setTitle(companyName);
         }
     }
 
@@ -185,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                 .setPositiveButton(R.string.vt_dialog_btn_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        quit();
+                        quit(true);
                     }
                 })
                 .setNegativeButton(R.string.vt_dialog_btn_cancel, new DialogInterface.OnClickListener() {
@@ -222,6 +237,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        AppLogger.getInstance().writeLog("*** MainActivity.onDestroy(), my hash: %s ***", hashCode());
+    }
+
     private void showErrorDialog() {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("")   //R.string.vt_dialog_logout_title
@@ -247,8 +269,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
      */
     private void bindGuardService() {
         Intent intent = new Intent(this, GuardService.class);
-        startService(intent);   // *必须*先使用 startService 确保 service 的生命周期不绑定至该 Context 的生命周期
-
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
 
         mHeartBeatHandler.sendEmptyMessageDelayed(1, 60 * 1000);
@@ -260,9 +280,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void unbindGuardService() {
         if (mRemoteApi != null) {
             try {
+                AppLogger.getInstance().writeLog("call leave when unbindGuardService");
                 mRemoteApi.leave(mBinder);  // 必须调用
             } catch (RemoteException e) {
-                e.printStackTrace();
+                AppLogger.getInstance().writeLog("leave failed when unbindGuardService. exception: %s", e);
             }
         }
 
@@ -275,9 +296,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
      * 检查下位机状态
      */
     private void checkDeviceState() {
-        DeviceManager.getInstance().checkDeviceStatus(new DeviceManager.OnDeviceBreakdown() {
+        DeviceManager.getInstance().checkDeviceStatus(new DeviceManager.OnDeviceStateChangeObserver() {
             @Override
-            public void onDeviceBreakdown(final int errorCode) {
+            public void onDeviceStateChanged(final int errorCode) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -287,6 +308,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                             mCurrentDeviceStateView.setText(Html.fromHtml(getString(R.string.zg_text_device_error)));
                         } else {
                             mCurrentDeviceStateView.setText(getString(R.string.zg_text_current_device_state, errorCode));
+                            if (errorCode != 0) {
+                                // 设备上报状态
+                            }
                         }
                     }
                 });
@@ -313,6 +337,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             public void onNothingSelected(AdapterView<?> adapterView) {
             }
         });
+
+        mUseTestEnvView = (CheckBox) findViewById(R.id.zg_use_test_env);
+        mUseTestEnvView.setChecked(PrefUtil.getInstance().isUseTestEnv());
+        mUseTestEnvView.setOnCheckedChangeListener(mCheckedChangeListener);
 
         int defaultResolution = PrefUtil.getInstance().getLiveQualityResolution();
         mResolutionView = (CustomSeekBar) findViewById(R.id.sb_resolution);
@@ -369,7 +397,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.enablePreviewMirror(false);
         mZegoLiveRoom.setPreviewView(mMainPreviewView);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill);
-//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90);
         mZegoLiveRoom.enableCamera(true);
         mZegoLiveRoom.setFrontCam(true);
         mZegoLiveRoom.startPreview();
@@ -378,12 +405,19 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mZegoLiveRoom.setPreviewView(mSecondPreviewView, channelIndex);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill, channelIndex);
-//        mZegoLiveRoom.setAppOrientation(Surface.ROTATION_90, channelIndex);
         mZegoLiveRoom.enableCamera(true, channelIndex);
         mZegoLiveRoom.setFrontCam(false, channelIndex);
         mZegoLiveRoom.startPreview(channelIndex);
 
         AppLogger.getInstance().writeLog("Start preview");
+
+//        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN);
+//        mZegoLiveRoom.setSharpenFactor(0.15f);
+//        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN, channelIndex);
+//        mZegoLiveRoom.setSharpenFactor(0.15f, channelIndex);
+
+        AppLogger.getInstance().writeLog("pause audio module");
+        mZegoLiveRoom.pauseModule(ZegoConstants.ModuleType.AUDIO);
     }
 
     private void loginRoomAndPublishStream() {
@@ -398,6 +432,22 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
             mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
         }
+
+        String currentUserId = PrefUtil.getInstance().getUserId();
+        TextView currentUserView = (TextView) findViewById(R.id.zg_current_user_id);
+        currentUserView.setText(Html.fromHtml(getString(R.string.zg_text_current_user_id, currentUserId)));
+
+        String currentRoomId = PrefUtil.getInstance().getRoomId();
+        TextView currentRoomView = (TextView) findViewById(R.id.zg_current_room_id);
+        currentRoomView.setText(Html.fromHtml(getString(R.string.zg_text_current_room_id, currentRoomId)));
+
+        String mainStreamId = PrefUtil.getInstance().getStreamId();
+        TextView mainStreamView = (TextView) findViewById(R.id.main_stream_id);
+        mainStreamView.setText(Html.fromHtml(getString(R.string.zg_text_front_stream_info, mainStreamId)));
+
+        String secondStreamId = PrefUtil.getInstance().getStreamId2();
+        TextView secondStreamView = (TextView) findViewById(R.id.second_stream_id);
+        secondStreamView.setText(Html.fromHtml(getString(R.string.zg_text_side_stream_info, secondStreamId)));
     }
 
     private void initRoomAndStreamInfo() {
@@ -441,6 +491,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.setRoomConfig(false, true);
         String roomId = PrefUtil.getInstance().getRoomId();
         String roomName = PrefUtil.getInstance().getRoomName();
+        AppLogger.getInstance().writeLog("login room with roomId & roomName: %s, %s", roomId, roomName);
         return mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
             @Override
             public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
@@ -554,7 +605,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         return cmdInfo.toString();
     }
 
-    private void quit() {
+    private void quit(boolean unbindGuardService) {
         mZegoLiveRoom.stopPublishing();
         mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.AUX);
 
@@ -578,7 +629,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         DeviceManager.getInstance().exitDevice();
 
-        unbindGuardService();
+        if (unbindGuardService) {
+            unbindGuardService();
+        }
 
         finish();
 
@@ -650,6 +703,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
                 int seq = CommandSeqManager.getInstance().getAndIncreaseSequence();
                 String cmdContent = generateUserUpdateCommand(seq);
+                AppLogger.getInstance().writeLog("will broadcast content: %s to room", cmdContent);
                 boolean success = mZegoLiveRoom.sendCustomCommand(allMembers, cmdContent, new IZegoCustomCommandCallback() {
                     @Override
                     public void onSendCustomCommand(int errorCode, String roomId) {
@@ -743,9 +797,15 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
      * override from IRoomClient
      */
     @Override
-    public void updateCurrentPlayerInfo(String userId, String userName) {
-        mCurrentPlayer.userID = userId;
-        mCurrentPlayer.userName = userName;
+    public void updateCurrentPlayerInfo(final String userId, final String userName) {
+        runOnWorkThread(new Runnable() {
+            @Override
+            public void run() {
+                AppLogger.getInstance().writeLog("[updateCurrentPlayerInfo], userId: %s; userName: %s", userId, userName);
+                mCurrentPlayer.userID = userId;
+                mCurrentPlayer.userName = userName;
+            }
+        });
     }
 
     @Override
@@ -771,6 +831,17 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
     }
 
+    @Override
+    public void requireRestart(String reason) {
+        AppLogger.getInstance().writeLog(reason);
+        mRetryHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                quit(false);
+            }
+        }, 500);
+    }
+
     private Binder mBinder = new Binder();
     private IRemoteApi mRemoteApi;
 
@@ -780,9 +851,19 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         public void onServiceConnected(ComponentName name, IBinder service) {
             mRemoteApi = IRemoteApi.Stub.asInterface(service);
             try {
+                AppLogger.getInstance().writeLog("call join when onServiceConnected");
                 mRemoteApi.join(mBinder);   // 此处为 UI 进程异常退出时能重启的关键
             } catch (RemoteException e) {
-                e.printStackTrace();
+                AppLogger.getInstance().writeLog("join failed when onServiceConnected. exception: %s", e);
+            }
+
+            try {
+                String sdkVersion = ZegoLiveRoom.version();
+                String veVersion = ZegoLiveRoom.version2();
+                AppLogger.getInstance().writeLog("update bugly info with sdkVersion : %s & veVersion : %s", sdkVersion, veVersion);
+                mRemoteApi.updateBuglyInfo(sdkVersion, veVersion);
+            } catch (RemoteException e) {
+                AppLogger.getInstance().writeLog("update bugly info failed when onServiceConnected. exception: %s", e);
             }
         }
 
@@ -820,6 +901,14 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
 
+        }
+    };
+
+    private CheckBox.OnCheckedChangeListener mCheckedChangeListener = new CheckBox.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            PrefUtil.getInstance().setUseTestEnv(isChecked);
+            Toast.makeText(MainActivity.this, R.string.zg_toast_reopen_app, Toast.LENGTH_LONG).show();
         }
     };
 

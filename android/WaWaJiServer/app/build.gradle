@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+def releaseTime() {
+    return new Date().format("yyyyMMddHHmm", TimeZone.getTimeZone("GMT+8:00"))
+}
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.1"
@@ -7,8 +11,8 @@ android {
         applicationId "com.zego.zegowawaji_server"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 3
-        versionName "1.1"
+        versionCode 10
+        versionName "1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        externalNativeBuild {
 //            cmake {
@@ -50,6 +54,13 @@ android {
             shrinkResources true
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            applicationVariants.all { variant ->
+                variant.outputs.each{ output ->
+                    output.outputFile = new File(output.outputFile.parent, "zego_" + productFlavors[0].name + "_control_" + releaseTime() + "_v" + defaultConfig.versionName + "." + defaultConfig.versionCode + ".apk" )
+                }
+                // can use git rev-parse --short HEAD to get git info for apk name
+            }
         }
     }
 
@@ -57,10 +68,10 @@ android {
         xwawaji {
             buildConfigField("String", "DEVICE_BRAND_NAME", "\"XWawaji\"")
         }
-
-        swawaji {
-            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SWawaji\"")
-        }
+//
+//        swawaji {
+//            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SWawaji\"")
+//        }
     }
 }
 

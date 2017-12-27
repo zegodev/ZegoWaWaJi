@@ -24,4 +24,6 @@ public interface IRoomClient {
     ZegoLiveRoom getZegoLiveRoom();
 
     void runOnWorkThread(Runnable task);
+
+    void requireRestart(String desc);
 }

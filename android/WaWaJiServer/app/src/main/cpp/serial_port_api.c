@@ -147,19 +147,16 @@ JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open
 /*
  * Class:     com_zego_base_SerialPort
  * Method:    close
- * Signature: ()V
+ * Signature: (Ljava/io/FileDescriptor)V
  */
 JNIEXPORT void JNICALL Java_com_zego_base_SerialPort_close
-  (JNIEnv *env, jobject thiz)
+  (JNIEnv *env, jobject thiz, jobject fd)
 {
-	jclass SerialPortClass = (*env)->GetObjectClass(env, thiz);
 	jclass FileDescriptorClass = (*env)->FindClass(env, "java/io/FileDescriptor");
 
-	jfieldID mFdID = (*env)->GetFieldID(env, SerialPortClass, "mFd", "Ljava/io/FileDescriptor;");
 	jfieldID descriptorID = (*env)->GetFieldID(env, FileDescriptorClass, "descriptor", "I");
 
-	jobject mFd = (*env)->GetObjectField(env, thiz, mFdID);
-	jint descriptor = (*env)->GetIntField(env, mFd, descriptorID);
+	jint descriptor = (*env)->GetIntField(env, fd, descriptorID);
 
 	LOGD("close(fd = %d)", descriptor);
 	close(descriptor);

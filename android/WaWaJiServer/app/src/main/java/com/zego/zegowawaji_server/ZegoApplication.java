@@ -1,12 +1,14 @@
 package com.zego.zegowawaji_server;
 
 import android.app.Application;
+import android.content.Intent;
 import android.os.Build;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.tencent.bugly.crashreport.CrashReport;
 import com.zego.base.utils.AppLogger;
+import com.zego.base.utils.BuglyUtil;
 import com.zego.base.utils.DeviceIdUtil;
 import com.zego.base.utils.OSUtils;
 import com.zego.base.utils.PrefUtil;
@@ -15,6 +17,7 @@ import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
 import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegowawaji_server.entity.GameConfig;
+import com.zego.zegowawaji_server.service.GuardService;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -23,14 +26,13 @@ import com.zego.zegowawaji_server.entity.GameConfig;
  */
 
 public class ZegoApplication extends Application {
-    static final private  String BUGLY_APP_KEY = "e8f51c6215";
-
     static private ZegoApplication sInstance;
 
     private long mAppId;
     private byte[] mSignKey;
     private boolean mIsUseTestEnv;
     private byte[] mServerSecret;
+    private String mCompanyName;
     private GameConfig mDefaultGameConfig;
 
     private ZegoLiveRoom mZegoLiveRoom;
@@ -50,14 +52,15 @@ public class ZegoApplication extends Application {
         sInstance = this;
 
         boolean isMainProcess = OSUtils.isMainProcess(this);
-
-        initCrashReport(isMainProcess);
-
         AppLogger.getInstance().writeLog("******* Application (%s) onCreate *******", (isMainProcess ? "main" : "guard"));
 
         if (isMainProcess) {    // 仅在主进程中才初始化
+            BuglyUtil.initCrashReport(this, true, ZegoLiveRoom.version(), ZegoLiveRoom.version2());
+
             boolean success = loadActivateConfig();
             if (success) {
+                startGuardService();
+
                 initUserInfo();
 
                 setupZegoSDK();
@@ -67,14 +70,9 @@ public class ZegoApplication extends Application {
         }
     }
 
-    private void initCrashReport(boolean isMainProcess) {
-        CrashReport.UserStrategy strategy = new CrashReport.UserStrategy(this);
-        strategy.setBuglyLogUpload(isMainProcess);
-        CrashReport.initCrashReport(this, BUGLY_APP_KEY, false, strategy);
-
-        CrashReport.setSdkExtraData(this, "zego_liveroom_version", ZegoLiveRoom.version());
-        CrashReport.setSdkExtraData(this, "zego_ve_version", ZegoLiveRoom.version2());
-        CrashReport.setUserId(DeviceIdUtil.generateDeviceId(this));
+    private void startGuardService() {
+        Intent intent = new Intent(this, GuardService.class);
+        startService(intent);   // *必须*先使用 startService 确保 service 的生命周期不绑定至该 Context 的生命周期
     }
 
     private boolean loadActivateConfig() {
@@ -86,6 +84,7 @@ public class ZegoApplication extends Application {
                                 (byte)0xf0, (byte)0x6b, (byte)0xa6, (byte)0xf2, (byte)0x81, (byte)0x21, (byte)0x5b, (byte)0xa5 };
         mIsUseTestEnv = false;
         mServerSecret = "abcdefghabcdefghabcdefghabcdefgh".getBytes();
+        mCompanyName = "客户体验_Debug";
         mDefaultGameConfig = new GameConfig();
 
         return true;
@@ -95,8 +94,9 @@ public class ZegoApplication extends Application {
         String userId = PrefUtil.getInstance().getUserId();
         String userName = PrefUtil.getInstance().getUserName();
         if (TextUtils.isEmpty(userId) || TextUtils.isEmpty(userName)) {
-            userId = TimeUtil.getNowTimeStr();
-            userName = String.format("WWJS_%s_%s", Build.MODEL.replaceAll(",", "."), userId);
+            String deviceId = DeviceIdUtil.generateDeviceId(this);
+            userId = String.format("WWJS_%s", deviceId);
+            userName = String.format("WWJS_%s_%s", Build.MODEL.replaceAll(",", "."), deviceId);
 
             PrefUtil.getInstance().setUserId(userId);
             PrefUtil.getInstance().setUserName(userName);
@@ -104,21 +104,7 @@ public class ZegoApplication extends Application {
     }
 
     private void setupZegoSDK() {
-        String userId = PrefUtil.getInstance().getUserId();
-        String userName = PrefUtil.getInstance().getUserName();
-        AppLogger.getInstance().writeLog("set userId & userName with : %s, %s", userId, userName);
-
-        ZegoLiveRoom.setUser(userId, userName);
-        ZegoLiveRoom.requireHardwareEncoder(true);
-        ZegoLiveRoom.requireHardwareDecoder(true);
-
-        AppLogger.getInstance().writeLog("use test env ? %s", mIsUseTestEnv);
-        ZegoLiveRoom.setTestEnv(mIsUseTestEnv);
-
-        ZegoLiveRoom.setConfig("camera_orientation_mode=180"); // 锁死摄像头方向且开启竖向采集(变相增加可视范围)
-
-        mZegoLiveRoom = new ZegoLiveRoom();
-        mZegoLiveRoom.setSDKContext(new ZegoLiveRoom.SDKContext() {
+        ZegoLiveRoom.setSDKContext(new ZegoLiveRoom.SDKContext() {
             @Override
             public String getSoFullPath() {
                 return null;
@@ -134,6 +120,21 @@ public class ZegoApplication extends Application {
                 return sInstance;
             }
         });
+
+        String userId = PrefUtil.getInstance().getUserId();
+        String userName = PrefUtil.getInstance().getUserName();
+        AppLogger.getInstance().writeLog("set userId & userName with : %s, %s", userId, userName);
+
+        ZegoLiveRoom.setUser(userId, userName);
+        ZegoLiveRoom.requireHardwareEncoder(true);
+        ZegoLiveRoom.requireHardwareDecoder(true);
+
+        AppLogger.getInstance().writeLog("use test env ? %s", mIsUseTestEnv);
+        ZegoLiveRoom.setTestEnv(mIsUseTestEnv);
+
+        ZegoLiveRoom.setConfig("camera_orientation_mode=90"); // 其中 0 度或者 180 度为横向采集；90 度或者 270 度为竖向采集。当竖向采集时，可以让摄像头距离娃娃机更近
+
+        mZegoLiveRoom = new ZegoLiveRoom();
 
         initZegoSDK(mZegoLiveRoom);
     }
@@ -180,7 +181,8 @@ public class ZegoApplication extends Application {
 
         int width = Integer.parseInt(strWidthHeight[0].trim());
         int height = Integer.parseInt(strWidthHeight[1].trim());
-        // 默认使用 720 * 1280 采集分辨率以达到最大可视角度及最佳推流质量，再高的采集分辨率，目前所使用的摄像头不支持
+
+        // 默认使用 720 * 1280 采集分辨率以达到最大可视角度及最佳推流质量(再高的采集分辨率，目前所使用的摄像头不支持)
         if (width < height) {
             config.setVideoCaptureResolution(720, 1280);
         } else {
@@ -194,6 +196,10 @@ public class ZegoApplication extends Application {
 
     public byte[] getServerSecret(){
         return mServerSecret;
+    }
+
+    public String getCompanyName() {
+        return mCompanyName;
     }
 
     public GameConfig getDefaultGameConfig(){

@@ -25,6 +25,7 @@ public class XWawaji extends WawajiDevice {
     static final private byte[] CMD_BYTE_RIGHT = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x03, (byte) 0x9b, (byte) 0x13, (byte) 0x27};
     static final private byte[] CMD_BYTE_DOWN = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x42};
     static final private byte[] CMD_BYTE_STOP = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x0c, (byte) 0x32, (byte) 0x05, (byte) 0x00, (byte) 0x00, (byte) 0x43};
+    static final private byte[] CMD_BYTE_RESET = {(byte) 0xfe, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xff, (byte) 0xff, (byte) 0x09, (byte) 0x38, (byte) 0x41 };
 
     private DeviceStateListener mListener;
 
@@ -40,35 +41,42 @@ public class XWawaji extends WawajiDevice {
 
     /**
      * 设置本局游戏初始值
-     * @param gameTime 游戏时长
-     * @param grabPower 下爪力度
-     * @param upPower 提起力度
-     * @param movePower 移动力度
-     * @param upHeight 提起高度
+     * @param gameTime 游戏时长[10, 60]
+     * @param grabPower 下爪力度[0, 100], 0 时取默认值 67
+     * @param upPower 提起力度[0, 100], 0 时取默认值 33
+     * @param movePower 移动力度[0, 100], 0 时取默认值 21
+     * @param upHeight 提起高度[0, 10], 0 时取默认值 7
      * @param seq 指令序号
      * @return 是否调用成功
      */
     @Override
     public boolean initGameConfig(int gameTime, int grabPower, int upPower, int movePower, int upHeight, int seq) {
-        byte[] cmdData = CMD_BYTE_BEGIN;
-
-        if (gameTime < 10 || gameTime > 60) {
+        if (gameTime > 60 || gameTime < 10) {
             gameTime = 30;
         }
 
+        if (grabPower > 100 || grabPower < 1) {
+            grabPower = 67;
+        }
         grabPower = grabPower * 48 / 100;
-        if (grabPower > 48 || grabPower < 1) {
-            grabPower = 32;
+        if (grabPower < 1) {
+            grabPower = 1;
         }
 
+        if (upPower > 100 || upPower < 1) {
+            upPower = 33;
+        }
         upPower = upPower * 48 / 100;
-        if (upPower > 48 || upPower < 1) {
-            upPower = 16;
+        if (upPower < 1) {
+            upPower = 1;
         }
 
+        if (movePower > 100 || movePower < 1) {
+            movePower = 21;
+        }
         movePower = movePower * 48 / 100;
-        if (movePower > 48 || movePower < 1) {
-            movePower = 10;
+        if (movePower < 1) {
+            movePower = 1;
         }
 
         if (upHeight > 10 || upHeight < 1) {
@@ -76,13 +84,14 @@ public class XWawaji extends WawajiDevice {
         }
 
         int index = 8;
+        byte[] cmdData = CMD_BYTE_BEGIN;
         cmdData[index++] = (byte)gameTime;
-        cmdData[index++] = 0;     // 0: 表示使用如下设定的爪力值
+        cmdData[index++] = 0;     // 0: 使用该指令中设定的爪力值
         cmdData[index++] = (byte) grabPower;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) upPower;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) upPower;  //(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
         cmdData[index++] = (byte) movePower;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) upHeight;//mRandom.nextInt(10);        // 抓起高度（0--10），需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x30;     //(mRandom.nextInt(47) + 1);    // 最大爪力(1—48)，前面已经设置为使用本指令中的爪力值，此值会被忽略
+        cmdData[index++] = (byte) upHeight; //mRandom.nextInt(10);          // 抓起高度(0--10)，需根据实际投放的娃娃类型做现场调优
 
         int sum = 0;
         for (int i = 6; i < cmdData.length - 1; i++) {
@@ -100,7 +109,7 @@ public class XWawaji extends WawajiDevice {
      * 各阶段爪力值的设置需要根据娃娃样式、重量、用料等现场调节，以下各值只是用在即构公司体验机上的一组相对较优值，客户需要根据自己的实际情况做调优。
      *
      * @param hit 控制是否中奖，true：中奖；false：概率
-     * @param gameTime 单局游戏时长，取值范围 [10, 90]
+     * @param gameTime 单局游戏时长，取值范围 [10, 60]
      * @param seq 指令序号
      * @return
      *
@@ -111,14 +120,18 @@ public class XWawaji extends WawajiDevice {
     public boolean initGameConfig(boolean hit, int gameTime, int seq) {
         byte[] cmdData = CMD_BYTE_BEGIN;
 
+        if (gameTime > 60 || gameTime < 10) {
+            gameTime = 30;
+        }
+
         int index = 8;
         cmdData[index++] = (byte)gameTime;
         cmdData[index++] = hit ? (byte) 1: (byte) 0;     // 1: 表示全部使用最大抓力，会忽略用户设置的各爪力值；0: 表示使用用户设置的爪力值，不代表一定抓不中
         cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 抓起爪力(1—48)，需根据实际投放的娃娃类型做现场调优
         cmdData[index++] = (byte) 0x10;//(mRandom.nextInt(47) + 1);    // 到顶爪力(1—48)，需根据实际投放的娃娃类型做现场调优
         cmdData[index++] = (byte) 0x0a;//(mRandom.nextInt(47) + 1);    // 移动爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x20;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
-        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);        // 抓起高度（0--10），需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x30;//(mRandom.nextInt(47) + 1);    // 大爪力(1—48)，需根据实际投放的娃娃类型做现场调优
+        cmdData[index++] = (byte) 0x07;//mRandom.nextInt(10);          // 抓起高度(0--10)，需根据实际投放的娃娃类型做现场调优
 
         int sum = 0;
         for (int i = 6; i < cmdData.length - 1; i++) {
@@ -153,12 +166,17 @@ public class XWawaji extends WawajiDevice {
 
     @Override
     public boolean sendStopCommand(int seq) {
-        return sendCommandData( updateSequence(CMD_BYTE_STOP, seq));
+        return sendCommandData( updateSequence(CMD_BYTE_STOP, seq) );
     }
 
     @Override
     public boolean sendGrabCommand(int seq) {
         return sendCommandData( updateSequence(CMD_BYTE_DOWN, seq) );
+    }
+
+    @Override
+    public boolean sendResetCommand(int seq) {
+        return sendCommandData( updateSequence(CMD_BYTE_RESET, seq) );
     }
 
     @Override
@@ -197,14 +215,18 @@ public class XWawaji extends WawajiDevice {
         AppLogger.getInstance().writeLog("receive: %s from device. data size: %d", sb.toString(), size);
 
         if (data[7] == (byte) 0x33) {    // 游戏结束返回
-            boolean win = (data[8] == (byte) 0x01);
             if (mListener != null) {
+                boolean win = (data[8] == (byte) 0x01);
                 mListener.onGameOver(win);
             }
         } else if (data[7] == (byte)0x34 || data[7] == (byte)0x37) {
-            int errorCode = data[8] & 0xff;
-            if (errorCode >= 101 && errorCode <= 109) {
-                mListener.onDeviceBreakdown(errorCode);
+            if (mListener != null) {
+                int errorCode = data[8] & 0xff;
+                if (errorCode >= 101 && errorCode <= 109) {
+                    mListener.onDeviceStateChanged(errorCode);
+                } else {
+                    mListener.onDeviceStateChanged(0); // 自检无异常或者出现异常后中途又自动恢复了
+                }
             }
         }
     }
@@ -285,7 +307,7 @@ public class XWawaji extends WawajiDevice {
                         }
                     }
                 } catch (IOException e) {
-                    AppLogger.getInstance().writeLog("DeviceManager's ReadThread Exception. e : %s", e);
+                    AppLogger.getInstance().writeLog("XWawaji's ReadThread Exception. e : %s", e);
                     break;
                 }
 
@@ -294,7 +316,7 @@ public class XWawaji extends WawajiDevice {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
-                        AppLogger.getInstance().writeLog("DeviceManager's ReadThread wait Exception. e : ", e);
+                        AppLogger.getInstance().writeLog("XWawaji's ReadThread wait Exception. e : %s", e);
                     }
                 }
             }

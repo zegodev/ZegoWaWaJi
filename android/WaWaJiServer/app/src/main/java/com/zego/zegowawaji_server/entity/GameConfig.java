@@ -130,11 +130,19 @@ public class GameConfig {
 
     static public GameConfig parseFromJson(JSONObject jsonConfig, GameConfig defaultConfig) {
         GameConfig config = new GameConfig();
-        config.gameTime = jsonConfig.optInt("game_time", defaultConfig == null ? DEFAULT_GAME_TIME : defaultConfig.getGameTime());
-        config.clawPowerGrab = jsonConfig.optInt("claw_power_grab", defaultConfig == null ? DEFAULT_CLAW_POWER_GRAB : defaultConfig.getClawPowerGrab());
-        config.clawPowerUp = jsonConfig.optInt("claw_power_up", defaultConfig == null ? DEFAULT_CLAW_POWER_UP : defaultConfig.getClawPowerUp());
-        config.clawPowerMove = jsonConfig.optInt("claw_power_move", defaultConfig == null ? DEFAULT_CLAW_POWER_MOVE : defaultConfig.getClawPowerMove());
-        config.upHeight = jsonConfig.optInt("up_height", defaultConfig == null ? DEFAULT_UP_HEIGHT : defaultConfig.getUpHeight());
+        if (jsonConfig == null) {
+            config.gameTime = (defaultConfig == null) ? DEFAULT_GAME_TIME : defaultConfig.getGameTime();
+            config.clawPowerGrab = (defaultConfig == null) ? DEFAULT_CLAW_POWER_GRAB : defaultConfig.getClawPowerGrab();
+            config.clawPowerUp = (defaultConfig == null) ? DEFAULT_CLAW_POWER_UP : defaultConfig.getClawPowerUp();
+            config.clawPowerMove = (defaultConfig == null) ? DEFAULT_CLAW_POWER_MOVE : defaultConfig.getClawPowerMove();
+            config.upHeight = (defaultConfig == null) ? DEFAULT_UP_HEIGHT : defaultConfig.getUpHeight();
+        } else {
+            config.gameTime = jsonConfig.optInt("game_time", defaultConfig == null ? DEFAULT_GAME_TIME : defaultConfig.getGameTime());
+            config.clawPowerGrab = jsonConfig.optInt("claw_power_grab", defaultConfig == null ? DEFAULT_CLAW_POWER_GRAB : defaultConfig.getClawPowerGrab());
+            config.clawPowerUp = jsonConfig.optInt("claw_power_up", defaultConfig == null ? DEFAULT_CLAW_POWER_UP : defaultConfig.getClawPowerUp());
+            config.clawPowerMove = jsonConfig.optInt("claw_power_move", defaultConfig == null ? DEFAULT_CLAW_POWER_MOVE : defaultConfig.getClawPowerMove());
+            config.upHeight = jsonConfig.optInt("up_height", defaultConfig == null ? DEFAULT_UP_HEIGHT : defaultConfig.getUpHeight());
+        }
         return config;
     }
 }

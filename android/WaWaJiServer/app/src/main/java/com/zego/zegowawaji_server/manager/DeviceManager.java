@@ -6,7 +6,6 @@ import com.zego.zegowawaji_server.device.SWawaji;
 import com.zego.zegowawaji_server.device.WawajiDevice;
 import com.zego.zegowawaji_server.device.XWawaji;
 
-import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Random;
 public class DeviceManager {
     private WawajiDevice mWawajiDevice;
     private OnGameOverObserver mGameOverObserver;
-    private OnDeviceBreakdown mOnDeviceBreakdown;
+    private OnDeviceStateChangeObserver mOnDeviceStateChangeObserver;
     private Random mRandom;
 
     static private DeviceManager sInstance;
@@ -29,8 +28,15 @@ public class DeviceManager {
         void onGameOver(boolean win);
     }
 
-    public interface OnDeviceBreakdown {
-        void onDeviceBreakdown(int errorCode);
+    /**
+     * 娃娃机状态监控
+     */
+    public interface OnDeviceStateChangeObserver {
+        /**
+         * 娃娃机状态变化，比如娃娃机天车故障等
+         * @param errorCode 0: 设备运转正常; -1: 无法初始化下位机; > 0: 下位机故障，具体故障码需要根据不同的下位机类型决定
+         */
+        void onDeviceStateChanged(int errorCode);
     }
 
     static public DeviceManager getInstance() {
@@ -54,11 +60,10 @@ public class DeviceManager {
             }
 
             @Override
-            public void onDeviceBreakdown(int errorCode) {
-                // 此处需要通知业务服务器并报警，通知维护人员
-                AppLogger.getInstance().writeLog("the wawaji has break down, errorCode: %d", errorCode);
-                if (mOnDeviceBreakdown != null) {
-                    mOnDeviceBreakdown.onDeviceBreakdown(errorCode);
+            public void onDeviceStateChanged(int errorCode) {
+                AppLogger.getInstance().writeLog("the wawaji's state changed, errorCode: %d", errorCode);
+                if (mOnDeviceStateChangeObserver != null) {
+                    mOnDeviceStateChangeObserver.onDeviceStateChanged(errorCode);
                 }
             }
         };
@@ -72,15 +77,15 @@ public class DeviceManager {
                 mWawajiDevice = new SWawaji(listener);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.getInstance().writeLog("connect wawaji device with category(%s) failed. exception: %s", BuildConfig.DEVICE_BRAND_NAME, e);
         }
     }
 
-    public void checkDeviceStatus(OnDeviceBreakdown observer) {
-        mOnDeviceBreakdown = observer;
+    public void checkDeviceStatus(OnDeviceStateChangeObserver observer) {
+        mOnDeviceStateChangeObserver = observer;
         if (mWawajiDevice == null) {
             if (observer != null) {
-                observer.onDeviceBreakdown(-1);
+                observer.onDeviceStateChanged(-1);
             }
         } else {
             mWawajiDevice.checkDeviceState();
@@ -89,34 +94,32 @@ public class DeviceManager {
 
     /**
      * 设置本局游戏初始值
-     * @param gameTime 游戏时长
-     * @param grabPower 下爪力度
-     * @param upPower 提起力度
-     * @param movePower 移动力度
-     * @param upHeight 提起高度
+     * @param gameTime 游戏时长[10, 60]
+     * @param grabPower 下爪力度[0, 100], 0 时取默认值 67
+     * @param upPower 提起力度[0, 100], 0 时取默认值 33
+     * @param movePower 移动力度[0, 100], 0 时取默认值 21
+     * @param upHeight 提起高度[0, 10], 0 时取默认值 7
      * @return
      */
     public boolean initGameConfig(int gameTime, int grabPower, int upPower, int movePower, int upHeight) {
+        if (gameTime > 60 || gameTime < 10) {
+            gameTime = 30;
+        }
         return mWawajiDevice.initGameConfig(gameTime, grabPower, upPower, movePower, upHeight, sCmdSequence++);
-
     }
 
     /**
      * 初始化娃娃机
      * @param probability 中奖概率, 取值为 (0, 1]
-     * @param gameTime 单局游戏时长 [10, 90]
+     * @param gameTime 单局游戏时长 [10, 60]
      * @return
      *
      * @deprecated see {@link #initGameConfig(int, int, int, int, int)}
      */
     @Deprecated
     public boolean initGameConfig(float probability, int gameTime) {
-        if (probability <= 0 || probability > 1) {
-            probability = 0.5f;
-        }
-
-        if (gameTime > 90 || gameTime < 10) {
-            gameTime = 60;
+        if (gameTime > 60 || gameTime < 10) {
+            gameTime = 30;
         }
 
         boolean hit = canHit(probability);
@@ -143,6 +146,10 @@ public class DeviceManager {
         return mWawajiDevice.sendStopCommand(sCmdSequence++);
     }
 
+    public boolean sendResetCmd() {
+        return mWawajiDevice.sendResetCommand(sCmdSequence++);
+    }
+
     /**
      * 抓指令
      * @param observer 指令执行结果
@@ -159,6 +166,10 @@ public class DeviceManager {
      * @return
      */
     private boolean canHit(float probability) {
+        if (probability <= 0 || probability > 1) {
+            probability = 0.1f;
+        }
+
         return (mRandom.nextInt(1000) % (100 / (100 * probability)) + 1) == 1;
     }
 

@@ -41,6 +41,8 @@ public class PrefUtil {
 
     static private String KEY_ENCRYPTED_GAME_CONFIG = "_zego_encrypted_game_config";
 
+    static private String KEY_USE_TEST_ENV = "_zego_use_test_env";
+
     private SharedPreferences mPref;
 
     private PrefUtil() {
@@ -218,5 +220,17 @@ public class PrefUtil {
 
     public String getEncryptedGameConfig(){
         return mPref.getString(KEY_ENCRYPTED_GAME_CONFIG, "");
+    }
+
+    public void setUseTestEnv(boolean useTestEnv) {
+        setBoolean(KEY_USE_TEST_ENV, useTestEnv);
+    }
+
+    public boolean isUseTestEnv() {
+        return mPref.getBoolean(KEY_USE_TEST_ENV, false);
+    }
+
+    public void clearAll() {
+        mPref.edit().clear().apply();
     }
 }

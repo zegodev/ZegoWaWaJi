@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.zego.base.utils.AppLogger;
+import com.zego.base.utils.BuglyUtil;
 import com.zego.zegowawaji_server.MainActivity;
 
 import java.util.List;
@@ -33,7 +35,7 @@ public class GuardService extends Service {
 
     private Thread mWatchDog;
 
-    private volatile long mLastHeartBeatTime = System.currentTimeMillis();
+    private volatile long mLastHeartBeatTime = SystemClock.elapsedRealtime();
     private volatile boolean mMonitorMainProcess = true;
 
     @Override
@@ -41,6 +43,8 @@ public class GuardService extends Service {
         super.onCreate();
 
         AppLogger.getInstance().writeLog("***** GuardService.onCreate() *****");
+
+        BuglyUtil.initCrashReport(getApplication(), false, null, null);
 
         mWatchDog = new WatchDog();
         mWatchDog.start();
@@ -82,7 +86,7 @@ public class GuardService extends Service {
         @Override
         public void join(IBinder token) throws RemoteException {
             updateHeartBeatTime();
-            AppLogger.getInstance().writeLog("execute join");
+            AppLogger.getInstance().writeLog("execute join, token: %s", token.hashCode());
 
             mMonitorMainProcess = true;
 
@@ -98,7 +102,7 @@ public class GuardService extends Service {
 
         @Override
         public void leave(IBinder token) {
-            AppLogger.getInstance().writeLog("execute leave");
+            AppLogger.getInstance().writeLog("execute leave, token: %s", token.hashCode());
             mMonitorMainProcess = false;
             try {
                 token.unlinkToDeath(mRecipient, 0);
@@ -111,6 +115,12 @@ public class GuardService extends Service {
         public void sendHeartbeat() {
             updateHeartBeatTime();
             AppLogger.getInstance().writeLog("receive heart beat from client, time: %d", mLastHeartBeatTime);
+        }
+
+        @Override
+        public void updateBuglyInfo(String sdkVersion, String veVersion) {
+            BuglyUtil.updateVersionInfo(getApplicationContext(), sdkVersion, veVersion);
+            AppLogger.getInstance().writeLog("update bugly info with sdkVersion: %s & veVersion: %s", sdkVersion, veVersion);
         }
     }
 
@@ -137,7 +147,7 @@ public class GuardService extends Service {
     }
 
     private void updateHeartBeatTime() {
-        mLastHeartBeatTime = System.currentTimeMillis();
+        mLastHeartBeatTime = SystemClock.elapsedRealtime();
         AppLogger.getInstance().writeLog("(%d)update heart beat time to : %d", GuardService.this.hashCode(), mLastHeartBeatTime);
     }
 
@@ -176,9 +186,9 @@ public class GuardService extends Service {
                     }
                 }
 
-                AppLogger.getInstance().writeLog("(%d)mMonitorMainProcess ? %s, curTime: %d, last heart beat time: %d", GuardService.this.hashCode(), mMonitorMainProcess, System.currentTimeMillis(), mLastHeartBeatTime);
+                AppLogger.getInstance().writeLog("(%d)mMonitorMainProcess ? %s, curTime: %d, last heart beat time: %d", GuardService.this.hashCode(), mMonitorMainProcess, SystemClock.elapsedRealtime(), mLastHeartBeatTime);
                 if (mMonitorMainProcess && !isInterrupted()
-                        && (!mainProcessIsRunning || (System.currentTimeMillis() - mLastHeartBeatTime > 90 * 1000))) {
+                        && (!mainProcessIsRunning || (SystemClock.elapsedRealtime() - mLastHeartBeatTime > 90 * 1000))) {
 
                     if (mainProcessIsRunning) {
                         AppLogger.getInstance().writeLog("(%d)kill process then start new main activity", GuardService.this.hashCode());
