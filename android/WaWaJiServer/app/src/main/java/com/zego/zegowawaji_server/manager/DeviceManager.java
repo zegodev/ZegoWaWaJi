@@ -2,7 +2,6 @@ package com.zego.zegowawaji_server.manager;
 
 import com.zego.base.utils.AppLogger;
 import com.zego.zegowawaji_server.BuildConfig;
-import com.zego.zegowawaji_server.device.SWawaji;
 import com.zego.zegowawaji_server.device.WawajiDevice;
 import com.zego.zegowawaji_server.device.XWawaji;
 
@@ -73,8 +72,6 @@ public class DeviceManager {
         try {
             if (BuildConfig.DEVICE_BRAND_NAME.equals("XWawaji")) {
                 mWawajiDevice = new XWawaji(listener);
-            } else if (BuildConfig.DEVICE_BRAND_NAME.equals("SWawaji")) {
-                mWawajiDevice = new SWawaji(listener);
             }
         } catch (Exception e) {
             AppLogger.getInstance().writeLog("connect wawaji device with category(%s) failed. exception: %s", BuildConfig.DEVICE_BRAND_NAME, e);

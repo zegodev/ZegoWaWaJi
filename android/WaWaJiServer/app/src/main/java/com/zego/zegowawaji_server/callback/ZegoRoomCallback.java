@@ -437,6 +437,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             targetUser = queueMembers.remove(idx);
 
             AppLogger.getInstance().writeLog("[handleCancelAppointment], remove user: %s from queue, current queue size: %d", userId, queueMembers.size());
+
+            mListener.onRoomStateUpdate();
         } else {
             errorCode = 1;
             targetUser = new GameUser(userId, userName);
@@ -459,11 +461,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         AppLogger.getInstance().writeLog("[handleCancelAppointment], reply cancel appointment command success? %s", success);
 
-        if (errorCode == 0 && (mHandler.hasMessages(HandlerImpl.MSG_RESEND_READY_COMMAND) || mHandler.hasMessages(HandlerImpl.INTERVAL_WAIT_CONFIRM))
+        if (errorCode == 0 && (mHandler.hasMessages(HandlerImpl.MSG_RESEND_READY_COMMAND) || mHandler.hasMessages(HandlerImpl.MSG_WAIT_CONFIRM))
                 && TextUtils.equals(targetUser.userID, mCurrentPlayerId) && TextUtils.equals(targetUser.getSessionId(), mSessionId)) {
             // 取消预约的用户是正在等待上机的用户
             AppLogger.getInstance().writeLog("the cancel user is waiting user, notify next player");
             mHandler.removeMessages(HandlerImpl.MSG_RESEND_READY_COMMAND);
+            mHandler.removeMessages(HandlerImpl.MSG_WAIT_CONFIRM);
 
             setIdle(true, "the cancel user is waiting user");
             mSessionId = "";

@@ -11,8 +11,8 @@ android {
         applicationId "com.zego.zegowawaji_server"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 10
-        versionName "1.2"
+        versionCode 12
+        versionName "1.2.12"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        externalNativeBuild {
 //            cmake {
@@ -57,7 +57,7 @@ android {
 
             applicationVariants.all { variant ->
                 variant.outputs.each{ output ->
-                    output.outputFile = new File(output.outputFile.parent, "zego_" + productFlavors[0].name + "_control_" + releaseTime() + "_v" + defaultConfig.versionName + "." + defaultConfig.versionCode + ".apk" )
+                    output.outputFile = new File(output.outputFile.parent, "zego_" + productFlavors[0].name + "_control_" + releaseTime() + "_v" + defaultConfig.versionName + ".apk" )
                 }
                 // can use git rev-parse --short HEAD to get git info for apk name
             }
@@ -68,10 +68,6 @@ android {
         xwawaji {
             buildConfigField("String", "DEVICE_BRAND_NAME", "\"XWawaji\"")
         }
-//
-//        swawaji {
-//            buildConfigField("String", "DEVICE_BRAND_NAME", "\"SWawaji\"")
-//        }
     }
 }
 

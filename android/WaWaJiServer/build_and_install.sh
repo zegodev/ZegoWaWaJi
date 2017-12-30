@@ -3,6 +3,8 @@ function print_error_then_exit {
 	exit 1
 }
 
+echo "Begin at `date`"
+
 if [ 'a'$1 = 'as' ]; then
     echo "Build swawaji server apk"
     ./gradlew clean aSR || print_error_then_exit "build error"
@@ -29,4 +31,4 @@ done
 echo "Start com.zego.zegowawaji_server"
 adb shell am start -a android.intent.action.MAIN -c android.intent.category.DEFAULT -n com.zego.zegowawaji_server/.MainActivity || print_error_then_exit "start error"
 
-echo "Finish."
+echo "Finish at `date`"
