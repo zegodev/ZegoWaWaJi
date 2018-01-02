@@ -46,11 +46,9 @@ import com.zego.wawaji_client.utils.SystemUtil;
 import com.zego.wawaji_client.widgets.GameResultDialog;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoLivePlayerCallback;
-import com.zego.zegoliveroom.callback.IZegoLivePublisherCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.callback.IZegoRoomCallback;
 import com.zego.zegoliveroom.constants.ZegoConstants;
-import com.zego.zegoliveroom.entity.AuxData;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoStreamQuality;
 import com.zego.zegoliveroom.entity.ZegoUser;
@@ -517,38 +515,6 @@ public class PlayActivity extends AppCompatActivity {
                 }
 
                 CMDCenter.getInstance().printLog("[onVideoSizeChanged], streamID: " + streamID + ", currentShowIndex: " + currentShowIndex);
-            }
-        });
-
-        mZegoLiveRoom.setZegoLivePublisherCallback(new IZegoLivePublisherCallback() {
-            @Override
-            public void onPublishStateUpdate(int errCode, String streamID, HashMap<String, Object> hashMap) {
-                CMDCenter.getInstance().printLog("[onPublishStateUpdate], streamID: " + streamID + ", errorCode: " + errCode);
-            }
-
-            @Override
-            public void onJoinLiveRequest(int i, String s, String s1, String s2) {
-
-            }
-
-            @Override
-            public void onPublishQualityUpdate(String s, ZegoStreamQuality zegoStreamQuality) {
-
-            }
-
-            @Override
-            public AuxData onAuxCallback(int i) {
-                return null;
-            }
-
-            @Override
-            public void onCaptureVideoSizeChangedTo(int i, int i1) {
-
-            }
-
-            @Override
-            public void onMixStreamConfigUpdate(int i, String s, HashMap<String, Object> hashMap) {
-
             }
         });
 
@@ -1240,7 +1206,6 @@ public class PlayActivity extends AppCompatActivity {
             zegoStream.stopPlayStream();
         }
 
-        mZegoLiveRoom.stopPublishing();
         mZegoLiveRoom.logoutRoom();
         CMDCenter.getInstance().reset();
 
@@ -1265,6 +1230,8 @@ public class PlayActivity extends AppCompatActivity {
                 }
             }).create();
             dialog.show();
+        }else{
+            doLogout();
         }
     }
 
