@@ -26,7 +26,7 @@ ZegoWaWaJi is a delightful software solution for the Grab-Toy game. The content 
 3、增加poster <br>
 4、demo源码添加注释 <br>
 
-第三个版本新开了一个branch H5-WaWaJi-1.0.3
+第三个版本从原来的分支 H5-WaWaJi-1.0.3转移到master分支，此后master作为H5 demo 的发布分支
 
 >对应安卓娃娃机版子第三版协议 <br>
 1、添加了未打包之前的源码 <br>
@@ -34,12 +34,3 @@ ZegoWaWaJi is a delightful software solution for the Grab-Toy game. The content 
 3、长按时， seq不变 <br>
 4、房间列表页添加了筛选条件 <br>
 5、收到273指令信息，添加了逻辑判断
-
-
-
-后续将开发一整套的娃娃机管理系统，所以在master分支将不再是简单的demo演示代码了 <br>
-想要demo演示代码，请下载   <br> 
-Tag H5-WaWaJi-1.0.1， Tag H5-WaWaJi-1.0.2 以及branch H5-WaWaJi-1.0.3
-
->Tag H5-WaWaJi-1.0.1， Tag H5-WaWaJi-1.0.2将不再更新 <br>
-branch H5-WaWaJi-1.0.3  会不定期更新
