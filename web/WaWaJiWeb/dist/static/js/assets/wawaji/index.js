@@ -1153,6 +1153,23 @@ window.onload = function () {
                 cancelAppointmentClientHandler();
             }
         }
+
+        // fix预约之后，刷新，重新预约不再发送257问题
+        waitQueue = custom_content.data.queue;
+        // 排队队列不为空，则赋值设置当前的排队人数
+        if (waitQueue.length !== 0) {
+            $beforeQueueNum.innerHTML = waitQueue.length;
+            for (var i = 0; i < waitQueue.length; i++) {
+                if (waitQueue[i].id === idName) {
+                    // 用户当前所处排列位置
+                    waitPosition = i + 1;
+                    break;
+                }
+            }
+            $afterQueueNum.innerHTML = waitPosition;
+        } else {
+            $beforeQueueNum.innerHTML = 0;
+        }
     }
     // 恢复游戏中状态处理
     function recoveGameStateHandler(leftTime) {
