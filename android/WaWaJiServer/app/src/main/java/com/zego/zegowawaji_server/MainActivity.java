@@ -41,13 +41,13 @@ import android.widget.Toast;
 import com.zego.base.utils.AppLogger;
 import com.zego.base.utils.ByteSizeUnit;
 import com.zego.base.utils.DeviceIdUtil;
+import com.zego.base.utils.PkgUtil;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.widget.CustomSeekBar;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoCustomCommandCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
-import com.zego.zegoliveroom.constants.ZegoBeauty;
 import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
@@ -69,6 +69,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import im.zego.wawajiservice.apiex.CBUpdateTime;
+import im.zego.wawajiservice.apiex.IWwjsApiEx;
 
 public class MainActivity extends AppCompatActivity implements IStateChangedListener, IRoomClient {
 
@@ -140,14 +143,16 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
             initCtrls();
 
+            bindGuardService();
+
+            bindWwjExService();
+
+            checkDeviceState();
+
             if (checkOrRequestPermission()) {
                 startPreview();
                 loginRoomAndPublishStream();
             }
-
-            bindGuardService();
-
-            checkDeviceState();
         }
     }
 
@@ -155,11 +160,20 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     public void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
+        StringBuilder titleBuilder = new StringBuilder();
         // 使用 config 中设定的名字显示为页面标题
         String companyName = ZegoApplication.getAppContext().getCompanyName();
         if (!TextUtils.isEmpty(companyName)) {
-            getSupportActionBar().setTitle(companyName);
+            titleBuilder.append(companyName);
+        } else {
+            titleBuilder.append(getString(R.string.app_name));
         }
+
+        String versionName = PkgUtil.getAppVersion(this)[0];
+        if (!TextUtils.isEmpty(versionName)) {
+            titleBuilder.append("-v").append(versionName);
+        }
+        getSupportActionBar().setTitle(titleBuilder.toString());
     }
 
     @Override
@@ -272,6 +286,32 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
 
         mHeartBeatHandler.sendEmptyMessageDelayed(1, 60 * 1000);
+    }
+
+    private void bindWwjExService() {
+        Intent intent = new Intent("im.zego.wwjs.action.SERVICE_EX");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        boolean success = bindService(intent, new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                IWwjsApiEx api = IWwjsApiEx.Stub.asInterface(service);
+                try {
+                    api.requestUpdateSysTime(new UpdateTimeCallbackImpl());
+                } catch (RemoteException e) {
+                    AppLogger.getInstance().writeLog("call requestUpdateSysTime failed: %s", e);
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        }, BIND_AUTO_CREATE);
+
+        if (!success) {
+            AppLogger.getInstance().writeLog("*** package im.zego.wawajiservice not install in this device ***");
+            Toast.makeText(this, "*** package im.zego.wawajiservice not install in this device *** ", Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -394,6 +434,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void startPreview() {
         mZegoLiveRoom.enableMic(false);
 
+        AppLogger.getInstance().writeLog("Start preview");
+
         mZegoLiveRoom.enablePreviewMirror(false);
         mZegoLiveRoom.setPreviewView(mMainPreviewView);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill);
@@ -409,8 +451,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.setFrontCam(false, channelIndex);
         mZegoLiveRoom.startPreview(channelIndex);
 
-        AppLogger.getInstance().writeLog("Start preview");
-
 //        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN);
 //        mZegoLiveRoom.setSharpenFactor(0.15f);
 //        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN, channelIndex);
@@ -423,15 +463,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void loginRoomAndPublishStream() {
         // 初始化房间名及流名信息
         initRoomAndStreamInfo();
-
-        boolean success = loginRoom(false);
-        if (!success) { // 登录失败， 1 分钟后重试
-            AppLogger.getInstance().writeLog("Login room failed");
-            Toast.makeText(this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
-
-            mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
-            mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
-        }
 
         String currentUserId = PrefUtil.getInstance().getUserId();
         TextView currentUserView = (TextView) findViewById(R.id.zg_current_user_id);
@@ -448,6 +479,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         String secondStreamId = PrefUtil.getInstance().getStreamId2();
         TextView secondStreamView = (TextView) findViewById(R.id.second_stream_id);
         secondStreamView.setText(Html.fromHtml(getString(R.string.zg_text_side_stream_info, secondStreamId)));
+
+        loginRoom(false);
     }
 
     private void initRoomAndStreamInfo() {
@@ -483,29 +516,45 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
      * @param retry 是否为失败后重试逻辑
      * @return
      */
-    private boolean loginRoom(boolean retry) {
+    private void loginRoom(boolean retry) {
         if (!retry) {// 重试逻辑，不需要重新设置 callback 及 room config
             setupCallbacks();
         }
 
-        mZegoLiveRoom.setRoomConfig(false, true);
-        String roomId = PrefUtil.getInstance().getRoomId();
-        String roomName = PrefUtil.getInstance().getRoomName();
-        AppLogger.getInstance().writeLog("login room with roomId & roomName: %s, %s", roomId, roomName);
-        return mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
-            @Override
-            public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
-                AppLogger.getInstance().writeLog("onLoginCompletion, errorCode: %d", errorCode);
-                if (errorCode == 0) {
-                    publishStream(-1);
-                } else {
-                    Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
+        if (sysTimeUpdateSuccess()) {
+            mZegoLiveRoom.setRoomConfig(false, true);
+            String roomId = PrefUtil.getInstance().getRoomId();
+            String roomName = PrefUtil.getInstance().getRoomName();
+            AppLogger.getInstance().writeLog("login room with roomId & roomName: %s, %s", roomId, roomName);
+            boolean success = mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
+                @Override
+                public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
+                    AppLogger.getInstance().writeLog("onLoginCompletion, errorCode: %d", errorCode);
+                    if (errorCode == 0) {
+                        publishStream(-1);
+                    } else {
+                        Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
 
-                    mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
-                    mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
+                        mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
+                        mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
+                    }
                 }
+            });
+
+            if (!success) {
+                AppLogger.getInstance().writeLog("login room failed");
+                Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
             }
-        });
+        } else {
+            AppLogger.getInstance().writeLog("wait time sync to finish");
+            mRetryHandler.removeMessages(RetryHandler.MSG_WAIT_TIME_SYNC_FINISH);
+            mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_WAIT_TIME_SYNC_FINISH, 1000);
+        }
+    }
+
+    private volatile boolean mTimeUpdateSuccess = false;
+    private boolean sysTimeUpdateSuccess() {
+        return mTimeUpdateSuccess;
     }
 
     private void setupCallbacks() {
@@ -842,6 +891,18 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }, 500);
     }
 
+    private class UpdateTimeCallbackImpl extends CBUpdateTime.Stub {
+        @Override
+        public void onSysTimeUpdated(boolean success) throws RemoteException {
+            mTimeUpdateSuccess = success;
+            AppLogger.getInstance().writeLog("update time success? " + success);
+
+            if (!success) { // 时间更新失败，退出应用
+                requireRestart("update time failed");
+            }
+        }
+    }
+
     private Binder mBinder = new Binder();
     private IRemoteApi mRemoteApi;
 
@@ -916,6 +977,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         static final int MSG_RELOGIN_ROOM = 1;
         static final int MSG_REPUBLISH_STREAM = 2;
+        static final int MSG_WAIT_TIME_SYNC_FINISH = 3;
 
         public RetryHandler(Looper looper) {
             super(looper);
@@ -933,6 +995,11 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                     int channelIndex = msg.arg1;
                     AppLogger.getInstance().writeLog("republish stream: %d", channelIndex);
                     publishStream(channelIndex);
+                    break;
+
+                case MSG_WAIT_TIME_SYNC_FINISH:
+                    AppLogger.getInstance().writeLog("relogin room with wait time sync");
+                    loginRoom(true);
                     break;
 
                 default:

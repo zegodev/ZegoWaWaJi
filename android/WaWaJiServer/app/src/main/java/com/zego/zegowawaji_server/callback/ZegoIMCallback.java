@@ -80,6 +80,7 @@ public class ZegoIMCallback implements IZegoIMCallback {
                     user.userName = state.userName;
                     allMembers.add(user);
                 }
+                AppLogger.getInstance().writeLog("all members be updated, now total user: %d", allMembers.size());
 
                 List<GameUser> queueMembers = mRoomClient.getQueueUser();
                 int index = 0;

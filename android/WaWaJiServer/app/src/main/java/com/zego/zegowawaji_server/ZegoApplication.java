@@ -2,19 +2,16 @@ package com.zego.zegowawaji_server;
 
 import android.app.Application;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import com.tencent.bugly.crashreport.CrashReport;
 import com.zego.base.utils.AppLogger;
 import com.zego.base.utils.BuglyUtil;
 import com.zego.base.utils.DeviceIdUtil;
 import com.zego.base.utils.OSUtils;
+import com.zego.base.utils.PkgUtil;
 import com.zego.base.utils.PrefUtil;
-import com.zego.base.utils.TimeUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
 import com.zego.zegoliveroom.constants.ZegoConstants;
@@ -57,7 +54,7 @@ public class ZegoApplication extends Application {
         AppLogger.getInstance().writeLog("******* Application (%s) onCreate *******", (isMainProcess ? "main" : "guard"));
 
         if (isMainProcess) {    // 仅在主进程中才初始化
-            String[] appVersion = getAppVersion();
+            String[] appVersion = PkgUtil.getAppVersion(this);
             AppLogger.getInstance().writeLog("=== current app versionName: %s; versionCode: %s ===", appVersion[0], appVersion[1]);
 
             BuglyUtil.initCrashReport(this, true, ZegoLiveRoom.version(), ZegoLiveRoom.version2());
@@ -73,18 +70,6 @@ public class ZegoApplication extends Application {
                 Toast.makeText(this, getString(R.string.zg_toast_load_config_failed), Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private String[] getAppVersion() {
-        String[] version = new String[] { "", "" };
-        try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_CONFIGURATIONS);
-            version[0] = packageInfo.versionName;
-            version[1] = String.valueOf(packageInfo.versionCode);
-        } catch (Exception e) {
-            AppLogger.getInstance().writeLog("can't get app version. exception: %s", e);
-        }
-        return version;
     }
 
     private void startGuardService() {
