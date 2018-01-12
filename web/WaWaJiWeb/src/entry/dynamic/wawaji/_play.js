@@ -334,7 +334,7 @@ window.onload = function() {
                     console.log('调用startPlayingStream拉流, 流id 和 流视图分别为： ', useStreamList[m].stream_id, useStreamList[m].videoView);
                     zg.startPlayingStream(useStreamList[m].stream_id, useStreamList[m].videoView);
                     zg.setPlayVolume(useStreamList[m].stream_id, useStreamList[m].videoVolume);
-
+                    
                     // 该计时器仅供调试使用，帮助开发者了解是否有流地址存在，正式环境可删除掉
                     setTimeout(function() {
                         console.log('供播放的流地址 0 = ', zg.streamList[0] && zg.streamList[0].urls_ws);
@@ -363,14 +363,29 @@ window.onload = function() {
             e.target.dataset['switch'] = '0';
             util.removeClass($viewWrapper, 'front');
             util.removeClass($directWrapper, 'front');
+            //updateStreamDecode(false);
         } else { // 此时处于侧面，切换为正面
             e.target.dataset['switch'] = '1';
             util.addClass($viewWrapper, 'front');
             util.addClass($directWrapper, 'front');
+            //updateStreamDecode(true);
         }
 
     });
 
+    /*
+    function updateStreamDecode(frontDecode) {
+
+        for (var i = 0; i < useLocalStreamList.length; i++) {
+            if (useLocalStreamList[i].stream_id.endsWith("_2")) {
+                zg.enableDecode(useLocalStreamList[i].stream_id, !frontDecode);
+            }
+            else {
+                zg.enableDecode(useLocalStreamList[i].stream_id, frontDecode);
+            }
+        }
+    }
+    */
 
     /*************************************/
 
@@ -800,7 +815,13 @@ window.onload = function() {
     // 第四消息类
     // 处理收到的 收到回应，是否要付费上机，，--- 放弃 ？ 确定上机界面      258 排队轮到时，服务端自动发过来的， 客户端要回516包
     function upSelectHandler(custom_content) {
-        serverSeq = custom_content.seq;
+        // 过滤258指令
+        // 因为娃娃机如果收到516回包失败，会连续发送5次258指令，该指令seq一样，我们需要过滤
+        if (serverSeq === custom_content.seq) {
+            return;
+        } else {
+            serverSeq = custom_content.seq;
+        }
         var replyData = { "time_stamp'": new Date().getTime(), "seq": serverSeq };
         // 设置服务端返回的当次可以游戏的时间
         playCountDownTime = custom_content.data.game_time;
@@ -976,9 +997,8 @@ window.onload = function() {
     }
 
     // 第六消息类
-    // 处理收到的 收到本次抓娃娃的结果
+    // 处理收到的 收到本次抓娃娃的结果    260
     function operateResultHandler(custom_content) {
-        // 260
         gameStatus = 'gameover'; // 设置游戏处于结束状态
         localStorage.setItem('gameStatus', gameStatus);
         if (JSON.stringify(custom_content.data.player) === '{}') {
@@ -1052,7 +1072,7 @@ window.onload = function() {
     }
 
     // 第八消息类
-    // 获取到当前房间游戏信息，并设置房间人数，和当前排队人数
+    // 获取到当前房间游戏信息，并设置房间人数，和当前排队人数 275
     function gameInfoHandler(custom_content) {
         // 设置当前排队人数，和房间总人数
         var gameInfo = custom_content.data;
@@ -1072,23 +1092,16 @@ window.onload = function() {
                 cancelAppointmentClientHandler();
             }
         }
-
-        // fix预约之后，刷新，重新预约不再发送257问题
-        waitQueue = custom_content.data.queue;
-        // 排队队列不为空，则赋值设置当前的排队人数
-        if (waitQueue.length !== 0) {
-            $beforeQueueNum.innerHTML = waitQueue.length;
-            for (var i = 0; i < waitQueue.length; i++) {
-                if (waitQueue[i].id === idName) {
-                    // 用户当前所处排列位置
-                    waitPosition = i + 1;
-                    break;
+        // 如果是预约了，然后刷新页面，在队列里面发现还在排队，则主动发送取消预约指令
+        if (gameInfo.queue.length !==0) {
+            for (var i = 0; i < gameInfo.queue.length; i++) {
+                if (gameInfo.queue[i].id == idName) {
+                    // 发送取消预约指令
+                    cancelAppointmentClientHandler();
                 }
             }
-            $afterQueueNum.innerHTML = waitPosition;
-        } else {
-            $beforeQueueNum.innerHTML = 0;
         }
+
     }
     // 恢复游戏中状态处理
     function recoveGameStateHandler(leftTime) {
@@ -1168,6 +1181,10 @@ window.onload = function() {
         }
 
     };
+    // 房间成员变化回调
+    // zg.onUserStateUpdate = function(roomId, userList){
+    //     console.log('房间成员变化回调 = ', roomId, userList);
+    // };
 
     // 服务端推送过来已经删除掉的流   该函数删除本地流列表中对应的需要删除的流
     function deleteStreamInfo(streamList) {
@@ -1215,12 +1232,16 @@ window.onload = function() {
         }
     };
 
-    // 服务端主动推过来的 流的质量更新（暂时不用实现）
+    // 服务端主动推过来的 流的质量更新
     zg.onPlayQualityUpdate = function(streamID, streamQuality) {
         // code 业务逻辑
-        // console.log('客户端-onPlayQualityUpdate = ', streamID,  streamQuality);
+        console.log('客户端-onPlayQualityUpdate = ', streamID,  streamQuality.fps, streamQuality.kbs);
     };
 
+    // 服务端主动推过来的 房间内用户人数变化通知
+    zg.onUserStateUpdate = function(roomID, userList) {
+        console.log('客户端-onUserStateUpdate = ', roomID, userList);
+    };
 
     // 日志显示
     $logBtn.addEventListener('click', function() {
