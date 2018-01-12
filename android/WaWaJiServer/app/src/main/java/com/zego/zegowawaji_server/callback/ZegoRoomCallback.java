@@ -52,6 +52,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     private volatile int mLastCommandSeq = 0; // 上一次信令的 sequence 值
     private volatile String mSessionId = null;
     private volatile String mCustomToken = null;
+    private volatile boolean mCanOperationDevice = false;
 
     private GameUser mWaitingPlayer;    // 在 GameResultReply 中返回 continue 为 1 的连续玩家
 
@@ -343,13 +344,18 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         if (errorCode == 0 && queuePosition > 0
                 && (!TextUtils.isEmpty(mCurrentPlayerId) && !TextUtils.equals(mCurrentPlayerId, user.userID))) {    // 如果当前有人在玩，则排号加 1
-            queuePosition += 1;
+            ZegoUser header = queueMembers.get(0);
+            if (!TextUtils.equals(header.userID, mCurrentPlayerId)) {   // Vip 用户在某些时机会同时存在队首且占用 mCurrentPlayerId
+                queuePosition += 1;
+                AppLogger.getInstance().writeLog("[handleAppointmentCommand], add index, queue position: %d", queuePosition);
+            }
         }
 
         ZegoUser[] targetUser = { user };
 
         int requestSeq = cmdJson.optInt(Constants.JsonKey.KEY_SEQ);
         String cmdString = generateAppointmentReplyCommand(user.userID, user.userName, requestSeq, queuePosition, sessionId, errorCode);
+        AppLogger.getInstance().writeLog("[handleAppointmentCommand], appointment reply content: %s", cmdString);
         boolean success = mRoomClient.getZegoLiveRoom().sendCustomCommand(targetUser, cmdString, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
@@ -578,6 +584,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             DeviceManager.getInstance().initGameConfig(gameTime + 5, gameConfig.getClawPowerGrab(),
                     gameConfig.getClawPowerUp(), gameConfig.getClawPowerMove(), gameConfig.getUpHeight());  // 比设定的游戏时间多 5 秒，比应用超时时间 MSG_WAIT_GAME_OVER 多 3 秒，避免娃娃机自动下抓影响状态
 
+            mCanOperationDevice = true;
+
             // 开启计时器，防止网络超时
             Bundle userData = new Bundle();
             userData.putString(Constants.JsonKey.KEY_USER_ID, userId);
@@ -694,7 +702,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         Message message = new Message();
         message.what = HandlerImpl.MSG_WAIT_CONFIRM;
         message.setData(userData);
-        mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);
+        mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);    // 1. 在发送指令前，需要向业务服务器请求参数及扣费；2.连续玩时，等待用户确认后才发送上机指令，故等待时间需要长于客户端时间
     }
 
     // 在 Work 线程处理游戏结果应答指令
@@ -736,9 +744,10 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         if (continuePlay == 1) {    // 连续玩，添加标记位，等待预约信令
             AppLogger.getInstance().writeLog("[handleGameResultReplyCommand], the user %s will be continue to play", userId);
 
+            // 等待用户重新预约
             Message message = new Message();
             message.what = HandlerImpl.MSG_WAIT_REAPPOINTMENT;
-            mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);
+            mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);    // 有些客户端在处理继续玩时，等待用户确认后才发预约指令，所以需要等待 16S
         } else {
             mWaitingPlayer = null;
             setIdleAndNotifyNextPlayerInWorkThread("[handleGameResultReplyCommand], receive game result reply, but don't continue");
@@ -838,6 +847,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     }
 
     private void doGrab(final String fromUserId, final String fromUserName) {
+        if (mIsDoGrabbing) {
+            AppLogger.getInstance().writeLog("[doGrab] mIsDoGrabbing is true, ignore the request action from user: %s", fromUserId);
+            return;
+        }
+
+        mCanOperationDevice = false;    // 游戏结束，不能再操作设备
         mIsDoGrabbing = true;   // 需要等待收到用户的 GameResultReply 或者超时重新预约时才能置为 false
         mDeviceIsWaitingResult = true;
         mHandler.removeMessages(HandlerImpl.MSG_WAIT_GAME_OVER);
@@ -897,6 +912,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             AppLogger.getInstance().writeLog("current seq (%d) must greater than the last seq(%d)", seq, mLastCommandSeq);
             return;
         }
+
+        if (!mCanOperationDevice) {
+            AppLogger.getInstance().writeLog("didn't receive the start command, can't operation the device just now. user: %s", fromUserId);
+            return;
+        }
+
         mLastCommandSeq = seq;
 
         // 确保每次移动指令后都有一个停止指令(以防客户端发错或者丢包)
@@ -1070,7 +1091,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         static final public int MSG_RENOTITY_NEXT_PLAYER = 0x7; // 当调用 notifyNextPlayerIfNeed 时，发现还没有收到下位机返回游戏结果，此时等待一秒后重新通知
 
-        static final public int INTERVAL_WAIT_CONFIRM = (10 + 2) * 1000;      // 发送开始指令后，等待12s(比客户端多2s)开始游戏，否则视为放弃（此处业务侧可能有付费流程，所以需要等待至少 10 秒）
+        static final public int INTERVAL_WAIT_CONFIRM = (10 + 6) * 1000;      // 发送开始指令后，等待16s(比客户端多6s)开始游戏，否则视为放弃（此处业务侧可能有付费流程，所以需要等待至少 10 秒）
 
         static final public int INTERVAL_WAIT_RECEIVE_DEVICE_RESULT = 15000; // 等待下位机返回结果(理论值是3秒，目前实测可能会有12秒才返回的情况)，客户端等待时间必须大于该值，推荐 20S
         static final public int INTERVAL_RESEND_COMMAND_TIME = 1000;     // 重发信令间隔时间
@@ -1130,13 +1151,13 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
                 case MSG_RESEND_READY_COMMAND: {
                     int retryCount = message.arg1;
-                    if (retryCount <= 5) {
+                    if (retryCount <= 16) { // 部分客户端在处理继续玩时，优先发送了Appointment，但等待用户确认后才发送 GameReadyReply，所以需要等待 16S
                         resendCustomCommandInWorkThread(message, "game ready");
                     } else {
                         // Timeout
                         mHandler.removeMessages(MSG_RESEND_READY_COMMAND);
 
-                        AppLogger.getInstance().writeLog("has retry 5 times about MSG_RESEND_READY_COMMAND, remove the from queue and notify next player");
+                        AppLogger.getInstance().writeLog("has retry 16 times about MSG_RESEND_READY_COMMAND, remove the from queue and notify next player");
 
                         Bundle userInfo = message.getData();
                         removeFromQueue(userInfo.getString(Constants.JsonKey.KEY_USER_ID), userInfo.getString(Constants.JsonKey.KEY_USER_NAME));
@@ -1146,13 +1167,13 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
                 case MSG_RESEND_GAME_RESULT_COMMAND: {
                     int retryCount = message.arg1;
-                    if (retryCount <= 5) {
+                    if (retryCount <= 16) { // 部分客户端在处理继续玩时，等待用户确认后才发送 GameResultReply，所以需要等待 16S
                         resendCustomCommandInWorkThread(message, "game result");
                     } else {
                         // Timeout
                         mHandler.removeMessages(MSG_RESEND_GAME_RESULT_COMMAND);
 
-                        AppLogger.getInstance().writeLog("has retry 5 times about MSG_RESEND_GAME_RESULT_COMMAND, set idle and notify next player");
+                        AppLogger.getInstance().writeLog("has retry 16 times about MSG_RESEND_GAME_RESULT_COMMAND, set idle and notify next player");
                         mRoomClient.runOnWorkThread(new Runnable() {
                             @Override
                             public void run() {
@@ -1160,6 +1181,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                                     AppLogger.getInstance().writeLog("not do grabbing just now, maybe has processed");
                                 } else {
                                     mIsDoGrabbing = false;
+                                    mWaitingPlayer = null;
                                     setIdleAndNotifyNextPlayerInWorkThread("can't receive game result reply");
                                 }
                             }

@@ -20,12 +20,15 @@
         12345678900            device usb:336592896X product:rk7130s model:rk7130s device:rk7130s
     c、如果有，表明连接正常，可以执行接下来的步骤；否则，请重启娃娃机再次检测连接状态
 
-5. 打开终端，进入工程根目录（该文件所在目录）；
+5. 安装时间校准服务(解压 ./tools/zego_wwjs_ex.zip，里面有一个 zego_wwjs_ex.apk)：
+    adb install -r ./tools/zego_wwjs_ex/zego_wwjs_ex.apk
 
-6. 编译、安装并运行 apk （如果失败，请根据错误提示修改相应的源码）：
-    ./build_and_install.sh x -r
+6. 打开终端，进入工程根目录（该文件所在目录）；
 
-7. 请使用我们开源的 Client 端源码(选择您需要的平台)，设置相应的 AppId 与 App SignKey，编译可执行文件安装至手机；
+7. 编译、安装并运行 apk （如果失败，请根据错误提示修改相应的源码）：
+    ./build_and_install.sh
 
-8. 恭喜，至此，您已经大功告成，可以联调娃娃机了
+8. 请使用我们开源的 Client 端源码(选择您需要的平台)，设置相应的 AppId 与 App SignKey，编译可执行文件安装至手机；
+
+9. 恭喜，至此，您已经大功告成，可以联调娃娃机了
 

@@ -53,7 +53,8 @@
         </receiver>
 
         <service android:name=".service.GuardService"
-            android:process=":guard">
+            android:process=":guard"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.zego.zegowawaji_service.action.GUARD" />
             </intent-filter>

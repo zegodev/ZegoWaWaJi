@@ -27,8 +27,6 @@ import java.util.NoSuchElementException;
 
 public class GuardService extends Service {
 
-    static final private String TAG = "ZEGO_WWJ";
-
     private android.os.Binder mApi;
 
     private Handler mMainHandler = new Handler();
@@ -82,9 +80,20 @@ public class GuardService extends Service {
 
     private class RemoteApiImpl extends IRemoteApi.Stub {
         private DeathRecipient mRecipient;
+        private IBinder mBinder;
 
         @Override
         public void join(IBinder token) throws RemoteException {
+            if (mBinder != null && mRecipient != null) {
+                try {
+                    mBinder.unlinkToDeath(mRecipient, 0);
+                    mRecipient = null;
+                } catch (NoSuchElementException e) {
+                    AppLogger.getInstance().writeLog("unlink old DeathRecipient failed: %s", e);
+                }
+            }
+            mBinder = token;
+
             updateHeartBeatTime();
             AppLogger.getInstance().writeLog("execute join, token: %s", token.hashCode());
 
@@ -106,6 +115,7 @@ public class GuardService extends Service {
             mMonitorMainProcess = false;
             try {
                 token.unlinkToDeath(mRecipient, 0);
+                mRecipient = null;
             } catch (NoSuchElementException e) {
                 AppLogger.getInstance().writeLog("unlink to death failed. exception: %s", e);
             }
@@ -121,6 +131,19 @@ public class GuardService extends Service {
         public void updateBuglyInfo(String sdkVersion, String veVersion) {
             BuglyUtil.updateVersionInfo(getApplicationContext(), sdkVersion, veVersion);
             AppLogger.getInstance().writeLog("update bugly info with sdkVersion: %s & veVersion: %s", sdkVersion, veVersion);
+        }
+
+        public void destroy() {
+            mMonitorMainProcess = false;
+
+            if (mBinder != null && mRecipient != null) {
+                try {
+                    mBinder.unlinkToDeath(mRecipient, 0);
+                    mRecipient = null;
+                } catch (NoSuchElementException e) {
+                    AppLogger.getInstance().writeLog("destroy the api failed : %s", e);
+                }
+            }
         }
     }
 
@@ -156,6 +179,10 @@ public class GuardService extends Service {
      */
     private class WatchDog extends Thread {
 
+        public WatchDog() {
+            super("WatchDog");
+        }
+
         @Override
         public void run() {
             while (!isInterrupted()) {
@@ -167,23 +194,17 @@ public class GuardService extends Service {
                 }
 
                 AppLogger.getInstance().writeLog("(%d)check the main process is active?", GuardService.this.hashCode());
-                ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-                List<ActivityManager.RunningAppProcessInfo> runningApps = am.getRunningAppProcesses();
-                if (runningApps == null) {
+
+                int mainProcessId = getMainProcessId();
+                if (mainProcessId < 0) {
                     AppLogger.getInstance().writeLog("** Can't get any running process. exit WatchDog");
                     break;
                 }
 
                 boolean mainProcessIsRunning = false;
-                int mainProcessId = 0;
-                for (ActivityManager.RunningAppProcessInfo procInfo : runningApps) {
-                    String processName = procInfo.processName;
-                    if (TextUtils.equals(processName, getPackageName())) {
-                        mainProcessIsRunning = true;
-                        mainProcessId = procInfo.pid;
-                        AppLogger.getInstance().writeLog("main process (%d) is running", mainProcessId);
-                        break;
-                    }
+                if (mainProcessId > 0) {
+                    mainProcessIsRunning = true;
+                    AppLogger.getInstance().writeLog("main process (%d) is running", mainProcessId);
                 }
 
                 AppLogger.getInstance().writeLog("(%d)mMonitorMainProcess ? %s, curTime: %d, last heart beat time: %d", GuardService.this.hashCode(), mMonitorMainProcess, SystemClock.elapsedRealtime(), mLastHeartBeatTime);
@@ -191,12 +212,29 @@ public class GuardService extends Service {
                         && (!mainProcessIsRunning || (SystemClock.elapsedRealtime() - mLastHeartBeatTime > 90 * 1000))) {
 
                     if (mainProcessIsRunning) {
+                        if (mApi != null) {
+                            ((RemoteApiImpl)mApi).destroy();
+                        }
                         AppLogger.getInstance().writeLog("(%d)kill process then start new main activity", GuardService.this.hashCode());
                         android.os.Process.killProcess(mainProcessId);
                     }
                     startMainActivityDelay(100);
                 }
             }
+        }
+
+        private int getMainProcessId() {
+            ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            List<ActivityManager.RunningAppProcessInfo> runningApps = am.getRunningAppProcesses();
+            if (runningApps == null) return -1;
+
+            for (ActivityManager.RunningAppProcessInfo procInfo : runningApps) {
+                String processName = procInfo.processName;
+                if (TextUtils.equals(processName, getPackageName())) {
+                    return procInfo.pid;
+                }
+            }
+            return 0;
         }
     }
 }

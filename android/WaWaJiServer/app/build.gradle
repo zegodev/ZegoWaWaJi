@@ -6,13 +6,13 @@ def releaseTime() {
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.zego.zegowawaji_server"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 12
-        versionName "1.2.12"
+        versionCode 16
+        versionName "1.3.16"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        externalNativeBuild {
 //            cmake {
@@ -24,6 +24,7 @@ android {
             //设置支持的SO库架构
             abiFilters 'armeabi-v7a'//, 'x86', 'arm64-v8a', 'armeabi'
         }
+        flavorDimensions "versionCode"
     }
 
     sourceSets {
@@ -52,12 +53,12 @@ android {
             minifyEnabled true
             zipAlignEnabled true
             shrinkResources true
-            signingConfig signingConfigs.release
+            // signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
             applicationVariants.all { variant ->
-                variant.outputs.each{ output ->
-                    output.outputFile = new File(output.outputFile.parent, "zego_" + productFlavors[0].name + "_control_" + releaseTime() + "_v" + defaultConfig.versionName + ".apk" )
+                variant.outputs.all {
+                    outputFileName = "zego_" + productFlavors[0].name + "_control_" + releaseTime() + "_v" + defaultConfig.versionName + ".apk"
                 }
                 // can use git rev-parse --short HEAD to get git info for apk name
             }

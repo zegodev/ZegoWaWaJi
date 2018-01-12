@@ -268,6 +268,13 @@ public class XWawaji extends WawajiDevice {
                                 boolean isValidate = checkCmdData(cmdBuffer, currentCmdLength);
                                 if (isValidate) {
                                     onResponseCommandReceived(cmdBuffer, currentCmdLength);
+                                } else {
+                                    StringBuilder tmpBuilder = new StringBuilder();
+                                    for (int i = 0; i < currentCmdLength; i++) {
+                                        byte b = cmdBuffer[i];
+                                        tmpBuilder.append(Integer.toHexString((b & 0x000000FF) | 0xFFFFFF00).substring(6));
+                                    }
+                                    AppLogger.getInstance().writeLog("**** check failed data: %s ****", tmpBuilder.toString());
                                 }
 
                                 int j = 0;
