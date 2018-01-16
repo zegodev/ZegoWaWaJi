@@ -85,7 +85,7 @@ public class ZegoApplication extends Application {
                                 (byte)0x9f, (byte)0xca, (byte)0x1c, (byte)0x03, (byte)0x9f, (byte)0x93, (byte)0x5b, (byte)0x47,
                                 (byte)0xf0, (byte)0x6b, (byte)0xa6, (byte)0xf2, (byte)0x81, (byte)0x21, (byte)0x5b, (byte)0xa5 };
         mIsUseTestEnv = false;
-        mServerSecret = "abcdefghabcdefghabcdefghabcdefgh".getBytes();
+        mServerSecret = "f4ef312166bb1ae7787b66b438561813".getBytes();
         mCompanyName = "客户体验_Debug";
         mDefaultGameConfig = new GameConfig();
 
