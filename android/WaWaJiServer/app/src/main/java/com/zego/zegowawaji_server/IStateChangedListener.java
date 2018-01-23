@@ -14,4 +14,8 @@ public interface IStateChangedListener {
     void onPublishStateUpdate(int stateCode, String streamId);
 
     void onDisconnect();
+
+    void onCameraError(int errorCode);
+
+    void onPublishNullStream(String streamId, int count);
 }

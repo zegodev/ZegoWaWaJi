@@ -2,18 +2,17 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "com.zego.wawaji_client"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 2
+        versionName "1.0.2"
 
         ndk {
             //设置支持的SO库架构
-            abiFilters 'armeabi-v7a'
+            abiFilters 'armeabi-v7a','x86'
         }
     }
 
@@ -28,7 +27,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField "boolean", "LOG_DEBUG", "true"
+            buildConfigField "boolean", "LOG_DEBUG", "false"
             versionNameSuffix "-debug"
             jniDebuggable true
         }
@@ -37,9 +36,9 @@ android {
             versionNameSuffix "-release"
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            debuggable true
+            debuggable false
             jniDebuggable true
-            renderscriptDebuggable true
+            renderscriptDebuggable false
             pseudoLocalesEnabled true
             minifyEnabled false
         }

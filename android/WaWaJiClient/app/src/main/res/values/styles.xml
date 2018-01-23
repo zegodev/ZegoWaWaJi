@@ -17,14 +17,20 @@
     </style>
 
     <style name="tv_style1">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/text_white</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="tv_style2">
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">8sp</item>
         <item name="android:textColor">@color/text_white</item>
+    </style>
+
+    <!--弹出透明样式-->
+    <style name="dialog" parent="@android:style/Theme.Dialog">
+        <item name="android:windowNoTitle">true</item><!--无标题-->
+        <item name="android:windowBackground">@color/transparent</item><!--背景透明-->
     </style>
 
 </resources>

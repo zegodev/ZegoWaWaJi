@@ -1,5 +1,7 @@
 package com.zego.wawaji_client.entity;
 
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.view.TextureView;
 import android.view.View;
@@ -27,13 +29,13 @@ public class ZegoStream {
         }
     }
 
-    private String[] mStateStrings;
+    private TypedArray mStateStrings;
     private String mStreamID;
     private TextureView mTextureView;
     private StreamState mStreamState;
     private ZegoLiveRoom mZegoLiveRoom;
 
-    public ZegoStream(String streamID, TextureView textureView, String[] stateStrings){
+    public ZegoStream(String streamID, TextureView textureView, TypedArray stateStrings){
         if (TextUtils.isEmpty(streamID)){
             mStreamID = STREAM_NOT_EXIST + System.currentTimeMillis();
             mStreamState = StreamState.NotExist;
@@ -47,11 +49,11 @@ public class ZegoStream {
         mZegoLiveRoom = ZegoApiManager.getInstance().getZegoLiveRoom();
     }
 
-    public String getStateString(){
-        if (mStateStrings != null && mStateStrings.length == 3){
-            return mStateStrings[mStreamState.mCode];
+    public Drawable getStateDrawable(){
+        if (mStateStrings != null && mStateStrings.length() == 3){
+            return mStateStrings.getDrawable(mStreamState.mCode);
         }
-        return "";
+        return null;
     }
 
     public boolean isPlaySuccess(){
@@ -90,7 +92,7 @@ public class ZegoStream {
     }
 
     public void hide(){
-        mTextureView.setVisibility(View.INVISIBLE);
+        mTextureView.setVisibility(View.GONE);
         mZegoLiveRoom.setPlayVolume(0, mStreamID);
     }
 }

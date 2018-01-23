@@ -332,7 +332,7 @@ public class XWawaji extends WawajiDevice {
         private boolean checkCmdData(byte[] data, int length) {
             int sum = 0;
             for (int i = 6; i < length - 1; i++) {  // 最后的校验位不参与校验
-                sum += data[i];
+                sum += (data[i] & 0xff);
             }
             return sum % 100 == data[length - 1];
         }

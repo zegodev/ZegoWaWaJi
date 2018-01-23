@@ -52,6 +52,7 @@ import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegoliveroom.constants.ZegoVideoViewMode;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoUser;
+import com.zego.zegowawaji_server.callback.ZegoDeviceEventCallback;
 import com.zego.zegowawaji_server.callback.ZegoIMCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback;
 import com.zego.zegowawaji_server.callback.ZegoLivePublisherCallback2;
@@ -77,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
     static final private String ROOM_ID_PREFIX = "WWJ_ZEGO";
     static final private String STREAM_ID_PREFIX = "WWJ_ZEGO_STREAM";
+
+    static final private String INTENT_WWJ_ROOMID_EXTRA = "intent_wwj_room_id_extra";
 
     static final private int REQUEST_PERMISSION_CODE = 101;
 
@@ -148,6 +151,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             bindWwjExService();
 
             checkDeviceState();
+
+            // 初始化房间名及流名信息
+            initRoomAndStreamInfo(getIntent());
 
             if (checkOrRequestPermission()) {
                 startPreview();
@@ -461,9 +467,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     private void loginRoomAndPublishStream() {
-        // 初始化房间名及流名信息
-        initRoomAndStreamInfo();
-
         String currentUserId = PrefUtil.getInstance().getUserId();
         TextView currentUserView = (TextView) findViewById(R.id.zg_current_user_id);
         currentUserView.setText(Html.fromHtml(getString(R.string.zg_text_current_user_id, currentUserId)));
@@ -483,7 +486,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         loginRoom(false);
     }
 
-    private void initRoomAndStreamInfo() {
+    private void initRoomAndStreamInfo(Intent startIntent) {
         PrefUtil prefUtil = PrefUtil.getInstance();
         if (TextUtils.isEmpty(prefUtil.getRoomId())
                 || TextUtils.isEmpty(prefUtil.getRoomName())
@@ -491,7 +494,13 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                 || TextUtils.isEmpty(prefUtil.getStreamId2())) {
             String deviceId = DeviceIdUtil.generateDeviceId(this);
 
-            String roomId = String.format("%s_%s", ROOM_ID_PREFIX, deviceId);
+            String roomId;
+            String roomIdEx = (startIntent != null) ? startIntent.getStringExtra(INTENT_WWJ_ROOMID_EXTRA) : null;
+            if (TextUtils.isEmpty(roomIdEx)) {
+                roomId = String.format("%s_%s", ROOM_ID_PREFIX, deviceId);
+            } else {
+                roomId = String.format("%s_%s_%s", ROOM_ID_PREFIX, deviceId, roomIdEx);
+            }
             PrefUtil.getInstance().setRoomId(roomId);
 
             // 对娃娃机名做特殊处理以区分是即构的还是开发者的
@@ -562,6 +571,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.setZegoLivePublisherCallback2(new ZegoLivePublisherCallback2(this));
         mZegoLiveRoom.setZegoRoomCallback(new ZegoRoomCallback(this, this));
         mZegoLiveRoom.setZegoIMCallback(new ZegoIMCallback(this, this));
+        mZegoLiveRoom.setZegoDeviceEventCallback(new ZegoDeviceEventCallback(this));
     }
 
     private void publishStream(int channelIndex) {
@@ -664,6 +674,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         mZegoLiveRoom.setZegoLivePlayerCallback(null);
         mZegoLiveRoom.setZegoRoomCallback(null);
         mZegoLiveRoom.setZegoIMCallback(null);
+        mZegoLiveRoom.setZegoDeviceEventCallback(null);
 
         mZegoLiveRoom.unInitSDK();
 
@@ -714,6 +725,25 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                 Toast.makeText(this, R.string.zg_toast_reopen_app, Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private void reLoginRoomAndPublishStream(String desc) {
+        AppLogger.getInstance().writeLog(desc);
+
+        mRetryHandler.removeMessages(RetryHandler.MSG_RELOGIN_ROOM);
+        mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
+
+        mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.MAIN);
+        mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.AUX);
+//        mZegoLiveRoom.logoutRoom();
+
+        mRetryHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+//                startPreview();
+                loginRoomAndPublishStream();
+            }
+        }, 5000);
     }
 
     private List<ZegoUser> mTotalUsers = Collections.synchronizedList(new ArrayList<ZegoUser>());
@@ -771,6 +801,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
      * @param height
      * @param channelIndex
      */
+    @Override
     public void onVideoCaptureSizeChanged(int width, int height, int channelIndex) {
         if (channelIndex == ZegoConstants.PublishChannelIndex.MAIN) {
             ViewGroup.LayoutParams params = mMainPreviewView.getLayoutParams();
@@ -792,6 +823,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     /**
      * override from IStateChangedListener
      */
+    @Override
     public void onPublishStateUpdate(int stateCode, String streamId) {
         if (stateCode != 0) { // retry
             AppLogger.getInstance().writeLog("republish stream : %s just a moment", streamId);
@@ -812,16 +844,41 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     /**
      * override from IStateChangedListener
      */
+    @Override
     public void onDisconnect() {
-        mRetryHandler.removeMessages(RetryHandler.MSG_RELOGIN_ROOM);
-        mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
+        reLoginRoomAndPublishStream("disconnect the server, relogin room and then publish stream");
+    }
 
-        mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.MAIN);
-        mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.AUX);
-        mZegoLiveRoom.logoutRoom();
+    /**
+     * override from IStateChangedListener
+     * @param errorCode 错误码
+     */
+    @Override
+    public void onCameraError(final int errorCode) {
+        AppLogger.getInstance().writeLog("camera error: %d", errorCode);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mCurrentDeviceStateView.setText(Html.fromHtml(getString(R.string.zg_text_camera_error, errorCode)));
+                //TODO: 此处应该有上报及做特殊处理，比如重启应用
+            }
+        });
+    }
 
-        AppLogger.getInstance().writeLog("disconnect the server, relogin room and then publish stream");
-        loginRoomAndPublishStream();
+    /**
+     * override from IStateChangedListener
+     * @param streamId 流 ID
+     * @param count 发送此通知的次数
+     */
+    @Override
+    public void onPublishNullStream(String streamId, int count) {
+        boolean restartApp = (count >= 3); // 如果出现 3 次这种情况, 则重启应用后再推流
+        if (restartApp) {
+            AppLogger.getInstance().writeLog("discover null stream: %s, quit the main process then restart it with guard", streamId);
+            quit(false);
+        } else {
+            reLoginRoomAndPublishStream(String.format("discover null stream: %s, relogin room and then republish stream", streamId));
+        }
     }
 
     /**
@@ -855,11 +912,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                 mCurrentPlayer.userName = userName;
             }
         });
-    }
-
-    @Override
-    public GameUser getCurrentPlayer() {
-        return mCurrentPlayer;
     }
 
     /**

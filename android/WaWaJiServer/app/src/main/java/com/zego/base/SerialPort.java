@@ -78,6 +78,18 @@ public class SerialPort {
 
 	// JNI
 	private native static FileDescriptor open(String path, int baudrate, int flags);
+
+	/**
+	 *
+	 * @param path 串口设备路径
+	 * @param baudrate 波特率
+	 * @param flags 端口参数
+	 * @param databits 数据位，取值 7 或 8
+	 * @param stopbits 停止位 取值 1 或 2
+	 * @param parity 校验位，取值 'N', 'O', 'E', 'S'，其中 N 无校验位；O 奇校验位
+	 * @return
+	 */
+	private native static FileDescriptor open_ex(String path, int baudrate, int flags, int databits, int stopbits, char parity);
 	private native void close(FileDescriptor fd);
 
 	static {
