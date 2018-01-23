@@ -626,8 +626,7 @@ window.onload = function () {
         playAudio();
         console.log('go!');
 
-        //把支付获得的token一起发送给服务器验证
-        var catchData = { "time_stamp": operateData.time_stamp, "pay_token": payToken };
+        var catchData = { "time_stamp": operateData.time_stamp };
         sendCustomCMD(sendClientSeq(), 532, catchData);
         clearInterval(countDownTimer);
 
