@@ -31,7 +31,6 @@ __webpack_require__(1);
             document.getElementsByTagName('html')[0].style.width = 375 + 'px';
             document.getElementsByTagName('html')[0].style.maxHeight = 690 + 'px';
         }
-        console.log(isMobile);
         if (isMobile) {
             if (docW < 320) {
                 docW = 320;

@@ -1,10 +1,67 @@
 /*global ZegoClient*/
 
-
+// demo采用require模式加载，也可以采用script加载模式  示例在wawaji页面上，script标签内，已经注释
+// 关于平台判断客户可以根据自己的实际情况自己设置
+// demo仅供参考
+let ZegoClient;
+console.log('navigator = ', navigator);
+var ua = navigator.userAgent.toLowerCase();
+if (/iphone|ipad|ipod/i.test(ua)) {                              // 在ios中
+    if (ua.match(/MicroMessenger/i) == "micromessenger") {      // 微信中
+        if (window.__wxjs_is_wkwebview === true) {              // wkwebview
+            setSdk(true);
+            console.log('ios 微信 wk');
+        } else {                                                // UIWebView
+            setSdk(false);
+            console.log('ios 微信 ui');
+        }
+    } else if (/QQ|UIWebView/i.test(ua)) {                      // 在QQ中
+        console.log('ios QQ ui');
+        setSdk(false);
+    } else {
+        setSdk(true);
+        console.log('ios 其他');
+    }
+} else if (/Android/i.test(ua)) {                                // 在android中
+    var index = ua.indexOf("android"); 
+    var androidVersion = parseFloat(navigator.userAgent.slice(index + 8));   
+    console.log(androidVersion);
+    if (androidVersion < 4.4 ){  
+        setSdk(false);
+        console.log('android 版本小于4.4');
+    } else {
+        setSdk(true);
+        console.log('android 版本大于4.4');
+    }
+} else {                                                        // 电脑或者其他平台
+    setSdk(true);
+}
+function setSdk(type){
+    if (type) {     // 同步版本  适用于性能好的机器
+        window.quality = true;
+        ZegoClient = require('@static/js/jZego/jZego-1.0.13.min.js');
+    } else {        // 异步版本  适用于性能不好的机器  视频将会码率降级
+        window.quality = false;
+        ZegoClient = require('@static/js/jZego/jZego-1.0.13.async.min.js');
+    }
+}
 // 工具函数
 const util = require('./_util.js');
 
 
+var xmlhttp2,workerPlayerJSBlob;
+xmlhttp2 = new XMLHttpRequest();
+xmlhttp2.onreadystatechange = function() {
+    if (xmlhttp2.readyState == 4) {
+        if (xmlhttp2.status == 200) {
+            workerPlayerJSBlob = new Blob([xmlhttp2.responseText], {type : 'text/javascript'});
+        } else {
+            alert("获取stub文件失败");
+        }
+    }
+};
+xmlhttp2.open("GET", '/static/js/jZego/jsmpeg-stub.min.js', false);
+xmlhttp2.send();
 // dom元素
 
 /**********************/
@@ -116,7 +173,6 @@ var zg;                                                                         
 var clientSeq = 1;                                                              //发送客户端请求seq
 var serverSeq = 0;                                                              //发送服务端返回seq
 
-var playingStatus = false;                                                      //是否游戏中状态
 var playCountDownTime = 30;                                                     //游戏总时长
 var upornotCountDownTime = 10;                                                  //上机确认超时时长
 var countDownTimer;                                                             //超时timer
@@ -170,13 +226,42 @@ window.onload = function() {
 
     // 1.配置参数
     zg.config({
-        appid: appid, // 必填，应用id
-        idName: idName, // 必填，用户自定义id
+        appid: appid,       // 必填，应用id
+        idName: idName,     // 必填，用户自定义id
         nickName: nickName, // 必填，用户自定义昵称
-        server: server, // 必填，Websocket连接地址     
+        server: server,     // 必填，Websocket连接地址     
         logLevel: 1,
         logUrl: logUrl,
         remoteLogLevel: 0,
+        // workerUrl: 'http://www.zego.im/static/js/jZego/jsmpeg-stub.min.js'   // 自定义jsmpeg.stub.min.js的引入地址
+        workerPlayerJSBlob: workerPlayerJSBlob                                  // jsmpeg.stub.min.js内容Blob化的数据格式
+
+        // 1、针对低性能手机/webview需要使用async异步sdk版本，配置辅助文件jsmpeg.stub.min.js，作为worker运行在浏览器后台对视频进行解码操作，
+        // 性能好的手机/webview依旧使用同步sdk版本
+
+        // 2、同步与异步版本的sdk接口没有变化，只有在startPlayingStream这个接口增加了第四个参数，参数值为字符串的1,
+        // 例子： zg.startPlayingStream(streamID, view, viewMode, '1'); 表示调用降级后的视频流，视频流比原先降了4分之一质量；
+
+        // 3、异步sdk的辅助文件jsmpeg.stub.min.js的引入方式有三种，开发者可自己决定：
+            // （1）jsmpeg.stub.min.js和异步sdk文件放置于同一个目录下，异步sdk内部会自动去同级目录下加载jsmpeg.stub.min.js
+            // （2）调用zg.config接口，配置workerUrl参数，该参数表示jsmpeg.stub.min.js的引入路径
+            //      例子 zg.config({ workerUrl: 'http://www.zego.im/static/js/jZego/jsmpeg-stub.min.js' });
+                    // 浏览器不允许跨域请求资源，此处url需要是同域名下的地址
+            // （3）调用zg.config接口，配置workerPlayerJSBlob参数，该参数表示jsmpeg.stub.min.js内容Blob化后的数据格式（可解决跨域问题）
+                // 例子： 
+                // var xmlhttp2,workerPlayerJSBlob;
+                // xmlhttp2 = new XMLHttpRequest();
+                // xmlhttp2.onreadystatechange = function() {
+                //     if (xmlhttp2.readyState == 4) {
+                //         if (xmlhttp2.status == 200) {
+                //             workerPlayerJSBlob = new Blob([xmlhttp2.responseText], {type : 'text/javascript'});
+                //         }
+                //     }
+                // };
+                // xmlhttp2.open("GET", '/static/js/jZego/jsmpeg-stub.min.js', false);
+                // xmlhttp2.send();
+                // zg.config({ workerPlayerJSBlob: workerPlayerJSBlob });
+            // （4）workerUrl与workerPlayerJSBlob二者选其一，如果都配置以workerPlayerJSBlob为优先
     });
 
 
@@ -332,7 +417,13 @@ window.onload = function() {
                     zg.setPreferPlaySourceType(0);*/
                     // zg.startPlayingStream(useStreamList[m].stream_id, useStreamList[m].videoView);
                     console.log('调用startPlayingStream拉流, 流id 和 流视图分别为： ', useStreamList[m].stream_id, useStreamList[m].videoView);
-                    zg.startPlayingStream(useStreamList[m].stream_id, useStreamList[m].videoView);
+                    if (window.quality) {
+                        console.log('window.quality1 = ', window.quality);
+                        zg.startPlayingStream(useStreamList[m].stream_id, useStreamList[m].videoView);
+                    } else {
+                        console.log('window.quality2 = ', window.quality);
+                        zg.startPlayingStream(useStreamList[m].stream_id, useStreamList[m].videoView, '', '1');
+                    }
                     zg.setPlayVolume(useStreamList[m].stream_id, useStreamList[m].videoVolume);
                     
                     // 该计时器仅供调试使用，帮助开发者了解是否有流地址存在，正式环境可删除掉
@@ -1240,6 +1331,11 @@ window.onload = function() {
     // 服务端主动推过来的 房间内用户人数变化通知
     zg.onUserStateUpdate = function(roomID, userList) {
         console.log('客户端-onUserStateUpdate = ', roomID, userList);
+    };
+
+    // 回调当前在线用户列表 （登录房间成功后自动拉取)
+    zg.onGetTotalUserList = function(roomID, userList) {
+        console.log('客户端-onGetTotalUserList = ', roomID, userList);
     };
 
     // 日志显示
