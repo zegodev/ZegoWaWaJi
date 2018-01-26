@@ -63,7 +63,12 @@ public class ZegoIMCallback implements IZegoIMCallback {
      * 收到会话消息
      */
     @Override
-    public void onRecvConversationMessage(String s, String s1, ZegoConversationMessage zegoConversationMessage) {
+    public void onRecvConversationMessage(String roomId, String conversationId, ZegoConversationMessage zegoConversationMessage) {
+
+    }
+
+    @Override
+    public void onUpdateOnlineCount(String roomId, int onlineCount) {
 
     }
 

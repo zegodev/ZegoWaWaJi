@@ -8,7 +8,7 @@ import android.text.TextUtils;
 
 import com.zego.base.utils.AESUtil;
 import com.zego.base.utils.AppLogger;
-import com.zego.zegowawaji_server.BuildConfig;
+import com.zego.base.utils.PrefUtil;
 import com.zego.zegowawaji_server.ZegoApplication;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoCustomCommandCallback;
@@ -39,22 +39,17 @@ import java.util.UUID;
 public class ZegoRoomCallback implements IZegoRoomCallback {
     private IRoomClient mRoomClient;
     private IStateChangedListener mListener;
-
     private HandlerThread mMessageThread;
     private Handler mHandler;
 
-    private volatile boolean mCurrentIsIdle = true;     // 当前状态是否空闲（非设备状态，而是逻辑状态）
+    private volatile Constants.WawajiState mWawajiState = Constants.WawajiState.Idle;
     private volatile boolean mDeviceIsWaitingResult = false;      // 设备当前状态是否空闲，如果执行了下抓指令，但没有收到下位机返回，此时设备为忙状态，若该时刻发送初始化指令和移动指令都无响应，故不能开始下一局
-    private volatile boolean mIsDoGrabbing = false;     // 当前正在执行抓娃娃动作，不再重复接收此动作
-    private volatile String mCurrentPlayerId = null;    // 当前上机者的 UserId, 便于操作
+
     private volatile long mBeginPlayTime = 0;
     private volatile int mLastCommandId = 0; // 上次天车移动方向，对于同一 seq 的移动请求，只处理第一个，当不同方向的移动指令间没有停止指令时，需要插入一个停止指令，少于当前 seq 的指令全部忽略掉
     private volatile int mLastCommandSeq = 0; // 上一次信令的 sequence 值
-    private volatile String mSessionId = null;
-    private volatile String mCustomToken = null;
-    private volatile boolean mCanOperationDevice = false;
-
     private GameUser mWaitingPlayer;    // 在 GameResultReply 中返回 continue 为 1 的连续玩家
+    private GameUser mCurrentPlayer;    // 当前正在上机的用户
 
     public ZegoRoomCallback(IRoomClient client, IStateChangedListener listener) {
         mRoomClient = client;
@@ -65,6 +60,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         mHandler = new Handler(mMessageThread.getLooper(), new HandlerImpl());
     }
+
     /**
      * 因为登陆抢占原因等被挤出房间
      */
@@ -169,7 +165,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             cmdJson = new JSONObject(content);
         } catch (JSONException e) {
             AppLogger.getInstance().writeLog("onRecvCustomCommand, parse command failed. cmd : %s; from: %s", content, fromUserId);
-            return ;
+            return;
         }
 
         int commandId = cmdJson.optInt(Constants.JsonKey.KEY_CMD);
@@ -210,10 +206,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         }
     }
 
-    private void setIdle(boolean idle, String callFrom){
-        mCurrentIsIdle = idle;
-        AppLogger.getInstance().writeLog("[setIdle]: " + idle + ", callFrom: " + callFrom);
+
+    private void setWawajiState(Constants.WawajiState State, String reason) {
+        AppLogger.getInstance().writeLog("[setWawajiState], from : %s to state: %s, because: %s", mWawajiState, State, reason);
+        mWawajiState = State;
     }
+
 
     private void notifyNextPlayerIfNeed() {
         mRoomClient.runOnWorkThread(new Runnable() {
@@ -221,24 +219,28 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             public void run() {
                 List<GameUser> queueMembers = mRoomClient.getQueueUser();
 
-                AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], queueMember: %d, current is Idle? %s, mDeviceIsWaitingResult ? %s", queueMembers.size(), mCurrentIsIdle, mDeviceIsWaitingResult);
-                if (queueMembers.size() > 0 && mCurrentIsIdle
-                        && !mDeviceIsWaitingResult) { // 当前有玩家在排队且没有人上机且设备状态未处于忙状态，则通知队首的玩家准备上机
+                AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], queueMember: %d, current WawajiState ? %s, mDeviceIsWaitingResult: %s", queueMembers.size(), mWawajiState, mDeviceIsWaitingResult);
+                // 当前有玩家在排队且没有人上机且设备状态未处于忙状态，则通知队首的玩家准备上机
+                if ((queueMembers.size() > 0 && !mDeviceIsWaitingResult)
+                        && (mWawajiState == Constants.WawajiState.Idle ||
+                        mWawajiState == Constants.WawajiState.WaitReAppointment ||
+                        mWawajiState == Constants.WawajiState.WaitGameReady)) {
 
-                    setIdle(false, "notifyNextPlayerIfNeed");
 
-                    //TODO: 在此处从队列中移除用户，而不是等到 handleStart
+                    //设置用户为通知上机状态
+                    setWawajiState(Constants.WawajiState.GameReady, "notifyNextPlayerIfNeed");
 
-                    GameUser zegoUser = queueMembers.get(0);
-                    mCurrentPlayerId = zegoUser.userID;
-                    mSessionId = zegoUser.getSessionId();
-                    int gameTime = zegoUser.getGameConfig().getGameTime();
+                    mCurrentPlayer = queueMembers.remove(0);
+
+                    int gameTime = mCurrentPlayer.getGameConfig().getGameTime();
                     int seq = CommandSeqManager.getInstance().getAndIncreaseSequence();
-                    String beginPlayCmd = generateReadyCommand(zegoUser.userID, zegoUser.userName, seq, mSessionId, gameTime);
+                    //258通知上机指令
+                    String beginPlayCmd = generateReadyCommand(mCurrentPlayer.userID, mCurrentPlayer.userName, seq, mCurrentPlayer.getSessionId(), gameTime);
 
-                    final String userId = mCurrentPlayerId;
-                    ZegoUser[] targetUser = { zegoUser };
+                    final String userId = mCurrentPlayer.userID;
+                    ZegoUser[] targetUser = {mCurrentPlayer};
                     ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
+
                     boolean success = liveRoom.sendCustomCommand(targetUser, beginPlayCmd, new IZegoCustomCommandCallback() {
                         @Override
                         public void onSendCustomCommand(int errorCode, String roomId) {
@@ -246,7 +248,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                         }
                     });
 
-                    AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], send ready command to %s success? %s", zegoUser.userID, success);
+                    AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], send ready command to %s success? %s. content: %s", mCurrentPlayer.userID, success, beginPlayCmd);
 
                     // 等待用户返回
                     Message retryMsg = new Message();
@@ -255,11 +257,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     retryMsg.obj = beginPlayCmd;
 
                     Bundle userInfo = new Bundle();
-                    userInfo.putString(Constants.JsonKey.KEY_USER_ID, zegoUser.userID);
-                    userInfo.putString(Constants.JsonKey.KEY_USER_NAME, zegoUser.userName);
+                    userInfo.putString(Constants.JsonKey.KEY_USER_ID, mCurrentPlayer.userID);
+                    userInfo.putString(Constants.JsonKey.KEY_USER_NAME, mCurrentPlayer.userName);
                     retryMsg.setData(userInfo);
                     mHandler.sendMessageDelayed(retryMsg, HandlerImpl.INTERVAL_RESEND_COMMAND_TIME);
                 } else if (mDeviceIsWaitingResult && !mHandler.hasMessages(HandlerImpl.MSG_RENOTITY_NEXT_PLAYER)) {
+                    AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], queue is empty or device is busy. reNotify after 1 second");
                     Message msg = Message.obtain();
                     msg.what = HandlerImpl.MSG_RENOTITY_NEXT_PLAYER;
                     msg.arg1 = 1;
@@ -279,12 +282,14 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         });
     }
 
-    // 处理预约指令
+    // 处理预约指令513
     private void handleAppointmentCommand(String fromUserId, String fromUserName, JSONObject cmdJson) {
         int errorCode = 0;
         int queuePosition = -1;
         String sessionId = null;
+
         List<GameUser> queueMembers = mRoomClient.getQueueUser();
+        //查询列队是否存在当前用户
         for (int i = 0; i < queueMembers.size(); i++) {
             GameUser member = queueMembers.get(i);
             if (TextUtils.equals(member.userID, fromUserId)) {
@@ -294,12 +299,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 break;
             }
         }
-
         GameUser user = new GameUser(fromUserId, fromUserName);
         if (queuePosition < 0) {
-            sessionId = UUID.randomUUID().toString().replace("-", "");
-            user.setSessionId(sessionId);
-
             JSONObject jsonData = cmdJson.optJSONObject(Constants.JsonKey.KEY_DATA);
             if (jsonData != null) {
                 int continuePlay = jsonData.optInt(Constants.JsonKey.KEY_CONTINUE, 0);
@@ -308,33 +309,43 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 AppLogger.getInstance().writeLog("[handleAppointmentCommand], continuePlay? %s; fromUserId: %s; mWaitingPlayer.userID: %s; lastSession: %s; mWaitingPlayer.getSessionId(): %s, new sessionId: %s",
                         continuePlay, fromUserId, (mWaitingPlayer == null ? "Nan" : mWaitingPlayer.userID), lastSession, (mWaitingPlayer == null ? "Nan" : mWaitingPlayer.getSessionId()), sessionId);
                 boolean isVipPlayer = false;
-                if (mWaitingPlayer != null && TextUtils.equals(mWaitingPlayer.userID, fromUserId)) {
-                    mHandler.removeMessages(HandlerImpl.MSG_WAIT_REAPPOINTMENT);
-                    mHandler.removeMessages(HandlerImpl.MSG_RESEND_GAME_RESULT_COMMAND);
-
+                //判断当前用户是等待游戏状态或者等待重新预约状态,不是就不做任何处理,否则就作为继续玩用户添加到首位,让该用户继续玩
+                if (mWaitingPlayer != null && TextUtils.equals(mWaitingPlayer.userID, fromUserId)
+                        && (mWawajiState == Constants.WawajiState.WaitGameResultConfirm || mWawajiState == Constants.WawajiState.WaitReAppointment)) {
                     if (continuePlay == 1 && !TextUtils.isEmpty(lastSession)
                             && TextUtils.equals(mWaitingPlayer.getSessionId(), lastSession)) {
-                        isVipPlayer = true;
+                        sessionId = UUID.randomUUID().toString().replace("-", "");
+                        user.setSessionId(sessionId);
                         queueMembers.add(0, user);
                         queuePosition = 1;
 
-                        AppLogger.getInstance().writeLog("[handleAppointmentCommand], vip user: %s, queueMembers: %d", fromUserId, queuePosition);
+                        isVipPlayer = true;
+                        AppLogger.getInstance().writeLog("[handleAppointmentCommand], vip user: %s, queueMembers: %d", fromUserId, queueMembers.size());
                     }
+                    //等待通知当前玩家准备上机状态
+                    setWawajiState(Constants.WawajiState.WaitGameReady, "[handleAppointmentCommand]");
 
-                    setIdle(true, "is waiting user reappointment");
-
-                    // 当收到等待用户的预约，认为上一局游戏结束, 但还是当前玩家在玩，所以不置空当前玩家信息
-                    mIsDoGrabbing = false;
                     mWaitingPlayer = null;
+                    mCurrentPlayer = null;
+
+                    //删除用户玩完之后继续玩的等待消息
+                    mHandler.removeMessages(HandlerImpl.MSG_WAIT_REAPPOINTMENT);
+                    //删除等待用户确认游戏结果的消息,有可能用户会跳过确认结果直接预约
+                    mHandler.removeMessages(HandlerImpl.MSG_RESEND_GAME_RESULT_COMMAND);
                 }
 
-                if (!isVipPlayer) {
+                AppLogger.getInstance().writeLog("[handleAppointmentCommand], mCurrentPlayer: %s", (mCurrentPlayer == null ? "Nan" : mCurrentPlayer.userID));
+                boolean isPlayingUser = (mCurrentPlayer != null && TextUtils.equals(mCurrentPlayer.userID, fromUserId));
+                if (!isVipPlayer && !isPlayingUser) {
+                    sessionId = UUID.randomUUID().toString().replace("-", "");
+                    user.setSessionId(sessionId);
                     queueMembers.add(user);
                     queuePosition = queueMembers.size();
-
                     AppLogger.getInstance().writeLog("[handleAppointmentCommand], new user: %s, queueMembers: %d", fromUserId, queuePosition);
-
                     mListener.onRoomStateUpdate();
+                } else if (isPlayingUser) {
+                    AppLogger.getInstance().writeLog("[handleAppointmentCommand], current user is playing user");
+                    queuePosition = 1;
                 }
             } else {
                 errorCode = 1;
@@ -343,32 +354,34 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         }
 
         if (errorCode == 0 && queuePosition > 0
-                && (!TextUtils.isEmpty(mCurrentPlayerId) && !TextUtils.equals(mCurrentPlayerId, user.userID))) {    // 如果当前有人在玩，则排号加 1
-            ZegoUser header = queueMembers.get(0);
-            if (!TextUtils.equals(header.userID, mCurrentPlayerId)) {   // Vip 用户在某些时机会同时存在队首且占用 mCurrentPlayerId
-                queuePosition += 1;
-                AppLogger.getInstance().writeLog("[handleAppointmentCommand], add index, queue position: %d", queuePosition);
-            }
+                && mCurrentPlayer != null && !TextUtils.equals(mCurrentPlayer.userID, fromUserId)) {    // 如果当前有人在玩，则排号加 1
+            queuePosition += 1;
+            AppLogger.getInstance().writeLog("[handleAppointmentCommand], add index, queue position: %d", queuePosition);
         }
 
-        ZegoUser[] targetUser = { user };
+        ZegoUser[] targetUser = {user};
 
+        if (TextUtils.isEmpty(sessionId)) {
+            sessionId = mCurrentPlayer != null ? mCurrentPlayer.getSessionId() : "";
+        }
         int requestSeq = cmdJson.optInt(Constants.JsonKey.KEY_SEQ);
         String cmdString = generateAppointmentReplyCommand(user.userID, user.userName, requestSeq, queuePosition, sessionId, errorCode);
         AppLogger.getInstance().writeLog("[handleAppointmentCommand], appointment reply content: %s", cmdString);
+
         boolean success = mRoomClient.getZegoLiveRoom().sendCustomCommand(targetUser, cmdString, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
                 AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply appointment command result: %d", errorCode);
             }
         });
+
         AppLogger.getInstance().writeLog("[handleAppointmentCommand], reply appointment command success? %s with sessionId: %s", success, sessionId);
 
         notifyNextPlayerIfNeed();
     }
 
     private String generateAppointmentReplyCommand(String userId, String userName, int requestSeq, int queueSize, String sessionId, int errorCode) {
-        JSONObject json =  new JSONObject();
+        JSONObject json = new JSONObject();
         try {
             json.put(Constants.JsonKey.KEY_SEQ, requestSeq);
             json.put(Constants.JsonKey.KEY_CMD, Constants.Command.CMD_APPOINTMENT_REPLY);
@@ -428,6 +441,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     private void handleCancelAppointment(String userId, String userName, JSONObject cmdJson) {
         List<GameUser> queueMembers = mRoomClient.getQueueUser();
         int idx = -1;
+
         GameUser targetUser = null;
         for (int i = 0; i < queueMembers.size(); i++) {
             targetUser = queueMembers.get(i);
@@ -438,6 +452,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         }
 
         int errorCode = 0;
+
         if (idx >= 0 && TextUtils.equals(cmdJson.optString(Constants.JsonKey.KEY_SESSION_ID), targetUser.getSessionId())) {
             errorCode = 0;
             targetUser = queueMembers.remove(idx);
@@ -457,7 +472,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         String cmdString = generateCancelAppointmentReplyCommand(errorCode, requestSeq, sessionId);
 
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
-        boolean success = liveRoom.sendCustomCommand(new ZegoUser[]{ targetUser }, cmdString, new IZegoCustomCommandCallback() {
+
+        boolean success = liveRoom.sendCustomCommand(new ZegoUser[]{targetUser}, cmdString, new IZegoCustomCommandCallback() {
 
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
@@ -468,15 +484,18 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         AppLogger.getInstance().writeLog("[handleCancelAppointment], reply cancel appointment command success? %s", success);
 
         if (errorCode == 0 && (mHandler.hasMessages(HandlerImpl.MSG_RESEND_READY_COMMAND) || mHandler.hasMessages(HandlerImpl.MSG_WAIT_CONFIRM))
-                && TextUtils.equals(targetUser.userID, mCurrentPlayerId) && TextUtils.equals(targetUser.getSessionId(), mSessionId)) {
+                && TextUtils.equals(targetUser.userID, mCurrentPlayer.userID) && TextUtils.equals(targetUser.getSessionId(), mCurrentPlayer.getSessionId())) {
             // 取消预约的用户是正在等待上机的用户
             AppLogger.getInstance().writeLog("the cancel user is waiting user, notify next player");
             mHandler.removeMessages(HandlerImpl.MSG_RESEND_READY_COMMAND);
             mHandler.removeMessages(HandlerImpl.MSG_WAIT_CONFIRM);
 
-            setIdle(true, "the cancel user is waiting user");
-            mSessionId = "";
-            mCurrentPlayerId = "";
+
+            setWawajiState(Constants.WawajiState.Idle, "the cancel user is waiting user");
+
+            mCurrentPlayer = null;
+            mWaitingPlayer = null;
+
             mRoomClient.updateCurrentPlayerInfo("", "");
             notifyNextPlayerIfNeed();
         }
@@ -510,33 +529,21 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         });
     }
 
-    // 处理上机或者放弃游戏指令
+    // 处理上机或者放弃游戏指令515
     private void handleStartOrAbandonCommand(String userId, String userName, JSONObject cmdJson) {
-        if (TextUtils.isEmpty(mCurrentPlayerId) || !TextUtils.equals(userId, mCurrentPlayerId)) {
-            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], user (%s) is illegal, mCurrentPlayerId is : %s", userId, mCurrentPlayerId);
+        if (mCurrentPlayer == null ||
+                TextUtils.isEmpty(mCurrentPlayer.userID) || !TextUtils.equals(userId, mCurrentPlayer.userID)) {
+            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], user (%s) is illegal, mCurrentPlayerId is : %s", userId, (mCurrentPlayer == null ? "Nan" : mCurrentPlayer.userID));
             return;
         }
 
         String sessionId = cmdJson.optString(Constants.JsonKey.KEY_SESSION_ID);
-        if (TextUtils.isEmpty(mSessionId) || !TextUtils.equals(mSessionId, sessionId)) {
-            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], session (%s) is illegal, mSessionId: %s", sessionId, mSessionId);
+        if (TextUtils.isEmpty(sessionId) || !TextUtils.equals(mCurrentPlayer.getSessionId(), sessionId)) {
+            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], session (%s) is illegal, mSessionId: %s", sessionId, mCurrentPlayer.getSessionId());
             return;
         }
 
-        mHandler.removeMessages(HandlerImpl.MSG_WAIT_CONFIRM);
-
-        GameUser user;
-        boolean onlySendReply = false;
-        List<GameUser> queueMembers = mRoomClient.getQueueUser();
-        if (queueMembers.size() == 0) { // 可能是用户没有收到上机指令，此时再次发送上面指令
-            onlySendReply = true;
-            user = new GameUser(userId, userName);
-            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], queue members is empty, resend start reply command");
-        } else {
-            //TODO: 在 notify(sendReady) 时就从队列中移除，而不是此处
-            user = queueMembers.remove(0);
-            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], pop user: %s, queueMembers: %d", userId, queueMembers.size());
-        }
+        GameUser user = new GameUser(userId, userName);
 
         int errorCode = 0;  // 鉴权信息是否验证通过，当 confirm = 0 时不需要校验
         int confirm = 0;
@@ -554,28 +561,41 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
 
-        ZegoUser[] sendTo = { user };
+        ZegoUser[] sendTo = {user};
         int requestSeq = cmdJson.optInt(Constants.JsonKey.KEY_SEQ);
         String replyCommand = generateStartOrAbandonReplyCommand(requestSeq, sessionId, errorCode);
+
         boolean success = liveRoom.sendCustomCommand(sendTo, replyCommand, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
+
                 AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], reply StartOrAbandonReplyCommand result: %d", errorCode);
+
             }
         });
         AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], reply StartOrAbandonReplyCommand success ? %s", success);
 
-        if (onlySendReply) {
-            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], only send start reply command to the user ");
+        //判断当前状态可能因为网络原因导致等待开始和通知上机状态顺序打乱问题
+        if (mWawajiState != Constants.WawajiState.WaitStart && mWawajiState != Constants.WawajiState.GameReady) {
+            AppLogger.getInstance().writeLog("[handleStartOrAbandonCommand], only send start reply command to the user, current state: %s", mWawajiState);
             return;
         }
 
+        // 修复用户在发送完 GameReadyReply后马上退出房间，然后再发送 StartOrAbandon 信令，导致超时定时器被移除，设备无法恢复为 idle 状态。最根本的解决办法应该是在通知准备上机时，移除队列）
+        mHandler.removeMessages(HandlerImpl.MSG_WAIT_CONFIRM);
+
+        //删除通知用户上机的消息,原因是怕用户先接收到258再接收到272导致顺序错乱让516回复被拦截作为非法请求,导致超时清空用户信息问题
+        mHandler.removeMessages(HandlerImpl.MSG_RESEND_READY_COMMAND);
+
         if (confirm == 1 && errorCode == 0) { // 确认上机且校验通过
-            setIdle(false, String.format("handleStartOrAbandonCommand(confirm: %d, errorCode: %d)", confirm, errorCode));
+            //设置为上机状态,此时可操作下位机
+            //设置为确认上机状态
+            setWawajiState(Constants.WawajiState.ConfirmStartGame, String.format("handleStartOrAbandonCommand(confirm: %d, errorCode: %d)", confirm, errorCode));
+
             mBeginPlayTime = System.currentTimeMillis();
             mLastCommandId = 0;
             mLastCommandSeq = cmdJson.optInt(Constants.JsonKey.KEY_SEQ);
-            mCustomToken = user.getCustomToken();
+            mCurrentPlayer.setCustomToken(user.getCustomToken());
             mRoomClient.updateCurrentPlayerInfo(user.userID, user.userName);
 
             // 初始化设备
@@ -583,8 +603,6 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             int gameTime = gameConfig.getGameTime();
             DeviceManager.getInstance().initGameConfig(gameTime + 5, gameConfig.getClawPowerGrab(),
                     gameConfig.getClawPowerUp(), gameConfig.getClawPowerMove(), gameConfig.getUpHeight());  // 比设定的游戏时间多 5 秒，比应用超时时间 MSG_WAIT_GAME_OVER 多 3 秒，避免娃娃机自动下抓影响状态
-
-            mCanOperationDevice = true;
 
             // 开启计时器，防止网络超时
             Bundle userData = new Bundle();
@@ -594,33 +612,39 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             Message message = new Message();
             message.what = HandlerImpl.MSG_WAIT_GAME_OVER;
             message.setData(userData);
+
             mHandler.sendMessageDelayed(message, (gameTime + 2) * 1000);    // 比设定的游戏时间多 2 秒，但比设定到娃娃机上的时间要少，避免娃娃机自动下爪
-        } else {    // 放弃上机或者校验不通过
-            setIdle(true, String.format("handleStartOrAbandonCommand(confirm: %d, errorCode: %d)", confirm, errorCode));
-            mCurrentPlayerId = "";
-            mSessionId = "";
+        } else {
+            //设置当前为空闲状态,通知下一个用户上机
+            setWawajiState(Constants.WawajiState.Idle, String.format("handleStartOrAbandonCommand(confirm: %d, errorCode: %d)", confirm, errorCode));
+
+            // 放弃上机或者校验不通过
+            mCurrentPlayer = null;
+            mWaitingPlayer = null;
             mRoomClient.updateCurrentPlayerInfo("", "");
+
             notifyNextPlayerIfNeed();
         }
 
         mListener.onRoomStateUpdate();
     }
 
-
     /**
      * 解析 JSON 串，获取 用户 配置信息并将信息保存到 user 中。
      *
      * @param encryptedConfigString 输入参数，待解密 config 内容
-     * @param expectSessionId 期望 config 中的 sessionId 值
-     * @param expectTimestamp 期望 config 中的 timeStamp 值
-     * @param user 输出参数，保存解析结果
+     * @param expectSessionId       期望 config 中的 sessionId 值
+     * @param expectTimestamp       期望 config 中的 timeStamp 值
+     * @param user                  输出参数，保存解析结果
      * @return 0: 能成功解析且校验通过; 1: 解析失败; 2: 校验失败
      */
     private int parseStartConfigData(String encryptedConfigString, String expectSessionId, long expectTimestamp, /* out */GameUser user) {
         int errorCode = 0;
         try {
+
             // 使用约定的密钥串对 config 进行解密
             byte[] decryptedBytes = AESUtil.decrypt(encryptedConfigString, ZegoApplication.getAppContext().getServerSecret());
+
             JSONObject jsonConfig = new JSONObject(new String(decryptedBytes));
 
             JSONObject authorityJson = jsonConfig.optJSONObject(Constants.JsonKey.KEY_AUTHORITY_INFO);
@@ -628,7 +652,22 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             int confirm = authorityJson.optInt(Constants.JsonKey.KEY_CONFIRM);
             long timeStamp = authorityJson.optLong(Constants.JsonKey.KEY_TIME_STAMP);
 
-            if (confirm == 1 && timeStamp == expectTimestamp && TextUtils.equals(sessionId, expectSessionId)) {
+            boolean isValidSession = TextUtils.equals(sessionId, expectSessionId);
+
+
+            // 仅在密文中包含 RoomID 信息时，才校验房间ID是否真实；默认不校验
+            boolean isValidRoomId = true;
+
+            if (authorityJson.has(Constants.JsonKey.KEY_ROOM_ID)) {
+                String receivedRoomId = authorityJson.optString(Constants.JsonKey.KEY_ROOM_ID);
+                String myRoomId = PrefUtil.getInstance().getRoomId();
+
+                isValidRoomId = TextUtils.equals(receivedRoomId, myRoomId);
+                AppLogger.getInstance().writeLog("[parseStartConfigData], received roomId: %s, excepted roomId: %s, is valid roomId ? %s", receivedRoomId, myRoomId, isValidRoomId);
+            }
+
+            if (confirm == 1 && timeStamp == expectTimestamp && isValidSession && isValidRoomId) {
+
                 if (user != null) {
                     String customToken = authorityJson.optString(Constants.JsonKey.KEY_CUSTOM_TOKEN, "");
                     user.setCustomToken(customToken);
@@ -636,22 +675,30 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     GameConfig config = GameConfig.parseFromJson(jsonConfig.optJSONObject(Constants.JsonKey.KEY_GAME_CONFIG), ZegoApplication.getAppContext().getDefaultGameConfig());
                     user.setGameConfig(config);
                 }
+
             } else {
+
                 errorCode = 2;
-                AppLogger.getInstance().writeLog("[parseStartConfigData], check failed, confirm: %d; timestamp: %d, excepted: %d; sessionId: %s; excepted: %s",
-                        confirm, timeStamp, expectTimestamp, sessionId, expectSessionId);
+                AppLogger.getInstance().writeLog("[parseStartConfigData], check failed, confirm: %d; timestamp: %d, excepted: %d; sessionId: %s, excepted: %s; is valid roomId? %s",
+                        confirm, timeStamp, expectTimestamp, sessionId, expectSessionId, isValidRoomId);
             }
+
         } catch (JSONException e) {
+
             AppLogger.getInstance().writeLog("[parseStartConfigData], the config data format is illegal: %s", e);
             errorCode = 1;
+
         } catch (Exception e) {
+
             AppLogger.getInstance().writeLog("[parseStartConfigData], decrypt config failed: %s", e);
             errorCode = 1;
+
         }
         return errorCode;
     }
 
     private String generateStartOrAbandonReplyCommand(int requestSeq, String sessionId, int result) {
+
         JSONObject json = new JSONObject();
         try {
             json.put(Constants.JsonKey.KEY_SEQ, requestSeq);
@@ -663,13 +710,16 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             jsonData.put(Constants.JsonKey.KEY_TIME_STAMP, System.currentTimeMillis());
 
             json.put(Constants.JsonKey.KEY_DATA, jsonData);
+
         } catch (JSONException e) {
+
             AppLogger.getInstance().writeLog("generateStartOrAbandonReplyCommand failed. %s", e);
+
         }
         return json.toString();
     }
 
-    // 在 Work 线程处理上机应答指令
+    // 在 Work 线程处理上机应答指令516
     private void handleReadyReplyCommandInWorkThread(final String userId, final String userName, final JSONObject jsonData) {
         mRoomClient.runOnWorkThread(new Runnable() {
             @Override
@@ -681,17 +731,26 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
     // 处理上机应答指令
     private void handleReadyReplyCommand(String userId, String userName, JSONObject cmdJson) {
-        if (TextUtils.isEmpty(mCurrentPlayerId) || !TextUtils.equals(mCurrentPlayerId, userId)) {
-            AppLogger.getInstance().writeLog("[handleReadyReplyCommand], the user %s illegal, mCurrentPlayerId: %s", userId, mCurrentPlayerId);
+        if (mCurrentPlayer == null ||
+                TextUtils.isEmpty(userId) || !TextUtils.equals(mCurrentPlayer.userID, userId)) {
+            AppLogger.getInstance().writeLog("[handleReadyReplyCommand], the user %s illegal, the current player: %s", userId, (mCurrentPlayer == null ? "Nan" : mCurrentPlayer.userID));
             return;
         }
 
         String sessionId = cmdJson.optString(Constants.JsonKey.KEY_SESSION_ID);
-        if (TextUtils.isEmpty(sessionId) || !TextUtils.equals(mSessionId, sessionId)) {
-            AppLogger.getInstance().writeLog("[handleReadyReplyCommand], the sessionId %s illegal, mSessionId: %s", sessionId, mSessionId);
+        if (TextUtils.isEmpty(sessionId) || !TextUtils.equals(mCurrentPlayer.getSessionId(), sessionId)) {
+            AppLogger.getInstance().writeLog("[handleReadyReplyCommand], the sessionId %s illegal, the current session: %s", sessionId, mCurrentPlayer.getSessionId());
             return;
         }
 
+        if (mWawajiState != Constants.WawajiState.GameReady) {
+            AppLogger.getInstance().writeLog("[handleReadyReplyCommand], the user %s's state: %s is not %s", userId, mWawajiState, Constants.WawajiState.GameReady);
+            return;
+
+        }
+
+        //等待用户开始状态
+        setWawajiState(Constants.WawajiState.WaitStart, "handleReadyReplyCommand");
         mHandler.removeMessages(HandlerImpl.MSG_RESEND_READY_COMMAND);
 
         //启动定时器开始计时等待上机或者取消上机
@@ -699,10 +758,11 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         userData.putString(Constants.JsonKey.KEY_USER_ID, userId);
         userData.putString(Constants.JsonKey.KEY_USER_NAME, userName);
 
+        // 1. 在发送指令前，需要向业务服务器请求参数及扣费；2.连续玩时，等待用户确认后才发送上机指令，故等待时间需要长于客户端时间
         Message message = new Message();
         message.what = HandlerImpl.MSG_WAIT_CONFIRM;
         message.setData(userData);
-        mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);    // 1. 在发送指令前，需要向业务服务器请求参数及扣费；2.连续玩时，等待用户确认后才发送上机指令，故等待时间需要长于客户端时间
+        mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);
     }
 
     // 在 Work 线程处理游戏结果应答指令
@@ -715,14 +775,14 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         });
     }
 
-    // 处理游戏结果应答指令, 当用户选择连续玩时，添加等待预约的定时器
-    private void handleGameResultReplyCommand(final String userId, final String userName, final JSONObject cmdJson) {
-        if (!mIsDoGrabbing || mWaitingPlayer == null) {
-            AppLogger.getInstance().writeLog("[handleGameResultReplyCommand], mWaitingPlayer is null ? %s or mIsDoGrabbing is false? %s, ignore", mWaitingPlayer, !mIsDoGrabbing);
+    // 处理游戏结果应答指令, 当用户选择连续玩时，添加等待预约的定时器517
+    private void handleGameResultReplyCommand(String userId, String userName, JSONObject cmdJson) {
+        if (mWaitingPlayer == null || mWawajiState != Constants.WawajiState.WaitGameResultConfirm) {
+            AppLogger.getInstance().writeLog("[handleGameResultReplyCommand], mWaitingPlayer is null ? %s , ignore State: %s", (mWaitingPlayer == null), mWawajiState);
             return;
         }
 
-        if (!TextUtils.equals(mWaitingPlayer.userID, userId)) {
+        if (TextUtils.isEmpty(userId) || !TextUtils.equals(mWaitingPlayer.userID, userId)) {
             AppLogger.getInstance().writeLog("[handleGameResultReplyCommand], not the same user(%s != %s), ignore", mWaitingPlayer.userID, userId);
             return;
         }
@@ -730,10 +790,8 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         // 移除定时器
         mHandler.removeMessages(HandlerImpl.MSG_RESEND_GAME_RESULT_COMMAND);
 
-        //TODO: 此处可能会造成用户发送 grab 指令后，会误处理 grab
-        mIsDoGrabbing = false;
-
         int continuePlay = 0;
+
         JSONObject dataJson = cmdJson.optJSONObject(Constants.JsonKey.KEY_DATA);
         if (dataJson != null) {
             continuePlay = dataJson.optInt(Constants.JsonKey.KEY_CONTINUE);
@@ -743,28 +801,34 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
         if (continuePlay == 1) {    // 连续玩，添加标记位，等待预约信令
             AppLogger.getInstance().writeLog("[handleGameResultReplyCommand], the user %s will be continue to play", userId);
+            setWawajiState(Constants.WawajiState.WaitReAppointment, "handleGameResultReplyCommand");
 
             // 等待用户重新预约
             Message message = new Message();
             message.what = HandlerImpl.MSG_WAIT_REAPPOINTMENT;
-            mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);    // 有些客户端在处理继续玩时，等待用户确认后才发预约指令，所以需要等待 16S
+
+            // 有些客户端在处理继续玩时，等待用户确认后才发预约指令，所以需要等待 16S
+            mHandler.sendMessageDelayed(message, HandlerImpl.INTERVAL_WAIT_CONFIRM);
+
         } else {
-            mWaitingPlayer = null;
-            setIdleAndNotifyNextPlayerInWorkThread("[handleGameResultReplyCommand], receive game result reply, but don't continue");
+            setIdleAndNotifyNextPlayerInWorkThread("receive game result reply, but don't continue");
         }
     }
 
     private void setIdleAndNotifyNextPlayerInWorkThread(final String desc) {
+
         AppLogger.getInstance().writeLog("[setIdleAndNotifyNextPlayerInWorkThread], %s", desc);
 
         mRoomClient.runOnWorkThread(new Runnable() {
             @Override
             public void run() {
-                setIdle(true, desc);
+                // setIdle(true, desc);
+                setWawajiState(Constants.WawajiState.Idle, "setIdleAndNotifyNextPlayerInWorkThread");
 
-                mCurrentPlayerId = null;
                 mLastCommandId = 0;
                 mLastCommandSeq = 0;
+                
+                mCurrentPlayer = null;
                 mRoomClient.updateCurrentPlayerInfo("", "");
 
                 // 通知下一个人准备游戏
@@ -772,6 +836,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
                 mListener.onRoomStateUpdate();
             }
+
         });
     }
 
@@ -786,24 +851,29 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     }
 
     private void handleGetGameInfoCommand(String fromUserId, String fromUserName, JSONObject requestData) {
+
         ZegoUser user = new ZegoUser();
         user.userID = fromUserId;
         user.userName = fromUserName;
 
-        ZegoUser[] receiver = { user };
+        ZegoUser[] receiver = {user};
         int requestSeq = requestData.optInt(Constants.JsonKey.KEY_SEQ);
+
         String gameInfoStr = generateGetGameInfoCommandReplyCommand(requestSeq, Constants.DEFAULT_GAME_TIME_IN_SECONDS);
+
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
+
         boolean success = liveRoom.sendCustomCommand(receiver, gameInfoStr, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
                 AppLogger.getInstance().writeLog("[handleGetGameInfoCommand], send game info to user result : %d", errorCode);
             }
         });
-        AppLogger.getInstance().writeLog("[handleGetGameInfoCommand], send game info to user: %s success ? %s", fromUserName, success);
+        AppLogger.getInstance().writeLog("[handleGetGameInfoCommand], send game info to user: %s success ? %s", fromUserId, success);
     }
 
     private String generateGetGameInfoCommandReplyCommand(int requestSeq, int gameTimeInSeconds) {
+
         JSONObject json = new JSONObject();
         try {
             json.put(Constants.JsonKey.KEY_SEQ, requestSeq);
@@ -813,9 +883,9 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             jsonData.put(Constants.JsonKey.KEY_GAME_TIME, gameTimeInSeconds);
             jsonData.put(Constants.JsonKey.KEY_USER_TOTAL, mRoomClient.getTotalUser().size());
 
-            GameUser curPlayer = mRoomClient.getCurrentPlayer();
+            GameUser curPlayer = mCurrentPlayer;
             JSONObject jsonPlayer = new JSONObject();
-            if (!TextUtils.isEmpty(curPlayer.userID) && !TextUtils.isEmpty(mCurrentPlayerId)) {
+            if (curPlayer != null && !TextUtils.isEmpty(curPlayer.userID)) {
                 jsonPlayer.put(Constants.JsonKey.KEY_USER_ID, curPlayer.userID);
                 jsonPlayer.put(Constants.JsonKey.KEY_USER_NAME, curPlayer.userName);
                 int leftTime = gameTimeInSeconds - (int) ((System.currentTimeMillis() - mBeginPlayTime) / 1000);
@@ -826,6 +896,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 }
                 jsonPlayer.put(Constants.JsonKey.KEY_LEFT_TIME, leftTime);
             }
+
             jsonData.put(Constants.JsonKey.KEY_PLAYER, jsonPlayer);
 
             JSONArray queueData = new JSONArray();
@@ -835,30 +906,38 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 jsonUser.put(Constants.JsonKey.KEY_USER_NAME, zegoUser.userName);
                 queueData.put(jsonUser);
             }
+
             jsonData.put(Constants.JsonKey.KEY_USER_QUEUE, queueData);
 
             jsonData.put(Constants.JsonKey.KEY_TIME_STAMP, System.currentTimeMillis());
 
             json.put(Constants.JsonKey.KEY_DATA, jsonData);
+
         } catch (JSONException e) {
             AppLogger.getInstance().writeLog("generateGetGameInfoCommandReplyCommand failed. %s", e);
         }
         return json.toString();
     }
 
+    //532下抓,或者超时 自动下抓
     private void doGrab(final String fromUserId, final String fromUserName) {
-        if (mIsDoGrabbing) {
-            AppLogger.getInstance().writeLog("[doGrab] mIsDoGrabbing is true, ignore the request action from user: %s", fromUserId);
+
+        //需要做2种判断,如果用户还没操作娃娃机,程序就被关闭,会导致状态一直停留在ConfirmStartGame
+        if (mWawajiState != Constants.WawajiState.Operating && mWawajiState != Constants.WawajiState.ConfirmStartGame) {
+            AppLogger.getInstance().writeLog("[doGrab] current state: %s is not %s and %s, ignore the request action from user: %s",
+                    mWawajiState, Constants.WawajiState.Operating, Constants.WawajiState.ConfirmStartGame, fromUserId);
             return;
         }
 
-        mCanOperationDevice = false;    // 游戏结束，不能再操作设备
-        mIsDoGrabbing = true;   // 需要等待收到用户的 GameResultReply 或者超时重新预约时才能置为 false
         mDeviceIsWaitingResult = true;
+        //等待游戏结果状态
+        setWawajiState(Constants.WawajiState.WaitGrabResult, "doGrab");
         mHandler.removeMessages(HandlerImpl.MSG_WAIT_GAME_OVER);
+
         boolean success = DeviceManager.getInstance().sendDownCmd(new DeviceManager.OnGameOverObserver() {
             @Override
             public void onGameOver(boolean win) {
+
                 AppLogger.getInstance().writeLog("onGameOver because received device's grab result, userId: %s", fromUserId);
 
                 mDeviceIsWaitingResult = false;
@@ -867,55 +946,68 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
                 int result = win ? 1 : 0;
                 handleGameOverInWorkThread(result, fromUserId, fromUserName);
+
             }
         });
 
         // 发送"抓娃娃指令"失败，直接抛出"抓取"失败
         if (!success) {
+
             AppLogger.getInstance().writeLog("[HandlerImpl_doGrab] sendDownCmd fail, userId: %s", fromUserId);
             handleGameOverInWorkThread(0, fromUserId, fromUserName);
+
             return;
         }
 
         // 发送"抓娃娃指令"成功后，设置超时定时器，避免获取不到下位机结果
         Bundle data = new Bundle();
+
         data.putString(Constants.JsonKey.KEY_USER_ID, fromUserId);
+
         data.putString(Constants.JsonKey.KEY_USER_NAME, fromUserName);
 
         Message msg = Message.obtain();
         msg.what = HandlerImpl.MSG_WAIT_RECEIVE_DEVICE_RESULT;
         msg.setData(data);
         mHandler.sendMessageDelayed(msg, HandlerImpl.INTERVAL_WAIT_RECEIVE_DEVICE_RESULT);
+
     }
 
     // 为了响应速度，串口操作不进行线程切换
     private void handleOperationCommand(int commandId, final String fromUserId, final String fromUserName, final JSONObject jsonData) {
-        // 娃娃机正在执行抓操作
-        if (mIsDoGrabbing) {
-            AppLogger.getInstance().writeLog("[handleOperationCommand] the user: %s is grabbing, can't operation the current machine just now.", fromUserId);
+
+        // 娃娃机正在执行抓操作ConfirmStartGame
+        if (mWawajiState == Constants.WawajiState.WaitGrabResult) {
+            AppLogger.getInstance().writeLog("[handleOperationCommand], the user: %s is grabbing, can't operation the current machine just now.", fromUserId);
             return;
         }
 
-        if (mCurrentIsIdle || TextUtils.isEmpty(mCurrentPlayerId) || !TextUtils.equals(mCurrentPlayerId, fromUserId)) {
-            AppLogger.getInstance().writeLog("[handleOperationCommand], anomaly operation, the playing user %s not the %s, current device is idle? %s", fromUserId, mCurrentPlayerId, mCurrentIsIdle);
+        //只有状态为操作状态或者确认开始上机才能够操作下位机
+        if (mWawajiState != Constants.WawajiState.Operating && mWawajiState != Constants.WawajiState.ConfirmStartGame) {
+            AppLogger.getInstance().writeLog("[handleOperationCommand], didn't receive the start command, can't operation the device just now. user: %s  state: %s", fromUserId, mWawajiState.name());
+            return;
+        }
+
+        if (mCurrentPlayer == null || !TextUtils.equals(mCurrentPlayer.userID, fromUserId)) {
+            AppLogger.getInstance().writeLog("[handleOperationCommand], anomaly operation, the playing user %s not the %s", fromUserId, (mCurrentPlayer == null ? "Nan" : mCurrentPlayer.userID));
             return;
         }
 
         String sessionId = jsonData.optString(Constants.JsonKey.KEY_SESSION_ID);
-        if (TextUtils.isEmpty(mSessionId) || !TextUtils.equals(mSessionId, sessionId)) {
-            AppLogger.getInstance().writeLog("[handleOperationCommand] the session (%s) is illegal, mSession: %s.", sessionId, mSessionId);
+        if (TextUtils.isEmpty(sessionId) || !TextUtils.equals(mCurrentPlayer.getSessionId(), sessionId)) {
+            AppLogger.getInstance().writeLog("[handleOperationCommand], the session (%s) is illegal, current session: %s.", sessionId, mCurrentPlayer.getSessionId());
             return;
         }
 
         int seq = jsonData.optInt(Constants.JsonKey.KEY_SEQ);
         if (seq <= mLastCommandSeq) {   //
-            AppLogger.getInstance().writeLog("current seq (%d) must greater than the last seq(%d)", seq, mLastCommandSeq);
+            AppLogger.getInstance().writeLog("[handleOperationCommand], current seq (%d) must greater than the last seq(%d)", seq, mLastCommandSeq);
             return;
         }
 
-        if (!mCanOperationDevice) {
-            AppLogger.getInstance().writeLog("didn't receive the start command, can't operation the device just now. user: %s", fromUserId);
-            return;
+        //判断是确认上机状态才设置成操作状态
+        if (mWawajiState == Constants.WawajiState.ConfirmStartGame) {
+            setWawajiState(Constants.WawajiState.Operating, String.format("receive first operation command, change state %s to %s", Constants.WawajiState.ConfirmStartGame, Constants.WawajiState.Operating));
         }
 
         mLastCommandSeq = seq;
@@ -927,6 +1019,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 DeviceManager.getInstance().sendStopCmd();
             }
         }
+
         mLastCommandId = commandId;
 
         // send byte data to serial port
@@ -967,21 +1060,26 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
     }
 
     private void handleGameOver(int result, String userId, String userName) {
-        if (!mIsDoGrabbing) {
-            AppLogger.getInstance().writeLog("[handleGameOver], not do grabbing just now (may be has finished), ignored");
+
+        if (mWawajiState != Constants.WawajiState.WaitGrabResult) {
+            AppLogger.getInstance().writeLog("[handleGameOver], not do grabbing just now (may be has finished), ignored state: %s", mWawajiState);
             return;
         }
-
         ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
 
         List<ZegoUser> allMembers = mRoomClient.getTotalUser();
+
         ZegoUser[] userArray = new ZegoUser[allMembers.size()];
         allMembers.toArray(userArray);
-
+        //设置当前状态为等待用户确认结果状态
+        setWawajiState(Constants.WawajiState.WaitGameResultConfirm, "handleGameOver");
         int seq = CommandSeqManager.getInstance().getAndIncreaseSequence();
-        String sessionId = mSessionId;
-        String customToken = mCustomToken;
+        String sessionId = mCurrentPlayer.getSessionId();
+        String customToken = mCurrentPlayer.getCustomToken();
+
+        //发送260游戏结果
         String cmdString = generateGameOverCommand(result, userId, userName, seq, sessionId, customToken);
+
         boolean success = liveRoom.sendCustomCommand(userArray, cmdString, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomId) {
@@ -989,7 +1087,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             }
         });
 
-        AppLogger.getInstance().writeLog("[handleGameOver], send game result to %s success? %s", userId, success);
+        AppLogger.getInstance().writeLog("[handleGameOver], send game result to %s success? %s  cmdString: %S", userId, success, cmdString);
 
         mWaitingPlayer = new GameUser(userId, userName);
         mWaitingPlayer.setSessionId(sessionId);
@@ -1006,11 +1104,14 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         retryMsg.setData(userInfo);
 
         mHandler.sendMessageDelayed(retryMsg, HandlerImpl.INTERVAL_RESEND_COMMAND_TIME);
+
     }
 
     private String generateGameOverCommand(int result, String userId, String userName, int seq, String sessionId, String customToken) {
+
         JSONObject json = new JSONObject();
         try {
+
             json.put(Constants.JsonKey.KEY_SEQ, seq);
             json.put(Constants.JsonKey.KEY_CMD, Constants.Command.CMD_GAME_RESULT);
             json.put(Constants.JsonKey.KEY_SESSION_ID, sessionId);
@@ -1032,52 +1133,27 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             encryptResult.put(Constants.JsonKey.KEY_PLAYER, playerJson);
             encryptResult.put(Constants.JsonKey.KEY_CUSTOM_TOKEN, customToken);
             encryptResult.put(Constants.JsonKey.KEY_TIME_STAMP, timeStamp);
+            encryptResult.put(Constants.JsonKey.KEY_ROOM_ID, PrefUtil.getInstance().getRoomId());   // 加入房间信息，用于业务服务器校验与用户申请上机的房间是否一致
 
             String encryptContent;
             try {
+
                 //使用约定的密钥串对结果加密
                 byte[] encryptByte = AESUtil.encrypt(encryptResult.toString(), ZegoApplication.getAppContext().getServerSecret());
                 encryptContent = new String(encryptByte, "utf-8");
+
             } catch (Exception e) {
                 encryptContent = "";
             }
+
             dataJson.put(Constants.JsonKey.KEY_ENCRYPTED_RESULT, encryptContent);
 
             json.put(Constants.JsonKey.KEY_DATA, dataJson);
         } catch (JSONException e) {
             AppLogger.getInstance().writeLog("generateGameOverCommand failed. " + e);
         }
+
         return json.toString();
-    }
-
-    private void removeFromQueue(final String userId, final String userName) {
-        mRoomClient.runOnWorkThread(new Runnable() {
-            @Override
-            public void run() {
-                int idx = -1;
-                List<GameUser> queue = mRoomClient.getQueueUser();
-                for (int i = 0; i < queue.size(); i++) {
-                    ZegoUser user = queue.get(i);
-                    if (TextUtils.equals(userId, user.userID) && TextUtils.equals(userName, user.userName)) {
-                        idx = i;
-                        break;
-                    }
-                }
-
-                if (idx >= 0) {
-                    queue.remove(idx);
-                    AppLogger.getInstance().writeLog("[removeFromQueue], remove user: %s, queueMembers: %d", userId, queue.size());
-                }
-
-                setIdle(true, "removeFromQueue");
-                mSessionId = "";
-                mCurrentPlayerId = "";
-                mRoomClient.updateCurrentPlayerInfo("", "");
-                notifyNextPlayerIfNeed();
-
-                mListener.onRoomStateUpdate();
-            }
-        });
     }
 
     private class HandlerImpl implements Handler.Callback {
@@ -1094,6 +1170,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         static final public int INTERVAL_WAIT_CONFIRM = (10 + 6) * 1000;      // 发送开始指令后，等待16s(比客户端多6s)开始游戏，否则视为放弃（此处业务侧可能有付费流程，所以需要等待至少 10 秒）
 
         static final public int INTERVAL_WAIT_RECEIVE_DEVICE_RESULT = 15000; // 等待下位机返回结果(理论值是3秒，目前实测可能会有12秒才返回的情况)，客户端等待时间必须大于该值，推荐 20S
+
         static final public int INTERVAL_RESEND_COMMAND_TIME = 1000;     // 重发信令间隔时间
 
         private int mRetryResetCount = 0;
@@ -1104,31 +1181,30 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                 case MSG_WAIT_CONFIRM: {// 未响应，认为放弃上机，通知队首玩家准备游戏
                     Bundle userData = message.getData();
                     String userId = userData.getString(Constants.JsonKey.KEY_USER_ID);
-                    String userName = userData.getString(Constants.JsonKey.KEY_USER_NAME);
-
-                    AppLogger.getInstance().writeLog("timeout about MSG_WAIT_CONFIRM, userId: %s", userId);
-
-                    removeFromQueue(userId, userName);
+                    String desc = String.format("timeout about MSG_WAIT_CONFIRM, userId: %s", userId);
+                    setIdleAndNotifyNextPlayerInWorkThread(desc);
                 }
                     break;
 
                 case MSG_WAIT_GAME_OVER: {
+
                     Bundle userData = message.getData();
                     String userId = userData.getString(Constants.JsonKey.KEY_USER_ID);
                     String userName = userData.getString(Constants.JsonKey.KEY_USER_NAME);
                     AppLogger.getInstance().writeLog("timeout about MSG_WAIT_GAME_OVER, userId: %s", userId);
-
                     doGrab(userId, userName);
+
                 }
                     break;
 
                 case MSG_WAIT_RECEIVE_DEVICE_RESULT: {
+
                     Bundle userData = message.getData();
                     String userId = userData.getString(Constants.JsonKey.KEY_USER_ID);
                     String userName = userData.getString(Constants.JsonKey.KEY_USER_NAME);
                     AppLogger.getInstance().writeLog("onGameOver, because timeout about MSG_WAIT_RECEIVE_DEVICE_RESULT, userId: %s", userId);
-
                     handleGameOverInWorkThread(0, userId, userName);    // 下位机返回超时，通知用户没有抓中
+
                 }
                     break;
 
@@ -1140,7 +1216,6 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                         public void run() {
                             if (mWaitingPlayer != null) {
                                 mWaitingPlayer = null;
-                                mIsDoGrabbing = false;
 
                                 setIdleAndNotifyNextPlayerInWorkThread("can't receive the vip user's appointment");
                             }
@@ -1154,13 +1229,11 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     if (retryCount <= 16) { // 部分客户端在处理继续玩时，优先发送了Appointment，但等待用户确认后才发送 GameReadyReply，所以需要等待 16S
                         resendCustomCommandInWorkThread(message, "game ready");
                     } else {
-                        // Timeout
+                        // Timeout 等待16秒之后 用户还是没有回复确认上机状态,作为超时处理,并且初始化娃娃机状态,并通知下一个用户
                         mHandler.removeMessages(MSG_RESEND_READY_COMMAND);
 
-                        AppLogger.getInstance().writeLog("has retry 16 times about MSG_RESEND_READY_COMMAND, remove the from queue and notify next player");
-
-                        Bundle userInfo = message.getData();
-                        removeFromQueue(userInfo.getString(Constants.JsonKey.KEY_USER_ID), userInfo.getString(Constants.JsonKey.KEY_USER_NAME));
+                        //初始化当前状态和当前用户数据
+                        setIdleAndNotifyNextPlayerInWorkThread("has retry 16 times about MSG_RESEND_READY_COMMAND, remove the from queue and notify next player");
                     }
                 }
                     break;
@@ -1170,20 +1243,20 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     if (retryCount <= 16) { // 部分客户端在处理继续玩时，等待用户确认后才发送 GameResultReply，所以需要等待 16S
                         resendCustomCommandInWorkThread(message, "game result");
                     } else {
-                        // Timeout
+                        //游戏结果确认 超时,
                         mHandler.removeMessages(MSG_RESEND_GAME_RESULT_COMMAND);
-
                         AppLogger.getInstance().writeLog("has retry 16 times about MSG_RESEND_GAME_RESULT_COMMAND, set idle and notify next player");
                         mRoomClient.runOnWorkThread(new Runnable() {
                             @Override
                             public void run() {
-                                if (!mIsDoGrabbing) {
-                                    AppLogger.getInstance().writeLog("not do grabbing just now, maybe has processed");
-                                } else {
-                                    mIsDoGrabbing = false;
+
+                                if (mWawajiState == Constants.WawajiState.WaitGameResultConfirm) {
                                     mWaitingPlayer = null;
                                     setIdleAndNotifyNextPlayerInWorkThread("can't receive game result reply");
+                                } else {
+                                    AppLogger.getInstance().writeLog("not wait game result confirm just now, maybe has processed");
                                 }
+
                             }
                         });
                     }
@@ -1200,7 +1273,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                             //TODO: 此处应该报警，通知可能设备故障了(先临时重置下位机状态，存在无法操作下位机的风险)
                             DeviceManager.getInstance().sendResetCmd();
 
-                            mRetryResetCount ++;
+                            mRetryResetCount++;
 
                             if (mRetryResetCount > 5) { // 累计超过 5 次，重启主进程
                                 if (mRoomClient != null) {
@@ -1245,7 +1318,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     final String targetUserId = targetUser.userID;
 
                     ZegoLiveRoom liveRoom = mRoomClient.getZegoLiveRoom();
-                    boolean success = liveRoom.sendCustomCommand(new ZegoUser[]{ targetUser }, cmdString, new IZegoCustomCommandCallback() {
+                    boolean success = liveRoom.sendCustomCommand(new ZegoUser[]{targetUser}, cmdString, new IZegoCustomCommandCallback() {
                         @Override
                         public void onSendCustomCommand(int errorCode, String roomId) {
                             AppLogger.getInstance().writeLog("[resendCustomCommandInWorkThread], send %s to %s result: %d", desc, targetUserId, errorCode);
@@ -1260,8 +1333,10 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     Message retryMsg = Message.obtain(message);
                     retryMsg.arg1 = message.arg1 + 1;  // 更新重试次数
                     mHandler.sendMessageDelayed(retryMsg, INTERVAL_RESEND_COMMAND_TIME);
+
                 }
             });
         }
     }
 }
+

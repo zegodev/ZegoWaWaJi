@@ -1,6 +1,8 @@
 package com.zego.wawaji_client.controller;
 
 
+import android.util.Log;
+
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -66,6 +68,7 @@ public class RoomController {
                 long appID = ZegoApiManager.getInstance().getAppID();
                 String url = String.format("https://liveroom%d-api.%s/demo/roomlist?appid=%s", appID, "zego.im", appID);
 
+                Log.e("url:",url);
                 StringRequest request = new StringRequest(url,
                         new Response.Listener<String>() {
                             @Override
@@ -82,9 +85,13 @@ public class RoomController {
                         }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        if(mUpdateRoomListListener != null){
+                            mUpdateRoomListListener.onUpdateRoomList(null);
+                        }
 
                     }
                 });
+
                 mQueue.add(request);
             }
         });

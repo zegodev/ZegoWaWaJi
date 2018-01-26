@@ -35,4 +35,9 @@
 
 
     <color name="backgroud_blue">#0d70ff</color>
+
+    <color name="transparent">#00000000</color>
+
+    <drawable name="clr_normal">#ff6501</drawable>
+    <drawable name="clr_pressed">#a44100</drawable>
 </resources>

@@ -1,68 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/rlyt_root"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/backgroud_blue">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rlyt_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroud_blue">
 
-    <RelativeLayout
+
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/relativeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginBottom="120dp">
+        android:layout_marginBottom="110dp">
 
         <TextureView
             android:id="@+id/textureview1"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextureView
             android:id="@+id/textureview2"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:visibility="invisible"/>
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
+        <ImageView
             android:id="@+id/tv_stream_state"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@mipmap/background"
+            android:layout_margin="10dp"
             android:gravity="center"
-            android:textColor="@color/text_white"
-            android:textSize="20dp"/>
+            android:scaleType="centerInside"
+            android:src="@mipmap/background"
+            android:background="@color/bg_white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/ibtn_switch_camera"
             android:layout_width="51dp"
             android:layout_height="51dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
             android:layout_marginRight="9dp"
             android:background="@mipmap/switch1"
-            android:src="@drawable/sl_circle"/>
-    </RelativeLayout>
+            android:src="@drawable/sl_circle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </android.support.constraint.ConstraintLayout>
 
     <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="30dp"
+        android:layout_height="22dp"
         android:layout_alignParentRight="true"
         android:background="#801a1a1a">
 
         <ImageView
-            android:visibility="invisible"
             android:id="@+id/iv_quality"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
             android:src="@mipmap/excellent"
-            />
+            android:visibility="invisible" />
 
         <TextView
-            android:visibility="invisible"
             android:id="@+id/tv_quality"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -71,79 +81,79 @@
             android:layout_toRightOf="@id/iv_quality"
             android:text="网络流畅"
             android:textColor="@color/text_white"
-            android:textSize="11sp"/>
+            android:textSize="9sp"
+            android:visibility="invisible" />
 
         <TextView
             android:id="@+id/tv_room_user_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
+            android:layout_toRightOf="@id/tv_quality"
             android:text="0人在房间"
             android:textColor="@color/text_white"
-            android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/tv_quality"
-            android:textSize="11sp"/>
+            android:textSize="9sp" />
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/rlyt_control_pannel"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="125dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
         android:visibility="invisible">
 
         <RelativeLayout
-            android:layout_width="180dp"
+            android:layout_width="150dp"
             android:layout_height="match_parent"
-            android:layout_marginLeft="25dp">
+            android:layout_marginLeft="30dp">
 
             <ImageButton
                 android:id="@+id/ibtn_backward"
-                android:layout_width="61dp"
-                android:layout_height="61dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_centerHorizontal="true"
                 android:background="@mipmap/up"
                 android:src="@drawable/sl_rectangle_circle"
-                android:text="前"/>
+                android:text="前" />
 
             <ImageButton
                 android:id="@+id/ibtn_left"
-                android:layout_width="61dp"
-                android:layout_height="61dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_centerVertical="true"
                 android:background="@mipmap/left"
                 android:src="@drawable/sl_rectangle_circle"
-                android:text="左"/>
+                android:text="左" />
 
             <ImageButton
                 android:id="@+id/ibtn_forward"
-                android:layout_width="61dp"
-                android:layout_height="61dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:background="@mipmap/down"
                 android:src="@drawable/sl_rectangle_circle"
-                android:text="后"/>
+                android:text="后" />
 
             <ImageButton
                 android:id="@+id/ibtn_right"
-                android:layout_width="61dp"
-                android:layout_height="61dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:background="@mipmap/right"
                 android:src="@drawable/sl_rectangle_circle"
-                android:text="右"/>
+                android:text="右" />
         </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="71dp"
             android:layout_height="match_parent"
             android:layout_alignParentRight="true"
-            android:layout_marginRight="25dp"
-            >
+            android:layout_marginRight="30dp">
 
             <TextView
                 android:id="@+id/tv_boarding_countdown"
@@ -152,44 +162,56 @@
                 android:layout_centerHorizontal="true"
                 android:text="20s"
                 android:textColor="@color/text_white"
-                android:textSize="30sp"
-                android:textStyle="bold"/>
+                android:textSize="26sp"
+                android:layout_marginBottom="4dp"
+                android:textStyle="bold" />
 
             <ImageButton
                 android:id="@+id/ibtn_go"
-                android:layout_width="71dp"
-                android:layout_height="71dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:layout_marginBottom="30dp"
                 android:background="@mipmap/go"
-                android:src="@drawable/sl_circle"/>
+                android:src="@drawable/sl_circle" />
         </RelativeLayout>
     </RelativeLayout>
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="110dp"
+        android:gravity="center"
         android:layout_alignParentBottom="true">
 
-        <ImageButton
-            android:id="@+id/ibtn_apply"
-            android:layout_width="186dp"
-            android:layout_height="69dp"
+        <RelativeLayout
+            android:layout_width="130dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:background="@mipmap/start"
-            android:src="@drawable/sl_rectangle"/>
+            android:layout_height="50dp">
 
-        <TextView
-            android:id="@+id/tv_apply"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:gravity="center"
-            android:text="@string/start_game"
-            android:textColor="@color/text_white"
-            android:textSize="17sp"/>
-    </RelativeLayout>
+            <ImageButton
+                android:id="@+id/ibtn_apply"
+                android:layout_width="130dp"
+                android:layout_height="50dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:background="@mipmap/start"
+                android:src="@drawable/sl_rectangle" />
+
+            <TextView
+                android:id="@+id/tv_apply"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:text="@string/start_game"
+                android:textStyle="bold"
+                android:textColor="@color/text_white"
+                android:textSize="14sp" />
+        </RelativeLayout>
+    </LinearLayout>
 
 </RelativeLayout>

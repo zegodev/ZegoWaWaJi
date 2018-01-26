@@ -38,6 +38,7 @@
     <string name="zg_text_current_no_player">当前机器空闲</string>
     <string name="zg_text_current_device_state">设备状态&#160;<xliff:g id="value">%1$d</xliff:g></string>
     <string name="zg_text_device_error"><b><font color="#ff0000">设备未连接或者没有权限</font></b></string>
+    <string name="zg_text_camera_error"><b><font color="#ff0000">摄像头故障&#160;<xliff:g id="value">%1$d</xliff:g></font></b></string>
 
     <string name="zg_text_front_stream_info"><strong>正面摄像头:</strong> %1$s</string>
     <string name="zg_text_side_stream_info"><strong>侧面摄像头:</strong> %1$s</string>

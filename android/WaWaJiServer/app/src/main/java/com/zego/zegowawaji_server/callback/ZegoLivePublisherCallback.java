@@ -17,6 +17,9 @@ import java.util.HashMap;
 public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
 
     private IStateChangedListener mListener;
+    private HashMap<String, Integer> mReceivePublishQuality = new HashMap<>();
+    private HashMap<String, Integer> mPublishNullData = new HashMap<>();
+    private int mNotifyCount = 0;
 
     public ZegoLivePublisherCallback(IStateChangedListener listener) {
         mListener = listener;
@@ -46,7 +49,39 @@ public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
      */
     @Override
     public void onPublishQualityUpdate(String streamId, ZegoStreamQuality zegoStreamQuality) {
-        //TODO
+        int count;
+        if (mReceivePublishQuality.containsKey(streamId)) {
+            count = mReceivePublishQuality.get(streamId) + 1;
+        } else {
+            count = 1;
+        }
+
+        mReceivePublishQuality.put(streamId, count);
+        if (count == 20) {
+            mReceivePublishQuality.put(streamId, 0);
+
+            AppLogger.getInstance().writeLog("stream: %s's quality update, quality: %d, videoFPS: %.1f", streamId, zegoStreamQuality.quality, zegoStreamQuality.videoFPS);
+        }
+
+        if (zegoStreamQuality.videoBitrate <= 3 && zegoStreamQuality.videoFPS <= 1) {
+            if (mPublishNullData.containsKey(streamId)) {
+                count = mPublishNullData.get(streamId) + 1;
+            } else {
+                count = 1;
+            }
+            mPublishNullData.put(streamId, count);
+
+            if (count >= 35 && mListener != null) {
+                mNotifyCount ++;
+                mPublishNullData.put(streamId, 0);
+
+                mListener.onPublishNullStream(streamId, mNotifyCount);
+            }
+        } else {
+            if (mPublishNullData.containsKey(streamId)) {
+                mPublishNullData.put(streamId, 0);
+            }
+        }
     }
 
     /**

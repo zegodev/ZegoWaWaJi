@@ -17,6 +17,15 @@ JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open
 
 /*
  * Class:     com_zego_base_SerialPort
+ * Method:    open_ex
+ * Signature: (Ljava/lang/String;IIIIC)Ljava/io/FileDescriptor;
+ */
+JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open_1ex
+  (JNIEnv *, jclass, jstring, jint, jint,
+    jint, jint, jchar);
+
+/*
+ * Class:     com_zego_base_SerialPort
  * Method:    close
  * Signature: (Ljava/io/FileDescriptor)V
  */

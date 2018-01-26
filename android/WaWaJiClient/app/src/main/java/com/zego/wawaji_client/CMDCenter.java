@@ -2,9 +2,12 @@ package com.zego.wawaji_client;
 
 import android.content.res.Resources;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -170,6 +173,8 @@ public class CMDCenter {
 
     private String mSessionID;
 
+    private SendOperationCmdHandler sendOperationCmdHandler;
+
     /**
      * 用户上机操作的时长, 默认30s.
      */
@@ -179,7 +184,10 @@ public class CMDCenter {
         mZegoLiveRoom = ZegoApiManager.getInstance().getZegoLiveRoom();
         mResources = ZegoApplication.sApplicationContext.getResources();
         mSeq = 0;
+        HandlerThread handlerThread = new HandlerThread("send_cmd", Thread.NORM_PRIORITY);
+        handlerThread.start();
 
+        sendOperationCmdHandler = new SendOperationCmdHandler(handlerThread.getLooper());
         mUserInfoOfWaWaJi = null;
         mCurrentBoardSate = BoardState.Ended;
         mConfirmBoard = false;
@@ -200,40 +208,70 @@ public class CMDCenter {
         return sInstance;
     }
 
+    /**
+     * 销毁
+     */
+    public void cancel() {
+        if (mCountDownTimerMove != null) {
+            mCountDownTimerMove.cancel();
+        }
+        if (mCountDownTimerRetryHttpRequest != null) {
+            mCountDownTimerRetryHttpRequest.cancel();
+        }
+    }
+
     void reset() {
         mUserInfoOfWaWaJi = null;
         mCurrentBoardSate = BoardState.Ended;
         mConfirmBoard = false;
         mListLog = new LinkedList<>();
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
         mSessionID = null;
         mUserBoardingTime = 30 * 1000;
     }
 
-    void reinitGame(){
+    /**
+     * 清除游戏状态重新设置状态
+     */
+    void reinitGame() {
         mCurrentBoardSate = BoardState.Ended;
         mConfirmBoard = false;
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
         mSessionID = null;
     }
 
-    void continueToPlay(){
+    /**
+     * 清除游戏状态不清除SessionID
+     */
+    void reinitGameNoSessionId() {
         mCurrentBoardSate = BoardState.Ended;
         mConfirmBoard = false;
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
+            mCountDownTimerMove.cancel();
+        }
+
+    }
+
+    void continueToPlay() {
+        mCurrentBoardSate = BoardState.Ended;
+        mConfirmBoard = false;
+        if (mCountDownTimerRetryHttpRequest != null) {
+            mCountDownTimerRetryHttpRequest.cancel();
+        }
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
     }
@@ -243,7 +281,17 @@ public class CMDCenter {
         return mSeq;
     }
 
-    int getCurrentSeq(){
+    /**
+     * 获取操作娃娃机的Handler
+     *
+     * @return
+     */
+    public SendOperationCmdHandler getSendOperationCmdHandler() {
+
+        return sendOperationCmdHandler;
+    }
+
+    int getCurrentSeq() {
         return mSeq;
     }
 
@@ -255,9 +303,9 @@ public class CMDCenter {
         mUserInfoOfWaWaJi = zegoUser;
     }
 
-    private ZegoUser[] getUserListToSendCMD(){
-        if (mUserInfoOfWaWaJi != null){
-            ZegoUser []userList = new ZegoUser[1];
+    private ZegoUser[] getUserListToSendCMD() {
+        if (mUserInfoOfWaWaJi != null) {
+            ZegoUser[] userList = new ZegoUser[1];
             userList[0] = mUserInfoOfWaWaJi;
             return userList;
         }
@@ -276,6 +324,7 @@ public class CMDCenter {
 
     private
     SimpleDateFormat sDataFormat = new SimpleDateFormat("[hh:mm:ss.SSS]");
+
     void printLog(String msg) {
         Log.i(LOG_TAG, msg);
 
@@ -296,27 +345,27 @@ public class CMDCenter {
         return mConfirmBoard;
     }
 
-    void setSessionID(String sessionID){
+    void setSessionID(String sessionID) {
         printLog("[CommandUtil_setSessionID], sessionID: " + sessionID);
         mSessionID = sessionID;
     }
 
-    String getSessionID(){
-       return mSessionID;
+    String getSessionID() {
+        return mSessionID;
     }
 
-    void setUserBoardingTime(int time){
+    void setUserBoardingTime(int time) {
 //        mUserBoardingTime = time;
     }
 
-    int getUserBoardingTime(){
+    int getUserBoardingTime() {
         return mUserBoardingTime;
     }
 
     /**
      * 从业务后台获取加密的游戏配置信息.
      */
-    void getEntrptedConfig(){
+    void getEntrptedConfig() {
 
         RequestQueue mQueue = Volley.newRequestQueue(ZegoApplication.sApplicationContext);
 
@@ -341,22 +390,23 @@ public class CMDCenter {
             @Override
             public void onErrorResponse(VolleyError error) {
                 printLog("[CMDCenter_getEntrptedConfig] volley response error, " + error.getMessage());
+
             }
         });
         mQueue.add(request);
     }
 
-    Map<String, Object> getCMDHeader(int seq, int cmd, String sessionID){
+    Map<String, Object> getCMDHeader(int seq, int cmd, String sessionID) {
         Map<String, Object> header = new HashMap<>();
         header.put(CMDKey.SEQ, seq);
         header.put(CMDKey.CMD, cmd);
-        if (!TextUtils.isEmpty(sessionID)){
+        if (!TextUtils.isEmpty(sessionID)) {
             header.put(CMDKey.SESSION_ID, sessionID);
         }
         return header;
     }
 
-    Map<String, Object> getDataMap(long timeStamp){
+    Map<String, Object> getDataMap(long timeStamp) {
         Map<String, Object> data = new HashMap<>();
         data.put(CMDKey.TIME_STAMP, timeStamp);
         return data;
@@ -365,7 +415,7 @@ public class CMDCenter {
     /**
      * 查询游戏信息.
      */
-    void queryGameInfo(){
+    void queryGameInfo() {
         printLog("[CommandUtil_queryGameInfo] enter");
 
         Map<String, Object> mapCMD = getCMDHeader(getSeq(), CMD_QUERY_GAME_INFO, null);
@@ -397,7 +447,7 @@ public class CMDCenter {
             return;
         }
 
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
 
@@ -428,9 +478,9 @@ public class CMDCenter {
             public void onTick(long millisUntilFinished) {
                 if (mCurrentBoardSate == BoardState.Applying) {
                     // 第一次回调的时间间隔 < 2000ms, 不处理
-                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl){
+                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl) {
 
-                        final int retryTime =  MAX_RETRY_TIMES - (int) ((millisUntilFinished / RETRY_INTERVAl));
+                        final int retryTime = MAX_RETRY_TIMES - (int) ((millisUntilFinished / RETRY_INTERVAl));
                         printLog(mResources.getString(R.string.send_reply, retryTime + "") + msg);
                         mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
                             @Override
@@ -453,15 +503,15 @@ public class CMDCenter {
         }.start();
     }
 
-    void cancelApply(final OnCommandSendCallback callback){
+    void cancelApply(final OnCommandSendCallback callback) {
         printLog("[CMDCenter_cancelApply], enter");
 
-        if (mCurrentBoardSate != BoardState.WaitingBoard){
+        if (mCurrentBoardSate != BoardState.WaitingBoard) {
             printLog("[CMDCenter_cancelApply] error, state mismatch");
             return;
         }
 
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
 
@@ -486,9 +536,9 @@ public class CMDCenter {
             public void onTick(long millisUntilFinished) {
                 if (mCurrentBoardSate == BoardState.WaitingBoard) {
                     // 第一次回调的时间间隔 < 2000ms, 不处理
-                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl){
+                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl) {
 
-                        final int retryTime =  MAX_RETRY_TIMES - (int) ((millisUntilFinished / RETRY_INTERVAl));
+                        final int retryTime = MAX_RETRY_TIMES - (int) ((millisUntilFinished / RETRY_INTERVAl));
                         printLog(mResources.getString(R.string.send_cancel_reply, retryTime + "") + msg);
                         mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
                             @Override
@@ -514,7 +564,7 @@ public class CMDCenter {
     /**
      * 通知服务器，客户端已经收到"准备游戏"的指令.
      */
-    void replyRecvGameReady(int rspSeq){
+    void replyRecvGameReady(int rspSeq) {
         printLog("[CMDCenter_replyRecvGameReady], currentState: " + mCurrentBoardSate);
 
         Map<String, Object> mapCMD = getCMDHeader(rspSeq, CMD_REPLY_RECV_GAME_READY, mSessionID);
@@ -548,13 +598,13 @@ public class CMDCenter {
         }
 
         // 取消之前的定时器
-        if (mCountDownTimerRetryHttpRequest != null){
+        if (mCountDownTimerRetryHttpRequest != null) {
             mCountDownTimerRetryHttpRequest.cancel();
         }
 
         mConfirmBoard = confirmBoard;
 
-        if (mConfirmBoard){
+        if (mConfirmBoard) {
             setCurrentBoardSate(BoardState.ConfirmBoard);
         }
 
@@ -563,7 +613,7 @@ public class CMDCenter {
         Map<String, Object> mapData = getDataMap(timeStamp);
         mapData.put(CMDKey.CONFIRM, (mConfirmBoard ? YES : NO));
 
-        if (mConfirmBoard){
+        if (mConfirmBoard) {
             mapData.put(CMDKey.CONFIG, encryptedConfig);
         }
 
@@ -580,12 +630,37 @@ public class CMDCenter {
             }
         });
 
+        printLog(mResources.getString(R.string.send_confirm_board, "2") + msg);
+        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
+            @Override
+            public void onSendCustomCommand(int errorCode, String roomID) {
+                printLog(mResources.getString(R.string.rsp_confirm_board, "1") + errorCode);
+            }
+        });
+
+        printLog(mResources.getString(R.string.send_confirm_board, "3") + msg);
+        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
+            @Override
+            public void onSendCustomCommand(int errorCode, String roomID) {
+                printLog(mResources.getString(R.string.rsp_confirm_board, "1") + errorCode);
+            }
+        });
+
+        printLog(mResources.getString(R.string.send_confirm_board, "4") + msg);
+        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
+            @Override
+            public void onSendCustomCommand(int errorCode, String roomID) {
+                printLog(mResources.getString(R.string.rsp_confirm_board, "1") + errorCode);
+            }
+        });
+
+
         mCountDownTimerRetryHttpRequest = new CountDownTimer(MAX_RETRY_TIME, RETRY_INTERVAl) {
             @Override
             public void onTick(long millisUntilFinished) {
                 if (mCurrentBoardSate == BoardState.ConfirmBoard) {
                     // 第一次回调，时间间隔 < 2000ms, 不处理
-                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl){
+                    if ((MAX_RETRY_TIME - millisUntilFinished) > RETRY_INTERVAl) {
 
                         final int retryTime = MAX_RETRY_TIMES - (int) ((millisUntilFinished / RETRY_INTERVAl));
                         printLog(mResources.getString(R.string.send_confirm_board, retryTime + "") + msg);
@@ -624,17 +699,10 @@ public class CMDCenter {
         Gson gson = new Gson();
         final String msg = gson.toJson(mapCMD);
 
-        printLog("sendCustomCommand_moveLeft, msg: " + msg);
-        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
-            @Override
-            public void onSendCustomCommand(int errorCode, String roomID) {
-                printLog("onSendCustomCommand_moveLeft, errorCode:" + errorCode);
-            }
-        });
-
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
+
         mCountDownTimerMove = new CountDownTimer(3000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -643,14 +711,19 @@ public class CMDCenter {
                     @Override
                     public void onSendCustomCommand(int errorCode, String roomID) {
                         printLog("onSendCustomCommand_moveLeft, errorCode:" + errorCode);
+
                     }
                 });
             }
 
             @Override
             public void onFinish() {
+
             }
+
         }.start();
+
+
     }
 
     void moveRight() {
@@ -666,16 +739,7 @@ public class CMDCenter {
 
         Gson gson = new Gson();
         final String msg = gson.toJson(mapCMD);
-
-        printLog("sendCustomCommand_moveRight, msg: " + msg);
-        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
-            @Override
-            public void onSendCustomCommand(int errorCode, String roomID) {
-                printLog("onSendCustomCommand_moveRight, errorCode:" + errorCode);
-            }
-        });
-
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
         mCountDownTimerMove = new CountDownTimer(3000, 1000) {
@@ -692,9 +756,15 @@ public class CMDCenter {
 
             @Override
             public void onFinish() {
+
             }
+
         }.start();
+        ;
+
+
     }
+
 
     void moveForward() {
         printLog("[CMDCenter_moveForward], currentSate: " + mCurrentBoardSate);
@@ -709,21 +779,13 @@ public class CMDCenter {
 
         Gson gson = new Gson();
         final String msg = gson.toJson(mapCMD);
-
-        printLog("sendCustomCommand_moveForward, msg: " + msg);
-        mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
-            @Override
-            public void onSendCustomCommand(int errorCode, String roomID) {
-                printLog("onSendCustomCommand_moveForward, errorCode:" + errorCode);
-            }
-        });
-
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
         mCountDownTimerMove = new CountDownTimer(3000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
+                printLog("sendCustomCommand_moveBackward, msg: " + msg);
                 printLog("sendCustomCommand_moveForward, msg: " + msg);
                 mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
                     @Override
@@ -731,13 +793,15 @@ public class CMDCenter {
                         printLog("onSendCustomCommand_moveForward, errorCode:" + errorCode);
                     }
                 });
-
             }
-
             @Override
             public void onFinish() {
+
             }
         }.start();
+
+
+
     }
 
     void moveBackward() {
@@ -761,8 +825,7 @@ public class CMDCenter {
                 printLog("onSendCustomCommand_moveBackward, errorCode:" + errorCode);
             }
         });
-
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
         mCountDownTimerMove = new CountDownTimer(3000, 1000) {
@@ -772,16 +835,22 @@ public class CMDCenter {
                 mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
                     @Override
                     public void onSendCustomCommand(int errorCode, String roomID) {
+
                         printLog("onSendCustomCommand_moveBackward, errorCode:" + errorCode);
+
                     }
+
                 });
             }
 
             @Override
             public void onFinish() {
+
             }
+
         }.start();
     }
+
 
     void grub() {
         printLog("[CMDCenter_grub], currentSate: " + mCurrentBoardSate);
@@ -808,7 +877,7 @@ public class CMDCenter {
         });
     }
 
-    void stopMove(){
+    void stopMove() {
         printLog("[CMDCenter_stopMove], currentSate: " + mCurrentBoardSate);
 
         if (mCurrentBoardSate != BoardState.Boarding) {
@@ -816,7 +885,7 @@ public class CMDCenter {
             return;
         }
 
-        if (mCountDownTimerMove != null){
+        if (mCountDownTimerMove != null) {
             mCountDownTimerMove.cancel();
         }
 
@@ -826,14 +895,77 @@ public class CMDCenter {
         Gson gson = new Gson();
         final String msg = gson.toJson(mapCMD);
 
-        printLog( "sendCustomCommand_stopMove, msg: " + msg);
+        printLog("sendCustomCommand_stopMove, msg: " + msg);
         mZegoLiveRoom.sendCustomCommand(getUserListToSendCMD(), msg, new IZegoCustomCommandCallback() {
             @Override
             public void onSendCustomCommand(int errorCode, String roomID) {
-                printLog( "onSendCustomCommand_stopMove, errorCode: " + errorCode);
+                printLog("onSendCustomCommand_stopMove, errorCode: " + errorCode);
             }
         });
     }
+
+
+    /**
+     * 处理移动的单独线程
+     */
+    public class SendOperationCmdHandler extends Handler {
+        static final int MSG_Move_Left = 1;
+        static final int MSG_Move_Forward = 2;
+        static final int MSG_Move_Right = 3;
+        static final int MSG_Move_Backward = 4;
+        static final int MSG_Stop_Move = 5;
+
+        public SendOperationCmdHandler(Looper looper) {
+            super(looper);
+        }
+
+        public void send(int msg) {
+            switch (msg) {
+                case MSG_Move_Left:
+                    this.sendEmptyMessage(MSG_Move_Left);
+                    break;
+                case MSG_Move_Forward:
+                    this.sendEmptyMessage(MSG_Move_Forward);
+                    break;
+                case MSG_Move_Right:
+                    this.sendEmptyMessage(MSG_Move_Right);
+                    break;
+                case MSG_Move_Backward:
+                    this.sendEmptyMessage(MSG_Move_Backward);
+                    break;
+                case MSG_Stop_Move:
+                    this.sendEmptyMessage(MSG_Stop_Move);
+                    break;
+            }
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_Move_Left:
+                    moveLeft();
+                    break;
+                case MSG_Move_Forward:
+                    moveForward();
+                    break;
+
+                case MSG_Move_Right:
+                    moveRight();
+                    break;
+                case MSG_Move_Backward:
+                    moveBackward();
+                    break;
+                case MSG_Stop_Move:
+                    stopMove();
+                    break;
+
+                default:
+                    super.handleMessage(msg);
+                    break;
+            }
+        }
+    }
+
 
     void confirmGameResult(int rspSeq, boolean needContinue) {
         printLog("[CMDCenter_confirmGameResult], needContinue: " + needContinue + ", currentSate: " + mCurrentBoardSate);
@@ -856,6 +988,7 @@ public class CMDCenter {
             }
         });
     }
+
 
     public interface OnCommandSendCallback {
         void onSendFail();

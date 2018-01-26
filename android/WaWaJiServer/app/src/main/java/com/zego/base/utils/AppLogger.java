@@ -108,8 +108,8 @@ public class AppLogger {
                 }
 
                 int logLength = mLogList.size();
-                if (logLength > 1500) {
-                    for (int i = logLength - 1; i >= 1000; i--) {
+                if (logLength > 800) {
+                    for (int i = logLength - 1; i >= 500; i--) {
                         mLogList.remove(i);
                     }
 

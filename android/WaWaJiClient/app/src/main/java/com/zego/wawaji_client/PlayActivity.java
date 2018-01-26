@@ -6,6 +6,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -39,16 +40,16 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.zego.wawaji.R;
 import com.zego.wawaji_client.constants.BoardState;
 import com.zego.wawaji_client.constants.CMDKey;
+import com.zego.wawaji_client.dialog.GameDialog;
 import com.zego.wawaji_client.entity.Room;
 import com.zego.wawaji_client.entity.ZegoStream;
+import com.zego.wawaji_client.utils.Countdown;
 import com.zego.wawaji_client.utils.PreferenceUtil;
 import com.zego.wawaji_client.utils.SystemUtil;
-import com.zego.wawaji_client.widgets.GameResultDialog;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoLivePlayerCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.callback.IZegoRoomCallback;
-import com.zego.zegoliveroom.constants.ZegoConstants;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
 import com.zego.zegoliveroom.entity.ZegoStreamQuality;
 import com.zego.zegoliveroom.entity.ZegoUser;
@@ -58,6 +59,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.zego.zegoliveroom.constants.ZegoConstants.*;
+
 /**
  * Copyright © 2017 Zego. All rights reserved.
  */
@@ -65,7 +68,7 @@ public class PlayActivity extends AppCompatActivity {
     /**
      * 流状态.
      */
-    private TextView mTvStreamSate;
+    private ImageView mTvStreamSate;
 
     /**
      * 切换摄像头.
@@ -109,6 +112,7 @@ public class PlayActivity extends AppCompatActivity {
      */
     private CountDownTimer mCountDownTimer;
 
+    private CountDownTimer mCountDownTimerGameR;
     /**
      * 网络质量.
      */
@@ -124,8 +128,15 @@ public class PlayActivity extends AppCompatActivity {
      * "确认上机"对话框.
      */
     private AlertDialog mDialogConfirmGameReady;
+    /**
+     * "游戏结果"对话框
+     */
+    private AlertDialog mDialogGameResult;
+    /**
+     * 自定义对话框
+     */
+    private GameDialog gameDialog;
 
-    private GameResultDialog mDialogGameResult;
 
     private ZegoLiveRoom mZegoLiveRoom = ZegoApiManager.getInstance().getZegoLiveRoom();
 
@@ -141,10 +152,15 @@ public class PlayActivity extends AppCompatActivity {
      */
     private boolean mContinueToPlay = false;
 
+
     /**
      * 房间内的排队人数.
      */
     private int mUsersInQueue = 0;
+    /**
+     * 倒计时工具类
+     */
+    Countdown mCountdown;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -166,26 +182,31 @@ public class PlayActivity extends AppCompatActivity {
             Toast.makeText(this, "房间信息初始化错误, 请重新开始", Toast.LENGTH_LONG).show();
             finish();
         }
-
-
+        //初始化窗口
+        gameDialog = new GameDialog(this);
+        //初始化倒计时类
+        mCountdown = new Countdown();
         // 从加速服务器拉流
-        ZegoLiveRoom.setConfig(ZegoConstants.Config.PREFER_PLAY_ULTRA_SOURCE + "=1");
+        ZegoLiveRoom.setConfig(Config.PREFER_PLAY_ULTRA_SOURCE + "=1");
+
+
     }
+
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (mIsAppInBackground){
+        if (mIsAppInBackground) {
             mIsAppInBackground = false;
 
             Log.i("PlayActivity", "App comes to foreground");
 
             int currentShowIndex = mSwitchCameraTimes % 2;
-            if (currentShowIndex == 0){
+            if (currentShowIndex == 0) {
                 mListStream.get(0).playStream();
                 mListStream.get(1).playStream();
-            }else {
+            } else {
                 mListStream.get(0).playStream();
                 mListStream.get(1).playStream();
             }
@@ -196,25 +217,25 @@ public class PlayActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        if (!SystemUtil.isAppForeground()){
+        if (!SystemUtil.isAppForeground()) {
             mIsAppInBackground = true;
 
             Log.i("PlayActivity", "App goes to background");
 
-            for(ZegoStream zegoStream : mListStream){
+            for (ZegoStream zegoStream : mListStream) {
                 zegoStream.stopPlayStream();
             }
         }
     }
 
     private ZegoStream constructStream(int index, String streamID) {
-        String sateStrings[];
+        TypedArray sateStrings;
         TextureView textureView;
         if (index == 0) {
-            sateStrings = getResources().getStringArray(R.array.video1_state);
+            sateStrings = getResources().obtainTypedArray(R.array.video1_state);
             textureView = (TextureView) findViewById(R.id.textureview1);
         } else {
-            sateStrings = getResources().getStringArray(R.array.video2_state);
+            sateStrings = getResources().obtainTypedArray(R.array.video2_state);
             textureView = (TextureView) findViewById(R.id.textureview2);
         }
         return new ZegoStream(streamID, textureView, sateStrings);
@@ -242,8 +263,9 @@ public class PlayActivity extends AppCompatActivity {
 
         mTvBoardingCountDown = (TextView) findViewById(R.id.tv_boarding_countdown);
 
-        mTvStreamSate = (TextView) findViewById(R.id.tv_stream_state);
-        mTvStreamSate.setText(mListStream.get(0).getStateString());
+        mTvStreamSate = (ImageView) findViewById(R.id.tv_stream_state);
+
+        mTvStreamSate.setImageDrawable(mListStream.get(0).getStateDrawable());
 
         mRlytControlPannel = (RelativeLayout) findViewById(R.id.rlyt_control_pannel);
 
@@ -263,12 +285,15 @@ public class PlayActivity extends AppCompatActivity {
                         }
                     });
                 } else {
-                    if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard){
+                    if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
                         CMDCenter.getInstance().cancelApply(new CMDCenter.OnCommandSendCallback() {
                             @Override
                             public void onSendFail() {
                                 Toast.makeText(PlayActivity.this, getString(R.string.cancel_apply_failed), Toast.LENGTH_SHORT).show();
+                                //取消预约失败重新查询状态
+                                CMDCenter.getInstance().queryGameInfo();
                                 mIBtnApply.setEnabled(true);
+
                             }
                         });
                     }
@@ -279,13 +304,35 @@ public class PlayActivity extends AppCompatActivity {
         mIBtnGO = (ImageButton) findViewById(R.id.ibtn_go);
         mIBtnGO.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(final View view) {
                 if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Boarding) {
-                    if (mCountDownTimer != null){
+                    if (mCountDownTimer != null) {
                         mCountDownTimer.cancel();
                     }
+                    if (mCountDownTimerGameR != null) {
+                        mCountDownTimerGameR.cancel();
+                    }
+
                     enbleControl(false);
+
                     CMDCenter.getInstance().grub();
+                    //获取游戏结果超时，倒计时类
+
+                    mCountDownTimer = mCountdown.countdown(new Countdown.CountdownListener() {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            reinitGame(true);
+                            gameDialog.ShowRemind("获取游戏结果超时!", "温馨提示");
+
+
+                        }
+                    }, 17000l);
+
                 }
             }
         });
@@ -308,7 +355,7 @@ public class PlayActivity extends AppCompatActivity {
                     if (mListStream.get(1).isPlaySuccess()) {
                         mListStream.get(1).show();
                     } else {
-                        mTvStreamSate.setText(mListStream.get(1).getStateString());
+                        mTvStreamSate.setImageDrawable(mListStream.get(1).getStateDrawable());
                         mTvStreamSate.setVisibility(View.VISIBLE);
                     }
                 } else {
@@ -319,7 +366,7 @@ public class PlayActivity extends AppCompatActivity {
                     if (mListStream.get(0).isPlaySuccess()) {
                         mListStream.get(0).show();
                     } else {
-                        mTvStreamSate.setText(mListStream.get(0).getStateString());
+                        mTvStreamSate.setImageDrawable(mListStream.get(0).getStateDrawable());
                         mTvStreamSate.setVisibility(View.VISIBLE);
                     }
                 }
@@ -330,15 +377,18 @@ public class PlayActivity extends AppCompatActivity {
         mIBtnLeft.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     if (mSwitchCameraTimes % 2 == 0) {
-                        CMDCenter.getInstance().moveLeft();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Left);
                     } else {
-                        CMDCenter.getInstance().moveForward();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Forward);
+
                     }
-                }else if (motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    CMDCenter.getInstance().stopMove();
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Stop_Move);
                 }
+
                 return false;
             }
         });
@@ -347,14 +397,14 @@ public class PlayActivity extends AppCompatActivity {
         mIBtnForward.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     if (mSwitchCameraTimes % 2 == 0) {
-                        CMDCenter.getInstance().moveForward();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Forward);
                     } else {
-                        CMDCenter.getInstance().moveRight();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Right);
                     }
-                }else if (motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    CMDCenter.getInstance().stopMove();
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Stop_Move);
                 }
                 return false;
             }
@@ -364,14 +414,14 @@ public class PlayActivity extends AppCompatActivity {
         mIBtnBackward.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     if (mSwitchCameraTimes % 2 == 0) {
-                        CMDCenter.getInstance().moveBackward();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Backward);
                     } else {
-                        CMDCenter.getInstance().moveLeft();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Left);
                     }
-                }else if (motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    CMDCenter.getInstance().stopMove();
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Stop_Move);
                 }
                 return false;
             }
@@ -381,14 +431,14 @@ public class PlayActivity extends AppCompatActivity {
         mIBtnRight.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN){
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     if (mSwitchCameraTimes % 2 == 0) {
-                        CMDCenter.getInstance().moveRight();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Right);
                     } else {
-                        CMDCenter.getInstance().moveBackward();
+                        CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Move_Backward);
                     }
-                }else if (motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    CMDCenter.getInstance().stopMove();
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    CMDCenter.getInstance().getSendOperationCmdHandler().send(CMDCenter.SendOperationCmdHandler.MSG_Stop_Move);
                 }
                 return false;
             }
@@ -399,17 +449,18 @@ public class PlayActivity extends AppCompatActivity {
         mIvQuality = (ImageView) findViewById(R.id.iv_quality);
         mTvQuality = (TextView) findViewById(R.id.tv_quality);
         mTvRoomUserCount = (TextView) findViewById(R.id.tv_room_user_count);
+
+
     }
 
     private void startPlay() {
-        mZegoLiveRoom.loginRoom(mRoom.roomID, ZegoConstants.RoomRole.Audience, new IZegoLoginCompletionCallback() {
+        mZegoLiveRoom.loginRoom(mRoom.roomID, RoomRole.Audience, new IZegoLoginCompletionCallback() {
             @Override
             public void onLoginCompletion(int errCode, ZegoStreamInfo[] zegoStreamInfos) {
                 CMDCenter.getInstance().printLog("[onLoginCompletion], roomID: " + mRoom.roomID + ", errorCode: " + errCode + ", streamCount: " + zegoStreamInfos.length);
                 if (errCode == 0) {
                     for (ZegoStreamInfo streamInfo : zegoStreamInfos) {
                         CMDCenter.getInstance().printLog("[onLoginCompletion], streamInfo: " + streamInfo.toString());
-
                         if (!TextUtils.isEmpty(streamInfo.userID) &&
                                 !TextUtils.isEmpty(streamInfo.userName) && streamInfo.userName.startsWith("WWJS")) {
                             ZegoUser zegoUser = new ZegoUser();
@@ -420,7 +471,7 @@ public class PlayActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (CMDCenter.getInstance().getUserInfoOfWaWaJi() == null){
+                    if (CMDCenter.getInstance().getUserInfoOfWaWaJi() == null) {
                         CMDCenter.getInstance().printLog("[onLoginCompletion] error, No UserInfo Of WaWaJi");
                     }
 
@@ -432,6 +483,7 @@ public class PlayActivity extends AppCompatActivity {
                 }
             }
         });
+
 
         mZegoLiveRoom.setZegoLivePlayerCallback(new IZegoLivePlayerCallback() {
             @Override
@@ -450,7 +502,7 @@ public class PlayActivity extends AppCompatActivity {
 
                     ZegoStream currentShowStream = mListStream.get(currentShowIndex);
                     if (currentShowStream.getStreamID().equals(streamID)) {
-                        mTvStreamSate.setText(currentShowStream.getStateString());
+                        mTvStreamSate.setImageDrawable(currentShowStream.getStateDrawable());
                         mTvStreamSate.setVisibility(View.VISIBLE);
                     }
                 }
@@ -499,7 +551,7 @@ public class PlayActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onVideoSizeChangedTo(String streamID, int i, int i1) {
+            public void onVideoSizeChangedTo(String streamID, int width, int height) {
                 for (ZegoStream zegoStream : mListStream) {
                     if (zegoStream.getStreamID().equals(streamID)) {
                         zegoStream.setStreamSate(ZegoStream.StreamState.PlaySuccess);
@@ -515,6 +567,7 @@ public class PlayActivity extends AppCompatActivity {
                 }
 
                 CMDCenter.getInstance().printLog("[onVideoSizeChanged], streamID: " + streamID + ", currentShowIndex: " + currentShowIndex);
+
             }
         });
 
@@ -522,20 +575,38 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public void onKickOut(int reason, String roomID) {
 
+
             }
 
+            //与服务器彻底断开链接
             @Override
             public void onDisconnect(int errorCode, String roomID) {
+                //与服务器断开的时候禁用掉按钮
+                enbleControl(false);
+                mIBtnApply.setEnabled(false);
+                CMDCenter.getInstance().printLog("Error, : onDisconnect RoomId" + roomID);
+                Toast.makeText(PlayActivity.this, getString(R.string.disconnect), Toast.LENGTH_LONG).show();
+
             }
 
+            //重新链接
             @Override
             public void onReconnect(int i, String s) {
+                enbleControl(true);
+                mIBtnApply.setEnabled(true);
+                CMDCenter.getInstance().printLog("Error, : onReconnect RoomId" + s);
+                Toast.makeText(PlayActivity.this, getString(R.string.reconnect), Toast.LENGTH_LONG).show();
 
             }
 
+            //与服务器临时断开链接
             @Override
             public void onTempBroken(int i, String s) {
-
+                //与服务器临时断开的时候禁用掉按钮
+                enbleControl(false);
+                mIBtnApply.setEnabled(false);
+                CMDCenter.getInstance().printLog("Error, : onTempBroken RoomId" + s);
+                Toast.makeText(PlayActivity.this, getString(R.string.temp_broken), Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -584,7 +655,7 @@ public class PlayActivity extends AppCompatActivity {
     private void sendCMDFail(String cmd) {
         CMDCenter.getInstance().printLog("send cmd error: " + cmd);
         Toast.makeText(PlayActivity.this, getString(R.string.send_cmd_error), Toast.LENGTH_SHORT).show();
-        reinitGame();
+        reinitGame(true);
     }
 
     private void startGame() {
@@ -593,29 +664,39 @@ public class PlayActivity extends AppCompatActivity {
         showControlPannel(true);
     }
 
-    private void reinitGame() {
+    /**
+     * 清空游戏状态,
+     *
+     * @param isSessionId true:清空全部状态 false:清空游戏状态SessionId不清除
+     */
+    private void reinitGame(boolean isSessionId) {
         mContinueToPlay = false;
-        CMDCenter.getInstance().reinitGame();
+        if (isSessionId) {
+            CMDCenter.getInstance().reinitGame();
+        } else {
+            CMDCenter.getInstance().reinitGameNoSessionId();
+        }
         showControlPannel(false);
 
-        if (mUsersInQueue == 0){
+        if (mUsersInQueue == 0) {
             String text = getString(R.string.start_game);
             showApplyBtn(true, R.mipmap.start, text, getString(R.string.start_game).length());
-        }else {
+        } else {
             String text = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mUsersInQueue + "");
             showApplyBtn(true, R.mipmap.book, text, getString(R.string.apply_grub).length());
         }
     }
 
-    private void continueToPlay(){
+
+    private void continueToPlay() {
         mContinueToPlay = true;
         CMDCenter.getInstance().continueToPlay();
         showControlPannel(false);
 
-        if (mUsersInQueue == 0){
+        if (mUsersInQueue == 0) {
             String text = getString(R.string.start_game);
             showApplyBtn(false, R.mipmap.start, text, getString(R.string.start_game).length());
-        }else {
+        } else {
             String text = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mUsersInQueue + "");
             showApplyBtn(false, R.mipmap.book, text, getString(R.string.apply_grub).length());
         }
@@ -628,7 +709,13 @@ public class PlayActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 设置娃娃机操作面板是否显示
+     *
+     * @param show true为显示false
+     */
     private void showControlPannel(boolean show) {
+
         if (show) {
             mRlytControlPannel.setVisibility(View.VISIBLE);
         } else {
@@ -638,8 +725,20 @@ public class PlayActivity extends AppCompatActivity {
         enbleControl(show);
     }
 
+    @Override
+    protected void onDestroy() {
+        CMDCenter.getInstance().cancel();
+        super.onDestroy();
+    }
+
+    /**
+     * 禁用键盘
+     *
+     * @param enable false为禁用true为不禁用
+     */
     private void enbleControl(boolean enable) {
         mIBtnLeft.setEnabled(enable);
+
         mIBtnForward.setEnabled(enable);
         mIBtnRight.setEnabled(enable);
         mIBtnBackward.setEnabled(enable);
@@ -647,13 +746,13 @@ public class PlayActivity extends AppCompatActivity {
         mTvBoardingCountDown.setText("");
     }
 
-    private void showApplyBtn(boolean enable, int background, String text, int mainTextLen){
+    private void showApplyBtn(boolean enable, int background, String text, int mainTextLen) {
         mIBtnApply.setBackgroundResource(background);
 
         // 如果有副标题，则分行显示，字体要小一号
-        if (text.length() <= mainTextLen){
+        if (text.length() <= mainTextLen) {
             mTvApply.setText(text);
-        }else {
+        } else {
             // 主标题后面有换行符，需要mainTextLen+1
             showApplyText(text, mainTextLen + 1);
         }
@@ -678,19 +777,19 @@ public class PlayActivity extends AppCompatActivity {
             return null;
         }
 
-        try{
+        try {
             Gson gson = new Gson();
             Map<String, Object> map = new HashMap<>();
             map = gson.fromJson(json, map.getClass());
             return map;
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         return null;
     }
 
-    private boolean checkSeq(int rspSeq){
+    private boolean checkSeq(int rspSeq) {
         if (CMDCenter.getInstance().getCurrentSeq() != rspSeq) {
             CMDCenter.getInstance().printLog("Error, seq mismatch, rspSeq: " + rspSeq + ", currentSeq: " + CMDCenter.getInstance().getCurrentSeq());
             return false;
@@ -699,8 +798,8 @@ public class PlayActivity extends AppCompatActivity {
         return true;
     }
 
-    private boolean checkSessionID(String sessionID){
-        if (TextUtils.isEmpty(sessionID) || !sessionID.equals(CMDCenter.getInstance().getSessionID())){
+    private boolean checkSessionID(String sessionID) {
+        if (TextUtils.isEmpty(sessionID) || !sessionID.equals(CMDCenter.getInstance().getSessionID())) {
             CMDCenter.getInstance().printLog("Error, sessionID not equal, my sessionID: " + CMDCenter.getInstance().getSessionID() + ", sessionID: "
                     + sessionID);
             return false;
@@ -709,13 +808,13 @@ public class PlayActivity extends AppCompatActivity {
         return true;
     }
 
-    private boolean checkIsMyMsg(LinkedTreeMap<String, String> mapPlayer){
-        if (mapPlayer == null){
+    private boolean checkIsMyMsg(LinkedTreeMap<String, String> mapPlayer) {
+        if (mapPlayer == null) {
             CMDCenter.getInstance().printLog("Error, player is null");
             return false;
         }
 
-        if (!PreferenceUtil.getInstance().getUserID().equals(mapPlayer.get(CMDKey.USER_ID))){
+        if (!PreferenceUtil.getInstance().getUserID().equals(mapPlayer.get(CMDKey.USER_ID))) {
             CMDCenter.getInstance().printLog("Error, msg is not mine, my UserID: "
                     + PreferenceUtil.getInstance().getUserID() + ", player UserID: " + mapPlayer.get(CMDKey.USER_ID));
             return false;
@@ -730,11 +829,11 @@ public class PlayActivity extends AppCompatActivity {
     private void handleApplyResult(int rspSeq, Map<String, Object> data) {
         CMDCenter.getInstance().printLog("[handleApplyResult] enter");
 
-        if (!checkSeq(rspSeq)){
+        if (!checkSeq(rspSeq)) {
             return;
         }
 
-        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))){
+        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))) {
             return;
         }
 
@@ -747,7 +846,7 @@ public class PlayActivity extends AppCompatActivity {
         int result = ((Double) data.get(CMDKey.RESULT)).intValue();
         if (result == 0) {
             String sessionID = (String) data.get(CMDKey.SESSION_ID);
-            if(TextUtils.isEmpty(sessionID)){
+            if (TextUtils.isEmpty(sessionID)) {
                 CMDCenter.getInstance().printLog("[handleApplyResult] error, sessionID is null");
                 return;
             }
@@ -756,50 +855,52 @@ public class PlayActivity extends AppCompatActivity {
             CMDCenter.getInstance().setCurrentBoardSate(BoardState.WaitingBoard);
 
             int myPostion = ((Double) data.get(CMDKey.INDEX)).intValue();
-            if (!mContinueToPlay){
+            if (!mContinueToPlay) {
                 String text = getString(R.string.cancel_apply) + "\n" + getString(R.string.my_position, (myPostion + ""));
                 showApplyBtn(true, R.mipmap.cancel, text, getString(R.string.cancel_apply).length());
             }
         } else {
             Toast.makeText(PlayActivity.this, getString(R.string.apply_faile), Toast.LENGTH_SHORT).show();
-            reinitGame();
+            reinitGame(true);
+
         }
     }
 
-    private void handleReplyCancelApply(final int rspSeq, String sessionID, Map<String, Object> data){
+    private void handleReplyCancelApply(final int rspSeq, String sessionID, Map<String, Object> data) {
         CMDCenter.getInstance().printLog("[handleReplyCancelApply] enter");
 
-        if (!checkSeq(rspSeq)){
+        if (!checkSeq(rspSeq)) {
             return;
         }
 
-        if (!checkSessionID(sessionID)){
+        if (!checkSessionID(sessionID)) {
             return;
         }
 
         CMDCenter.getInstance().printLog("[handleReplyCancelApply], currentSate: " + CMDCenter.getInstance().getCurrentBoardSate());
 
-        if (CMDCenter.getInstance().getCurrentBoardSate() != BoardState.WaitingBoard){
+        if (CMDCenter.getInstance().getCurrentBoardSate() != BoardState.WaitingBoard) {
             CMDCenter.getInstance().printLog("[handleReplyCancelApply] error, state mismatch");
             return;
         }
 
         Toast.makeText(this, getString(R.string.cancel_apply_success), Toast.LENGTH_SHORT).show();
 
-        reinitGame();
+        reinitGame(true);
     }
 
     /**
      * 处理服务器返回的"准备游戏"的指令.
      */
     private void handleGameReady(final int rspSeq, String sessionID, Map<String, Object> data) {
+        //TODO 准备上机的指令
         CMDCenter.getInstance().printLog("[handleGameReady] enter");
 
-        if (!checkSessionID(sessionID)){
+        if (!checkSessionID(sessionID)) {
             return;
         }
 
-        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))){
+        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))) {
             return;
         }
 
@@ -815,18 +916,42 @@ public class PlayActivity extends AppCompatActivity {
             return;
         }
 
-        if (mCountDownTimer != null){
+        if (mCountDownTimer != null) {
             mCountDownTimer.cancel();
         }
+
 
         // 通知服务器，客户端已经收到GameReady指令
         CMDCenter.getInstance().replyRecvGameReady(rspSeq);
 
         // 继续玩，直接确认上机
-        if (mContinueToPlay){
+        if (mContinueToPlay) {
             mContinueToPlay = false;
             CMDCenter.getInstance().printLog("[handleGameReady], continue to play");
-            CMDCenter.getInstance().getEntrptedConfig();
+            gameDialog.setButtonState(true);
+            mCountDownTimer = new CountDownTimer(10000, 500) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
+                        gameDialog.countdown(getString(R.string.continue_to_play, ((millisUntilFinished / 1000) + 1) + ""));
+                    }
+                }
+
+                @Override
+                public void onFinish() {
+                    if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
+                        mDialogGameResult.dismiss();
+                        CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
+                            @Override
+                            public void onSendFail() {
+                                sendCMDFail("ConfirmBoard(false)");
+                            }
+                        });
+                        reinitGame(true);
+                    }
+                }
+            }.start();
+
             return;
         }
 
@@ -835,21 +960,29 @@ public class PlayActivity extends AppCompatActivity {
             return;
         }
 
-        mDialogConfirmGameReady = new AlertDialog.Builder(this).setMessage(getString(R.string.confirm_board, "10")).setTitle("提示").setPositiveButton("上机", new DialogInterface.OnClickListener() {
+
+        GameDialog.DialogClick start = new GameDialog.DialogClick() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onContinueToPlay(View v, AlertDialog dialog) {
                 dialog.dismiss();
-                mCountDownTimer.cancel();
+                if (mCountDownTimer != null) {
+                    mCountDownTimer.cancel();
+                }
 
                 // 按钮不能再点击
                 mIBtnApply.setEnabled(false);
+
                 CMDCenter.getInstance().getEntrptedConfig();
+
+
             }
-        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onGiveUpPlaying(View v, AlertDialog dialog) {
                 dialog.dismiss();
-                mCountDownTimer.cancel();
+                if (mCountDownTimer != null) {
+                    mCountDownTimer.cancel();
+                }
 
                 CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
                     @Override
@@ -858,28 +991,38 @@ public class PlayActivity extends AppCompatActivity {
                     }
                 });
 
-                reinitGame();
+                reinitGame(true);
             }
-        }).create();
-        mDialogConfirmGameReady.setCanceledOnTouchOutside(false);
-        mDialogConfirmGameReady.show();
+
+
+        };
+        //创建窗口
+        mDialogConfirmGameReady = gameDialog.showIsStartGame(start);
 
         mCountDownTimer = new CountDownTimer(10000, 500) {
             @Override
             public void onTick(long millisUntilFinished) {
                 if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    mDialogConfirmGameReady.setMessage(getString(R.string.confirm_board, ((millisUntilFinished / 1000) + 1) + ""));
+
+                    gameDialog.countdown(getString(R.string.start_game_cponfirm, ((millisUntilFinished / 1000) + 1) + ""));
                 }
             }
 
             @Override
             public void onFinish() {
                 if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
+                    CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
+                        @Override
+                        public void onSendFail() {
+                            sendCMDFail("ConfirmBoard(false)");
+                        }
+                    });
                     mDialogConfirmGameReady.dismiss();
-                    reinitGame();
+                    reinitGame(true);
                 }
             }
         }.start();
+
     }
 
     /**
@@ -888,7 +1031,7 @@ public class PlayActivity extends AppCompatActivity {
     private void handleConfirmBoardReply(int rspSeq, String sessionID, Map<String, Object> data) {
         CMDCenter.getInstance().printLog("[handleConfirmBoardReply] enter");
 
-        if (!checkSeq(rspSeq)){
+        if (!checkSeq(rspSeq)) {
             return;
         }
 
@@ -904,13 +1047,13 @@ public class PlayActivity extends AppCompatActivity {
         }
 
         int result = ((Double) data.get(CMDKey.RESULT)).intValue();
-        if (result != 0){
+        if (result != 0) {
             CMDCenter.getInstance().printLog("[handleConfirmBoardReply] error, confirm board fail");
             Toast.makeText(this, "上机校验失败", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (mCountDownTimer != null){
+        if (mCountDownTimer != null) {
             mCountDownTimer.cancel();
         }
 
@@ -933,6 +1076,23 @@ public class PlayActivity extends AppCompatActivity {
                     if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Boarding) {
                         enbleControl(false);
                         CMDCenter.getInstance().grub();
+
+                        //获取游戏结果超时，倒计时类
+
+                        mCountDownTimerGameR = mCountdown.countdown(new Countdown.CountdownListener() {
+                            @Override
+                            public void onTick(long millisUntilFinished) {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                reinitGame(true);
+                                gameDialog.ShowRemind("获取游戏结果超时!", "温馨提示");
+
+
+                            }
+                        }, 17000l);
                     }
                 }
             }.start();
@@ -945,93 +1105,104 @@ public class PlayActivity extends AppCompatActivity {
     private void handleGameResult(final int rspSeq, String sessionID, Map<String, Object> data) {
         CMDCenter.getInstance().printLog("[handleGameResult] enter");
 
-        if (!checkSessionID(sessionID)){
+        if (!checkSessionID(sessionID)) {
             return;
         }
 
-        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))){
+        if (!checkIsMyMsg((LinkedTreeMap<String, String>) data.get(CMDKey.PLAYER))) {
             return;
         }
 
         CMDCenter.getInstance().printLog("[handleGameResult], currentSate: " + CMDCenter.getInstance().getCurrentBoardSate());
 
-        if (CMDCenter.getInstance().getCurrentBoardSate() != BoardState.WaitingGameResult) {
-            // 服务器可能没有收到客户端发送的"确认收到游戏结果"消息，会继续发送"游戏结果"到客户端
-            CMDCenter.getInstance().confirmGameResult(rspSeq, mContinueToPlay);
-
+        if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingGameResult) {
+            reinitGame(false);
+            //设置是否继续玩为true
+            mContinueToPlay = true;
+            //回复已经收到游戏结果
+            CMDCenter.getInstance().confirmGameResult(rspSeq, true);
+            // 发起预约指令
+            CMDCenter.getInstance().apply(true, new CMDCenter.OnCommandSendCallback() {
+                @Override
+                public void onSendFail() {
+                    sendCMDFail("Apply");
+                }
+            });
             CMDCenter.getInstance().printLog("[handleGameResult], remain handleGameResult from Server");
-            return;
+
+        } else {
+            //怕服务器没有收到游戏结果,继续发送游戏结果!
+            CMDCenter.getInstance().confirmGameResult(rspSeq, true);
+            CMDCenter.getInstance().printLog("[handleGameResult], confirmGameResult repeat");
+
         }
 
-        if (mDialogGameResult != null && mDialogGameResult.isVisible()) {
+        if (mDialogGameResult != null && mDialogGameResult.isShowing()) {
             CMDCenter.getInstance().printLog("[handleGameResult], confirm dialog is visible");
             return;
         }
 
-        if (mCountDownTimer != null){
+        if (mCountDownTimer != null) {
             mCountDownTimer.cancel();
+        }
+        if (mCountDownTimerGameR != null) {
+            mCountDownTimerGameR.cancel();
         }
 
         int result = ((Double) data.get(CMDKey.RESULT)).intValue();
-        String message;
-        if (result == 1) {
-            message = getString(R.string.grub_successfully);
-        } else {
-            message = getString(R.string.grub_failed);
-        }
 
-        mDialogGameResult = new GameResultDialog();
-        mDialogGameResult.setTitle(message);
-        mDialogGameResult.setGameResultCallback(new GameResultDialog.OnGameResultCallback() {
+
+        GameDialog.DialogClick start = new GameDialog.DialogClick() {
+
             @Override
-            public void onGiveUpPlaying() {
-                mCountDownTimer.cancel();
-                mDialogGameResult.dismiss();
+            public void onContinueToPlay(View v, AlertDialog dialog) {
+                if (mCountDownTimer != null) {
+                    mCountDownTimer.cancel();
+                }
+                dialog.dismiss();
+                //TODO 游戏返回结果之后用户点击继续玩
+                //mContinueToPlay = true;
+                CMDCenter.getInstance().getEntrptedConfig();
 
-                CMDCenter.getInstance().confirmGameResult(rspSeq, false);
-                reinitGame();
             }
 
             @Override
-            public void onContinueToPlay() {
-                mCountDownTimer.cancel();
-                mDialogGameResult.dismiss();
+            public void onGiveUpPlaying(View v, AlertDialog dialog) {
+                if (mCountDownTimer != null) {
+                    mCountDownTimer.cancel();
+                }
+                dialog.dismiss();
 
-
-                CMDCenter.getInstance().confirmGameResult(rspSeq, true);
-                continueToPlay();
+                //设置状态为等待上机状态,然后发送取消上机
+                CMDCenter.getInstance().setCurrentBoardSate(BoardState.WaitingBoard);
+                CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
+                    @Override
+                    public void onSendFail() {
+                        sendCMDFail("ConfirmBoard(false)");
+                    }
+                });
+                reinitGame(true);
             }
-        });
 
+        };
+
+        mDialogGameResult = gameDialog.showIsComeAgainGame(start, result);
+        gameDialog.setButtonState(false);
         mDialogGameResult.setCancelable(false);
-        mDialogGameResult.show(getFragmentManager(), "GameResultDialog");
+        mDialogGameResult.show();
+        gameDialog.countdown(getString(R.string.continue_to_play_without_countdown));
 
-        mCountDownTimer = new CountDownTimer(10000, 500) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingGameResult) {
-                    mDialogGameResult.setContinueText(getString(R.string.continue_to_play, ((millisUntilFinished / 1000) + 1) + ""));
-                }
-            }
 
-            @Override
-            public void onFinish() {
-                if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingGameResult) {
-                    mDialogGameResult.dismiss();
-                    reinitGame();
-                }
-            }
-        }.start();
     }
 
-    private void showGameInfo(Map<String, Object> data){
+    private void showGameInfo(Map<String, Object> data) {
 
         int total = ((Double) data.get(CMDKey.TOTAL)).intValue();
         mTvRoomUserCount.setText(getString(R.string.room_user_count, total + ""));
 
         ArrayList queueList = (ArrayList) data.get(CMDKey.QUEUE);
         int myPosition = 0;
-        if (queueList != null){
+        if (queueList != null) {
             mUsersInQueue = queueList.size();
             for (int index = 0, size = queueList.size(); index < size; index++) {
                 if (PreferenceUtil.getInstance().getUserID().equals(((Map<String, Object>) queueList.get(index)).get(CMDKey.USER_ID))) {
@@ -1042,26 +1213,26 @@ public class PlayActivity extends AppCompatActivity {
         }
 
         if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Ended ||
-                CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Applying){
+                CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Applying) {
 
             boolean enable = true;
-            if ( CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Applying){
+            if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.Applying) {
                 enable = false;
             }
 
-            if (mUsersInQueue == 0){
+            if (mUsersInQueue == 0) {
                 String text = getString(R.string.start_game);
                 showApplyBtn(enable, R.mipmap.start, text, text.length());
-            }else {
+            } else {
                 String text = getString(R.string.apply_grub) + "\n" + getString(R.string.current_queue_count, mUsersInQueue + "");
                 showApplyBtn(enable, R.mipmap.book, text, getString(R.string.apply_grub).length());
             }
 
-        }else if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard
+        } else if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard
                 || CMDCenter.getInstance().getCurrentBoardSate() == BoardState.ConfirmBoard) {
 
             boolean enable = true;
-            if ( CMDCenter.getInstance().getCurrentBoardSate() == BoardState.ConfirmBoard){
+            if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.ConfirmBoard) {
                 enable = false;
             }
 
@@ -1083,10 +1254,10 @@ public class PlayActivity extends AppCompatActivity {
     /**
      * 处理服务器返回的"游戏信息".
      */
-    private void handleResponseGameInfo(int rspSeq, Map<String, Object> data){
+    private void handleResponseGameInfo(int rspSeq, Map<String, Object> data) {
         CMDCenter.getInstance().printLog("[handleResponseGameInfo] enter");
 
-        if (!checkSeq(rspSeq)){
+        if (!checkSeq(rspSeq)) {
             return;
         }
 
@@ -1113,7 +1284,7 @@ public class PlayActivity extends AppCompatActivity {
         String sessionID = (String) map.get(CMDKey.SESSION_ID);
 
         Map<String, Object> data = (Map<String, Object>) map.get("data");
-        if (data == null){
+        if (data == null) {
             CMDCenter.getInstance().printLog("[handleRecvCustomCMD] error, data is null");
             return;
         }
@@ -1200,7 +1371,7 @@ public class PlayActivity extends AppCompatActivity {
     private void doLogout() {
 
         // 回复从CDN拉流
-        ZegoLiveRoom.setConfig(ZegoConstants.Config.PREFER_PLAY_ULTRA_SOURCE + "=0");
+        ZegoLiveRoom.setConfig(Config.PREFER_PLAY_ULTRA_SOURCE + "=0");
 
         for (ZegoStream zegoStream : mListStream) {
             zegoStream.stopPlayStream();
@@ -1230,7 +1401,7 @@ public class PlayActivity extends AppCompatActivity {
                 }
             }).create();
             dialog.show();
-        }else{
+        } else {
             doLogout();
         }
     }

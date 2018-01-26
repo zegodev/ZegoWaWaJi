@@ -325,7 +325,55 @@ public class Constants {
         static final public String KEY_AUTHORITY_INFO = "authority_info";   // 付费鉴权信息
         static final public String KEY_ENCRYPTED_RESULT = "encrypted_result";   // 结果校验串
         static final public String KEY_CUSTOM_TOKEN = "custom_token";   // 预约时带上来的 token, 在游戏结果中透传给 Client App
+        static final public String KEY_ROOM_ID = "room_id";         // 所进入房间信息，用于业务服务器校验与用户申请上机的房间是否一致
 
         static final public String KEY_TIME_STAMP = "time_stamp";   // 时间戳 System.currentMillSeconds()
+    }
+
+    public enum WawajiState {
+        /**
+         * 空闲状态
+         */
+        Idle(0),
+        /**
+         * 游戏准备状态
+         */
+        GameReady(1),
+        /**
+         * 等待开始状态
+         */
+        WaitStart(2),
+        /**
+         * 确认上机状态
+         */
+        ConfirmStartGame(3),
+        /**
+         * 游戏操作中状态
+         */
+        Operating(4),
+        /**
+         * 等待机器返回游戏结果状态
+         */
+        WaitGrabResult(5),
+        /**
+         * 等待玩家确认结果状态
+         */
+        WaitGameResultConfirm(6),
+        /**
+         * 等待用户重复玩,再来一局
+         */
+        WaitReAppointment(7),
+        /**
+         * 等待通知玩家游戏
+         */
+        WaitGameReady(8);
+
+        // 定义私有变量
+        private int nCode;
+
+        // 构造函数，枚举类型只能为私有
+        private WawajiState(int _nCode) {
+            this.nCode = _nCode;
+        }
     }
 }

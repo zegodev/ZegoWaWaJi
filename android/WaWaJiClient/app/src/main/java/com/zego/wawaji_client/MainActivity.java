@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("即构抓娃娃");
+
         setContentView(R.layout.activity_main);
 
         initViews();
@@ -116,6 +117,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onUpdateRoomList(List<RoomInfo> listRoom) {
 
+                if(listRoom==null){
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    Toast.makeText(MainActivity.this,"网络连接错误",Toast.LENGTH_LONG).show();
+                    return;
+                }
                 mRoomList.clear();
                 List<Room> listZegoRoom = new ArrayList<>();
 
@@ -207,9 +213,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // 第一次获取房间信息
-        mSwipeRefreshLayout.post(new
-
-                                         Runnable() {
+        mSwipeRefreshLayout.post(new  Runnable() {
                                              @Override
                                              public void run() {
                                                  mSwipeRefreshLayout.setRefreshing(true);

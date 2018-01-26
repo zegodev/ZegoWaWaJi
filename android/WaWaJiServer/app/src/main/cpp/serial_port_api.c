@@ -28,8 +28,13 @@
 static const char *TAG="serial_port";
 #define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
+#define LOGW(fmt, args...) __android_log_print(ANDROID_LOG_WARN, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
+/**
+ * 通过波特率获得速率
+ * @param baudrate 波特率
+ */
 static speed_t getBaudrate(jint baudrate)
 {
 	switch(baudrate) {
@@ -68,6 +73,176 @@ static speed_t getBaudrate(jint baudrate)
 	}
 }
 
+/**
+ * 设置串口数据，校验位,速率，停止位
+ * @param fd
+ * @param nBits 数据位,取值 7 或 8
+ * @param nEvent 校验类型, 取值'N', 'E', 'O', 'S'
+ * @param mStop 停止位, 取值 1 或者 2
+ */
+int set_opt(int fd, jint nBits, jchar nEvent, jint nStop)
+{
+    LOGE("set_opt:databits=%d, parity=%c, stopbits=%d", nBits, nEvent, nStop);
+
+    struct termios newtio;
+    if (tcgetattr(fd, &newtio) != 0) {
+        LOGE("setup serial failure");
+        return -1;
+    }
+
+    bzero(&newtio, sizeof(newtio));
+
+    //c_cflag标志可以定义CLOCAL和CREAD，这将确保该程序不被其他端口控制和信号干扰，同时串口驱动将读取进入的数据。CLOCAL和CREAD通常总是被是能的
+    newtio.c_cflag |= CLOCAL | CREAD;
+
+    switch (nBits) { //设置数据位数
+    case 7:
+        newtio.c_cflag &= ~CSIZE;
+        newtio.c_cflag |= CS7;
+        break;
+
+    case 8:
+        newtio.c_cflag &= ~CSIZE;
+        newtio.c_cflag |= CS8;
+        break;
+
+    default:
+        break;
+    }
+
+    switch (nEvent) { //设置校验位
+    case 'O':
+        newtio.c_cflag |= PARENB; //enable parity checking
+        newtio.c_cflag |= PARODD; //奇校验位
+        newtio.c_iflag |= (INPCK | ISTRIP);
+        break;
+
+    case 'E':
+        newtio.c_cflag |= PARENB; //
+        newtio.c_cflag &= ~PARODD; //偶校验位
+        newtio.c_iflag |= (INPCK | ISTRIP);
+        break;
+
+    case 'N':
+        newtio.c_cflag &= ~PARENB; //清除校验位
+        break;
+
+    default:
+        break;
+    }
+
+    switch (nStop) { //设置停止位
+    case 1:
+        newtio.c_cflag &= ~CSTOPB;
+        break;
+
+    case 2:
+        newtio.c_cflag |= CSTOPB;
+        break;
+
+    default:
+        LOGW("invalid param nStop:%d", nStop);
+        break;
+    }
+
+    newtio.c_cc[VTIME] = 0; //设置等待时间
+    newtio.c_cc[VMIN] = 0; //设置最小接收字符
+    tcflush(fd, TCIFLUSH);
+
+    if (tcsetattr(fd, TCSANOW, & newtio) != 0) {
+        LOGE("options set error");
+        return -1;
+    }
+
+    LOGE("options set success");
+    return 1;
+}
+
+/**
+ * @parma env
+ * @param thiz
+ * @param path
+ * @param baudrate
+ * @param flags
+ * @param databits
+ * @param databits 数据位,取值 7 或 8
+ * @param stopbits 停止位, 取值 1 或者 2
+ * @param parity 校验类型, 取值'N', 'E', 'O', 'S'
+ */
+jobject _open(JNIEnv *env, jclass thiz, jstring path, jint baudrate, jint flags,
+            jint databits, jint stopbits, jchar parity) {
+    int fd;
+    speed_t speed;
+    jobject mFileDescriptor;
+
+    /* Check arguments */
+    {
+        speed = getBaudrate(baudrate);
+        if (speed == -1) {
+            /* TODO: throw an exception */
+            LOGE("Invalid baudrate: %d", baudrate);
+            return NULL;
+        }
+    }
+
+    /* Opening device */
+    {
+        jboolean iscopy;
+        const char *path_utf = (*env)->GetStringUTFChars(env, path, &iscopy);
+        LOGD("Opening serial port %s with flags 0x%x", path_utf, O_RDWR | flags);
+        fd = open(path_utf, O_RDWR | flags);
+        LOGD("open() fd = %d", fd);
+        (*env)->ReleaseStringUTFChars(env, path, path_utf);
+        if (fd == -1) {
+            /* Throw an exception */
+            LOGE("Cannot open port");
+            /* TODO: throw an exception */
+            return NULL;
+        }
+    }
+
+    /* Configure device */
+    {
+        struct termios cfg;
+        LOGD("Configuring serial port");
+        if (tcgetattr(fd, &cfg)) {
+            LOGE("tcgetattr() failed");
+            close(fd);
+            /* TODO: throw an exception */
+            return NULL;
+        }
+
+        cfmakeraw(&cfg);
+        cfsetispeed(&cfg, speed);
+        cfsetospeed(&cfg, speed);
+
+        if (tcsetattr(fd, TCSANOW, &cfg)) {
+            LOGE("tcsetattr() failed");
+            close(fd);
+            /* TODO: throw an exception */
+            return NULL;
+        }
+
+        int result = set_opt(fd, databits, parity, stopbits);
+        if (result == -1) {
+            close(fd);
+            /* TODO: throw an exception */
+            return NULL;
+        }
+    }
+
+    /* Create a corresponding file descriptor */
+    {
+        jclass cFileDescriptor = (*env)->FindClass(env, "java/io/FileDescriptor");
+        jmethodID iFileDescriptor = (*env)->GetMethodID(env, cFileDescriptor, "<init>", "()V");
+        jfieldID descriptorID = (*env)->GetFieldID(env, cFileDescriptor, "descriptor", "I");
+        mFileDescriptor = (*env)->NewObject(env, cFileDescriptor, iFileDescriptor);
+        (*env)->SetIntField(env, mFileDescriptor, descriptorID, (jint)fd);
+    }
+
+    return mFileDescriptor;
+}
+
 /*
  * Class:     com_zego_base_SerialPort
  * Method:    open
@@ -76,72 +251,19 @@ static speed_t getBaudrate(jint baudrate)
 JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open
   (JNIEnv *env, jclass thiz, jstring path, jint baudrate, jint flags)
 {
-	int fd;
-	speed_t speed;
-	jobject mFileDescriptor;
+    return _open(env, thiz, path, baudrate, flags, 8, 1, 'N');
+}
 
-	/* Check arguments */
-	{
-		speed = getBaudrate(baudrate);
-		if (speed == -1) {
-			/* TODO: throw an exception */
-			LOGE("Invalid baudrate");
-			return NULL;
-		}
-	}
-
-	/* Opening device */
-	{
-		jboolean iscopy;
-		const char *path_utf = (*env)->GetStringUTFChars(env, path, &iscopy);
-		LOGD("Opening serial port %s with flags 0x%x", path_utf, O_RDWR | flags);
-		fd = open(path_utf, O_RDWR | flags);
-		LOGD("open() fd = %d", fd);
-		(*env)->ReleaseStringUTFChars(env, path, path_utf);
-		if (fd == -1)
-		{
-			/* Throw an exception */
-			LOGE("Cannot open port");
-			/* TODO: throw an exception */
-			return NULL;
-		}
-	}
-
-	/* Configure device */
-	{
-		struct termios cfg;
-		LOGD("Configuring serial port");
-		if (tcgetattr(fd, &cfg))
-		{
-			LOGE("tcgetattr() failed");
-			close(fd);
-			/* TODO: throw an exception */
-			return NULL;
-		}
-
-		cfmakeraw(&cfg);
-		cfsetispeed(&cfg, speed);
-		cfsetospeed(&cfg, speed);
-
-		if (tcsetattr(fd, TCSANOW, &cfg))
-		{
-			LOGE("tcsetattr() failed");
-			close(fd);
-			/* TODO: throw an exception */
-			return NULL;
-		}
-	}
-
-	/* Create a corresponding file descriptor */
-	{
-		jclass cFileDescriptor = (*env)->FindClass(env, "java/io/FileDescriptor");
-		jmethodID iFileDescriptor = (*env)->GetMethodID(env, cFileDescriptor, "<init>", "()V");
-		jfieldID descriptorID = (*env)->GetFieldID(env, cFileDescriptor, "descriptor", "I");
-		mFileDescriptor = (*env)->NewObject(env, cFileDescriptor, iFileDescriptor);
-		(*env)->SetIntField(env, mFileDescriptor, descriptorID, (jint)fd);
-	}
-
-	return mFileDescriptor;
+/*
+ * Class:     com_zego_base_SerialPort
+ * Method:    open_ex
+ * Signature: (Ljava/lang/String;IIIIC)Ljava/io/FileDescriptor;
+ */
+JNIEXPORT jobject JNICALL Java_com_zego_base_SerialPort_open_1ex
+  (JNIEnv *env, jclass thiz, jstring path, jint baudrate, jint flags,
+    jint databits, jint stopbits, jchar parity)
+{
+    return _open(env, thiz, path, baudrate, flags, databits, stopbits, parity);
 }
 
 /*
