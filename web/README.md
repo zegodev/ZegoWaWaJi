@@ -3,11 +3,16 @@
 ZegoWaWaJi is a delightful software solution for the Grab-Toy game. The content contains:
 
 * web/WaWaJiWeb ——> H5 running on the Modern browser
+* 项目运行于现代浏览器
 
 ## How To Get Started
 
 * For H5, all you need to do is to clone or download this repository, run it on a server and set 'dist' as root dir
-
+* 运行项目：1、对于dist目录，不分任何后端语言，可以任意启动一个服务器，将dist目录放置其中，并且设置dist为根目录，而后访问即可<br>
+2、对于src目录，是未打包前的源代码<br>
+（1）、在WaWaJiWeb目录下运行命令  cnpm install  安装依赖包<br>
+（2）、接着执行命令  npm run dev  启动项目  运行开发环境<br>
+（3）、构建项目执行命令  npm run build   改命令构建的项目没有压缩混淆，开发者有需要可以自行在webpack配置文件中配置<br>
 ## 关于版本的区别
 
 娃娃机目前有多个版本
