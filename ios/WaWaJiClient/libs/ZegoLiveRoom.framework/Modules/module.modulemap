@@ -1,6 +1,0 @@
-framework module ZegoLiveRoom {
-  umbrella header "ZegoLiveRoom.h"
-
-  export *
-  module * { export * }
-}

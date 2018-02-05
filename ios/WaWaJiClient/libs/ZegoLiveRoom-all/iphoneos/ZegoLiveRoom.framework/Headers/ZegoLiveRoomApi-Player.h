@@ -45,6 +45,18 @@
  */
 - (bool)startPlayingStream:(NSString *)streamID inView:(ZEGOView *)view params:(NSString *)params;
 
+
+/**
+ 指定播放参数，播放直播流
+
+ @param streamID 流 ID，该参数仅能传入流 ID，不可在流 ID 后添加播放参数
+ @param view 用来渲染播放视频的视图
+ @param info 多媒体流附加信息
+ @return 成功，false 失败
+ @discussion 播放直播流调用此 API。播放成功后，等待 [ZegoLivePlayerDelegate -onPlayStateUpdate:streamID:] 回调
+ */
+- (bool)startPlayingStream:(NSString *)streamID inView:(ZEGOView *)view extraInfo:(ZegoAPIStreamExtraPlayInfo*)info;
+
 /**
  更新播放视图
  
@@ -256,10 +268,10 @@
 /**
  设置回调, 接收媒体次要信息
  
- @param onMediaSideCallback 回调函数指针, index：多条流时，播放流的通道索引(channel index), buf：接收到的信息数据（具体内容参考官网对应文档中的格式说明）, dataLen：buf 总长度
+ @param onMediaSideCallback 回调函数指针, pszStreamID：流ID，标记当前回调的信息属于哪条流， buf：接收到的信息数据（具体内容参考官网对应文档中的格式说明）, dataLen：buf 总长度
  @discussion 开始拉流前调用。观众端在此 API 设置的回调中获取主播端发送的次要信息（要求主播端开启发送媒体次要信息开关，并调用 [ZegoLiveRoomApi (Publisher) -sendMediaSideInfo:dataLen:packet:] 发送次要信息）。当不需要接收信息时，需将 onMediaSideCallback 置空，避免内存泄漏
  */
-- (void)setMediaSideCallback:(void(*)(int index, const unsigned char* buf, int dataLen))onMediaSideCallback;
+- (void)setMediaSideCallback:(void(*)(const char *pszStreamID, const unsigned char* buf, int dataLen))onMediaSideCallback;
 
 /**
  帧顺序检测开关
