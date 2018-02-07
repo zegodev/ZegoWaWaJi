@@ -18,15 +18,15 @@
 		</data>
 		<key>Headers/ZegoLiveRoomApi-AudioIO.h</key>
 		<data>
-		Wroh2qC+AOPQMN5WNTmpd3EYznU=
+		cb/UekgEb8+6PZdNOHP9gqISCow=
 		</data>
 		<key>Headers/ZegoLiveRoomApi-IM.h</key>
 		<data>
-		pVbOm6u9vAG9kyhsJ1BU3F0iXYA=
+		bgDfuiBvsNvtVPXTKbsYXALk180=
 		</data>
 		<key>Headers/ZegoLiveRoomApi-Player.h</key>
 		<data>
-		ZtXb7cz3O9qZids3XYc63nEGEj4=
+		56i6rIwLGnquvQLAeqI5Q/1fg5Y=
 		</data>
 		<key>Headers/ZegoLiveRoomApi-Publisher.h</key>
 		<data>
@@ -42,7 +42,7 @@
 		</data>
 		<key>Headers/ZegoLiveRoomApi.h</key>
 		<data>
-		Kdr7r4fLveca7kfqlmCt9xxu1jc=
+		Abhf+/dFNKTCK4j74nLAzAoEDvc=
 		</data>
 		<key>Headers/ZegoLiveRoomApiDefines-IM.h</key>
 		<data>
@@ -54,7 +54,7 @@
 		</data>
 		<key>Headers/ZegoLiveRoomApiDefines.h</key>
 		<data>
-		5F5QHkygTTvvGPxQjDLuLmv8guc=
+		FLKFCkYWPnpdPtzA1IHxhe/J2e0=
 		</data>
 		<key>Headers/ZegoVideoCapture.h</key>
 		<data>
@@ -62,11 +62,19 @@
 		</data>
 		<key>Headers/audio_in_output.h</key>
 		<data>
-		lXQM+DjVsJUgr7PM5166Gd1wDxw=
+		zthwkN7VC6aKsDI+YRyiQRKHkH0=
+		</data>
+		<key>Headers/zego-api-audio-processing-oc.h</key>
+		<data>
+		B4CFigt6mI5tYMN8jphKsNkT2oQ=
 		</data>
 		<key>Headers/zego-api-defines-oc.h</key>
 		<data>
-		eZ9jKC8FrB/XxoTikCo8/4sEllE=
+		QEodKwpP+W1Uh6SdDeWF+lpYVvU=
+		</data>
+		<key>Headers/zego-api-external-audio-device-oc.h</key>
+		<data>
+		aSqg8uyO7KDd4rL1B9od+2CjQRQ=
 		</data>
 		<key>Headers/zego-api-external-video-capture-oc.h</key>
 		<data>
@@ -75,6 +83,10 @@
 		<key>Headers/zego-api-external-video-filter-oc.h</key>
 		<data>
 		JGpD/Z2EuPIG38sZXVtXDcuQ68o=
+		</data>
+		<key>Headers/zego-api-media-side-info-oc.h</key>
+		<data>
+		WCBFQx4fLEca/V8JALzSeuqi3xQ=
 		</data>
 		<key>Headers/zego-api-mix-engine-playout-oc.h</key>
 		<data>
@@ -132,33 +144,33 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			Wroh2qC+AOPQMN5WNTmpd3EYznU=
+			cb/UekgEb8+6PZdNOHP9gqISCow=
 			</data>
 			<key>hash2</key>
 			<data>
-			7GUXdG5DF7VaL2aAWZVoF7x7PMyke+aVO9SvZZgvHnc=
+			MdZZ0W6gZTywRecWbo/ydWK2+oqLF9RmMFArZotviu4=
 			</data>
 		</dict>
 		<key>Headers/ZegoLiveRoomApi-IM.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			pVbOm6u9vAG9kyhsJ1BU3F0iXYA=
+			bgDfuiBvsNvtVPXTKbsYXALk180=
 			</data>
 			<key>hash2</key>
 			<data>
-			T99IsVKW8IWZKaCUahvW+12D8PmTeOMLnV08EuWwgzs=
+			8gFxil7OnvBZFxe99FofD/vXz5wo6lrQDzXhOqaQBZM=
 			</data>
 		</dict>
 		<key>Headers/ZegoLiveRoomApi-Player.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			ZtXb7cz3O9qZids3XYc63nEGEj4=
+			56i6rIwLGnquvQLAeqI5Q/1fg5Y=
 			</data>
 			<key>hash2</key>
 			<data>
-			2xR+f+nlUEI83hupaij7tZ5CizIeLkh/AcA2JbEYCTE=
+			a7iXB2neaA9OTXrqXX7N15iEaqdQ0Gh5Ke3aUCFbReg=
 			</data>
 		</dict>
 		<key>Headers/ZegoLiveRoomApi-Publisher.h</key>
@@ -198,11 +210,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			Kdr7r4fLveca7kfqlmCt9xxu1jc=
+			Abhf+/dFNKTCK4j74nLAzAoEDvc=
 			</data>
 			<key>hash2</key>
 			<data>
-			PoG6xlUXDKYTMWzC2g1L3nkOjJVO1jHB9125cjSbo7M=
+			LtNF83PhHSTt8C6roheaovd2ToZOihBXmnJ9tsw2q7Y=
 			</data>
 		</dict>
 		<key>Headers/ZegoLiveRoomApiDefines-IM.h</key>
@@ -231,11 +243,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			5F5QHkygTTvvGPxQjDLuLmv8guc=
+			FLKFCkYWPnpdPtzA1IHxhe/J2e0=
 			</data>
 			<key>hash2</key>
 			<data>
-			UB4w5yqpyigMA27EwE7b62VsGUx3HafUr9lIQ8liE8k=
+			8+QPOcZdzz2cDsrg62AAGMyMy6wLTxkFqhsXE3UYblg=
 			</data>
 		</dict>
 		<key>Headers/ZegoVideoCapture.h</key>
@@ -253,22 +265,44 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			lXQM+DjVsJUgr7PM5166Gd1wDxw=
+			zthwkN7VC6aKsDI+YRyiQRKHkH0=
 			</data>
 			<key>hash2</key>
 			<data>
-			k9kFVKX6Z9rzZo+StAJlIopXj4LR2f2Szf4Ud0HPSnU=
+			t/ZA57m5uZT0lTsqpZoCJgoA1L0nJNC3+y4fEibe6Vk=
+			</data>
+		</dict>
+		<key>Headers/zego-api-audio-processing-oc.h</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			B4CFigt6mI5tYMN8jphKsNkT2oQ=
+			</data>
+			<key>hash2</key>
+			<data>
+			k7xY8hIorWKoyevT3K/0S8or5M4sbT8Ntyz0y0WU3zU=
 			</data>
 		</dict>
 		<key>Headers/zego-api-defines-oc.h</key>
 		<dict>
 			<key>hash</key>
 			<data>
-			eZ9jKC8FrB/XxoTikCo8/4sEllE=
+			QEodKwpP+W1Uh6SdDeWF+lpYVvU=
 			</data>
 			<key>hash2</key>
 			<data>
-			oNgI2DrEuB4UVy2aqlC1O6Wm+mhy4W2x70c3i4RTNR8=
+			muVbgdvmAtHR6ajBYwXE7r2TLwYVGQ+lyvoUciW3dMI=
+			</data>
+		</dict>
+		<key>Headers/zego-api-external-audio-device-oc.h</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			aSqg8uyO7KDd4rL1B9od+2CjQRQ=
+			</data>
+			<key>hash2</key>
+			<data>
+			1qGqXQGOfk/9VRw6+ixTyt8oQk+rvs6t72VZEMhoe3U=
 			</data>
 		</dict>
 		<key>Headers/zego-api-external-video-capture-oc.h</key>
@@ -291,6 +325,17 @@
 			<key>hash2</key>
 			<data>
 			SjEvGXZi+j7OKcDBDbruU3wV4H9Se4ZeSaTs0bBSX6Y=
+			</data>
+		</dict>
+		<key>Headers/zego-api-media-side-info-oc.h</key>
+		<dict>
+			<key>hash</key>
+			<data>
+			WCBFQx4fLEca/V8JALzSeuqi3xQ=
+			</data>
+			<key>hash2</key>
+			<data>
+			mDGewn1PlwrrDj+zjje3hC2qehvIIaAwfW3tDYLY+TA=
 			</data>
 		</dict>
 		<key>Headers/zego-api-mix-engine-playout-oc.h</key>

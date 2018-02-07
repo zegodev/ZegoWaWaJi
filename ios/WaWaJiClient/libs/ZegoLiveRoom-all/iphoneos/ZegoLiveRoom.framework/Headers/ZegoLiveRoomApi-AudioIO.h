@@ -16,23 +16,22 @@
 /**
  启用外部音频采集
  
- @param enable true 启用，false 不启用。默认 false
- @discussion 必须在初始化 SDK 前调用
+ @warning Deprecated，请使用 [ZegoExternalAudioDevice enableExternalAudioDevice:]
  */
-+ (void)enableExternalAudioDevice:(bool)enable;
++ (void)enableExternalAudioDevice:(bool)enable __attribute__ ((deprecated));
 
 /**
  获取 IAudioDataInOutput 对象
  
- @return IAudioDataInOutput 对象
+ @warning Deprecated，请使用 [ZegoExternalAudioDevice getIAudioDataInOutput]
  */
-- (AVE::IAudioDataInOutput *)getIAudioDataInOutput;
+- (AVE::IAudioDataInOutput *)getIAudioDataInOutput __attribute__ ((deprecated));
 
 /**
  耳机插入状态下是否使用回声消除
  
- @param enable true 使用，false 不使用。默认 false
- @discussion 初始化 SDK 后，推流之前调用
+ @param enable true 使用，false 不使用。默认 true
+ @discussion InitSDK之后，在推流之前调用
  */
 - (void)enableAECWhenHeadsetDetected:(bool)enable;
 

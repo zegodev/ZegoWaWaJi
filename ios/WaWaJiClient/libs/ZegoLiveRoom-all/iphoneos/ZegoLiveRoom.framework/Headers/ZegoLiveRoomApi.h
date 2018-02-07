@@ -214,7 +214,7 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  设置配置信息
  
  @param config 配置信息
- @discussion  必须在初始化 SDK 前调用
+ @discussion   确保在 InitSDK 前调用，但开启拉流加速(config为“prefer_play_ultra_source=1”)可在 InitSDK 之后，拉流之前调用
  */
 + (void)setConfig:(NSString *)config;
 

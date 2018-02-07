@@ -64,12 +64,19 @@ namespace AVE
     struct ExtPrepSet
     {
         bool bEncode;           /*
-                                 bEncode == false, external prep output PCM data, ignore Samples.
-                                 bEncode == true, external prep output aac encode data
-                                 */
+                                 bEncode == false, external prep output PCM data.
+                                 bEncode == true, external prep output AAC encode data(only support aac encode)
+                                */
 		int nSampleRate;        //pcm capture or encode sample rate, if 0 use sdk inner sample rate..
         int nChannel;           //pcm capture or encode channels. if 0 use sdk inner channels.
-		int nSamples;           //encode one frame need samples. pcm ignore this parameter.
+		int nSamples;           /*
+                                 bEncode == false, if nSamples == 0. use sdk inner samples, push 20ms audio data to external prep module once.
+								                   else push nSamples(nSamples >= 160 AND nSamples <= 2048) audio data to external prep module once,
+												   some audio processing algorithm may need length not 20ms.
+														
+                                 bEncode == true, AAC encode one frame need samples(480/512/1024/1960/2048).
+                                */
+		
     };
     
     typedef void(*OnPrepCallback)(const AudioFrame& inFrame, AudioFrame& outFrame);
