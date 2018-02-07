@@ -5,7 +5,7 @@
   "description": "> A Vue.js project",
   "main": "index.js",
   "scripts": {
-    "build": "NODE_ENV=production rollup -c && webpack --config build/webpack.prod.config.js --hide-modules",
+    "build": "webpack --config build/webpack.prod.config.js --hide-modules",
     "build-demo": "NODE_ENV=production rollup -c && buildType=demo webpack --config build/webpack.prod.config.js --hide-modules",
     "build-v2": "NODE_ENV=production rollup -c && webpack --config build/webpack.prod.config.js --hide-modules && buildMode=all webpack --config build/webpack.prod-v2.config.js --hide-modules",
     "dev": "webpack --config build/webpack.dev.config.js",

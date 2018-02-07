@@ -39,10 +39,10 @@ if (/iphone|ipad|ipod/i.test(ua)) {                              // 在ios中
 function setSdk(type){
     if (type) {     // 同步版本  适用于性能好的机器
         window.quality = true;
-        ZegoClient = require('@static/js/jZego/jZego-1.0.13.min.js');
+        ZegoClient = require('@static/js/jZego/jZego-1.0.15.min.js');
     } else {        // 异步版本  适用于性能不好的机器  视频将会码率降级
         window.quality = false;
-        ZegoClient = require('@static/js/jZego/jZego-1.0.13.async.min.js');
+        ZegoClient = require('@static/js/jZego/jZego-1.0.15.async.min.js');
     }
 }
 // 工具函数
@@ -137,24 +137,43 @@ var $logViewer = util.getById('log-view');
 
 
 var ENUM_STREAM_UPDATE_TYPE = { added: 0, deleted: 1 };
-
-
+var zg;                                                                         //zegoClient对象
+var clientSeq = 1;                                                              //发送客户端请求seq
+var serverSeq = 0;                                                              //发送服务端返回seq
 var showLog = false;                                                            //日志显示
+var isInitApply = true;                                                         // 是否是从预约按钮开始预约，还是从结果页开始自动预约
+var payTimestamp = 0;
+
+var playCountDownTime = 30;                                                     //游戏总时长
+var upornotCountDownTime = 10;                                                  //上机确认超时时长
+var countDownTimer;                                                             //超时timer
+
+var itemType = "itme_type1";                                                    //商品类型
+var itemPrice = 6;                                                              //商品价格
+
+
 
 // var appid = 4095207472;                                                         //appid
 var appid = 3265350344;                                                         //appid
-                                                         
-var roomID = "";                                                                //房间id
-var idName = "";                                                                //用户id
-var nickName = "";                                                              //用户昵称
+var roomID = window.location.search.slice(1).split('=')[1];                                                                //房间id
+console.log('roomid = ', roomID, '\n');
+var idName = util.getLocal('idName');                                                                //用户id
+if (!idName) {
+    idName = "" + new Date().getTime() + Math.floor(Math.random() * 100000);
+    util.setLocal('idName', idName);
+}
+var nickName = "u" + idName;                                                              //用户昵称
 var anchor_id = "";                                                             //娃娃机主播id
+
 
 
 // 链接websocket
 var server = '';
 var logUrl = '';
 var loginTokenUrl = '';
+var loginToken = "";                                                            //登录令牌
 var payTokenUrl = '';
+var payToken = "";                                                              //支付令牌
 if (window.location.protocol === 'https:') {
     server = 'wss://wsliveroom' + appid + '-api.zego.im:8282/ws';                //wawaji接入服务器地址    --- 即构下发的server地址
     logUrl = '';                                                                //log服务器地址          --- 可填可不填
@@ -169,23 +188,6 @@ if (window.location.protocol === 'https:') {
 
 
 
-var zg;                                                                         //zegoClient对象
-var clientSeq = 1;                                                              //发送客户端请求seq
-var serverSeq = 0;                                                              //发送服务端返回seq
-
-var playCountDownTime = 30;                                                     //游戏总时长
-var upornotCountDownTime = 10;                                                  //上机确认超时时长
-var countDownTimer;                                                             //超时timer
-
-var isInitApply = true;                                                         // 是否是从预约按钮开始预约，还是从结果页开始自动预约
-
-var loginToken = "";                                                            //登录令牌
-var payToken = "";                                                              //支付令牌
-var itemType = "itme_type1";                                                    //商品类型
-var itemPrice = 6;                                                              //商品价格
-
-var payTimestamp = 0;
-
 var hasCatch = localStorage.getItem('hasCatch');                                // 判断用户是否下抓
 if (hasCatch === null) {
     hasCatch = 'yes';
@@ -195,30 +197,14 @@ var gameStatus = localStorage.getItem('gameStatus');                            
 if (gameStatus === null) {
     gameStatus = 'gameover';
 }
-//获取用户id
-var localIdName = util.getLocal('idName');
-if (!localIdName) {
-    idName = "" + new Date().getTime() + Math.floor(Math.random() * 100000);
-    util.setLocal('idName', idName);
-} else {
-    idName = localIdName;
-}
-nickName = "u" + idName;
-
-//获取房间id
-roomID = window.location.search.slice(1).split('=')[1];
-// roomID = 'WWJ_ZEGO_00d200ce17bf';
-console.log('roomid = ', roomID, '\n');
-
-
 
 
 // 文档加载完毕后执行
 window.onload = function() {
     zg = window.zg = new ZegoClient();
     console.log('zg = ', zg);
-
-
+    
+    
 
     /*************************************/
 
@@ -230,7 +216,7 @@ window.onload = function() {
         idName: idName,     // 必填，用户自定义id
         nickName: nickName, // 必填，用户自定义昵称
         server: server,     // 必填，Websocket连接地址     
-        logLevel: 1,
+        logLevel: 100,
         logUrl: logUrl,
         remoteLogLevel: 0,
         // workerUrl: 'http://www.zego.im/static/js/jZego/jsmpeg-stub.min.js'   // 自定义jsmpeg.stub.min.js的引入地址
@@ -455,10 +441,14 @@ window.onload = function() {
             util.removeClass($viewWrapper, 'front');
             util.removeClass($directWrapper, 'front');
             //updateStreamDecode(false);
+            // zg.stopPlayingStream('WWJ_ZEGO_STREAM_32a03dd42e06_2', $sideView);
+            // zg.stopPlayingStream('WWJ_ZEGO_STREAM_32a03dd42e06', $frontView);
         } else { // 此时处于侧面，切换为正面
             e.target.dataset['switch'] = '1';
             util.addClass($viewWrapper, 'front');
             util.addClass($directWrapper, 'front');
+            // zg.startPlayingStream('WWJ_ZEGO_STREAM_32a03dd42e06_2', $sideView);
+            // zg.startPlayingStream('WWJ_ZEGO_STREAM_32a03dd42e06', $frontView);
             //updateStreamDecode(true);
         }
 
@@ -751,7 +741,9 @@ window.onload = function() {
         clearInterval(appointmentTimer);
 
         // 发送取消预约指令
-        cancelAppointmentClientHandler();
+        // cancelAppointmentClientHandler();
+
+        confimTocancelHandler();
     });
 
 
@@ -1177,9 +1169,11 @@ window.onload = function() {
             console.log('gameStatus = ', gameStatus);
             if (gameStatus == 'playing') {
                 recoveGameStateHandler(leftTime);
-            } else if (gameStatus == 'gameover') { // 场景：游戏结束，自动预约，此时刷新页面，应该回到初始界面，并且取消预约之前的自动预约，取消上机之前可能的上机
+            } else if (gameStatus == 'gameover') { // 场景：游戏结束，自动预约，此时刷新页面，应该回到初始界面，并且取消上机之前可能的上机
                 // 发送取消预约指令
-                cancelAppointmentClientHandler();
+                // cancelAppointmentClientHandler();
+
+                confimTocancelHandler();
             }
         }
         // 如果是预约了，然后刷新页面，在队列里面发现还在排队，则主动发送取消预约指令
@@ -1187,7 +1181,9 @@ window.onload = function() {
             for (var i = 0; i < gameInfo.queue.length; i++) {
                 if (gameInfo.queue[i].id == idName) {
                     // 发送取消预约指令
-                    cancelAppointmentClientHandler();
+                    // cancelAppointmentClientHandler();
+
+                    confimTocancelHandler();
                 }
             }
         }
@@ -1325,7 +1321,7 @@ window.onload = function() {
     // 服务端主动推过来的 流的质量更新
     zg.onPlayQualityUpdate = function(streamID, streamQuality) {
         // code 业务逻辑
-        console.log('客户端-onPlayQualityUpdate = ', streamID,  streamQuality.fps, streamQuality.kbs);
+        // console.log('客户端-onPlayQualityUpdate = ', streamID,  streamQuality.fps, streamQuality.kbs);
     };
 
     // 服务端主动推过来的 房间内用户人数变化通知
