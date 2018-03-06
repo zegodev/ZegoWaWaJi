@@ -106,4 +106,12 @@ typedef void(^ZegoConversationInfoBlock)(int errorCode, NSString *roomId, NSStri
  */
 - (void)onRecvConversationMessage:(NSString *)roomId conversationId:(NSString *)conversationId message:(ZegoConversationMessage *)message;
 
+/**
+ 收到在线人数更新
+ 
+ @param onlineCount 在线人数
+ @param roomId 房间 Id
+ */
+- (void)onUpdateOnlineCount:(int)onlineCount room:(NSString *)roomId;
+
 @end

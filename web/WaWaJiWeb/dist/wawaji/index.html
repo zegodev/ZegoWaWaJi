@@ -59,7 +59,6 @@
     </style>
 
 <link href="/static/css/wawaji/index.227e8c22e8ee4746c53eb2817c3f9d61.css" rel="stylesheet"></head>
-
 <body>
     <div id="app">
         <audio id="audio" src="/static/media/click-voice.mp3"></audio>
@@ -185,7 +184,54 @@
             <div class="play-again disabled" id="play-again">再来一次(<em id="play-again-count-down">10</em>s)</div>
         </div>
     </div>
-    <script src="/static/js/jZego/jZego-1.0.9.min.js"></script>
+    <script id="jZego"></script>
+    <!-- <script src="/static/js/jZego/jZego-1.0.11.async.min.js"></script> -->
+    <!-- <script src="/static/js/jZego/jZego-1.0.11.min.js"></script> -->
+    <script>
+// script加载模式
+// var jZego = document.getElementById('jZego');
+
+// console.log('navigator = ', navigator);
+// var ua = navigator.userAgent.toLowerCase(); 
+// if (/iphone|ipad|ipod/i.test(ua)) {                             // 在ios中
+//     if (ua.match(/MicroMessenger/i) == "micromessenger") {      // 微信中
+//         if (window.__wxjs_is_wkwebview === true) {              // wkwebview
+//             setSdk(true);
+//             console.log('ios 微信 wk');
+//         } else {                                                // UIWebView
+//             setSdk(false);
+//             console.log('ios 微信 ui');
+//         }
+//     } else if (/QQ|UIWebView/i.test(ua)) {                      // 在QQ中
+//         setSdk(false);
+//         console.log('ios QQ ui');
+//     } else {
+//         setSdk(true);
+//         console.log('ios 其他');
+//     }
+// } else if (/Android/i.test(ua)) {                                // 在android中
+//     var index = ua.indexOf("android"); 
+//     var androidVersion = parseFloat(navigator.userAgent.slice(index + 8));   
+//     console.log(androidVersion);
+//     if (androidVersion < 4.4 ){                                  // 安卓版本小于4.4
+//         setSdk(false);
+//         console.log('android 版本小于4.4');
+//     } else {                                                     // 安卓版本大于4.4
+//         setSdk(true);
+//         console.log('android 版本大于4.4');
+//     }
+// }
+// 设置sdk版本
+// function setSdk(type){
+//     if (type) {     // 同步版本  适用于性能好的机器
+//         window.quality = true;
+//         jZego.setAttribute('src', '/static/js/jZego/jZego-1.0.13.min.js');
+//     } else {        // 异步版本  适用于性能不好的机器  视频将会码率降级
+//         window.quality = false;
+//         jZego.setAttribute('src', '/static/js/jZego/jZego-1.0.13.async.min.js');
+//     }
+// }
+    </script>
 <script type="text/javascript" src="/static/js/assets/manifest.js"></script><script type="text/javascript" src="/static/js/assets/wawaji/index.js"></script></body>
 
 </html>

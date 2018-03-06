@@ -1,2 +1,0 @@
-iphoneos & simulator 
-Debug

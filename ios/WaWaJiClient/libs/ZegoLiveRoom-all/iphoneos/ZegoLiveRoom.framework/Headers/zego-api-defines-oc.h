@@ -19,17 +19,28 @@
 
 ZEGO_EXTERN NSString *const kZegoStreamIDKey;           ///< 流ID，值为 NSString
 ZEGO_EXTERN NSString *const kZegoMixStreamIDKey;        ///< 混流ID，值为 NSString
-ZEGO_EXTERN NSString *const kZegoRtmpUrlListKey;        ///< rtmp 播放 url 列表，值为 NSArray<NSString *>
-ZEGO_EXTERN NSString *const kZegoHlsUrlListKey;         ///< hls 播放 url 列表，值为 NSArray<NSString *>
-ZEGO_EXTERN NSString *const kZegoFlvUrlListKey;         ///< flv 播放 url 列表，值为 NSArray<NSString *>
 
-ZEGO_EXTERN NSString *const kZegoDeviceCameraName;      ///< 摄像头设备
-ZEGO_EXTERN NSString *const kZegoDeviceMicrophoneName;  ///< 麦克风设备
+/** 流信息列表项 */
+/** rtmp 播放 url 列表，值为 <NSArrayNSString *> */
+ZEGO_EXTERN NSString *const kZegoRtmpUrlListKey;
+/** hls 播放 url 列表，值为 <NSArrayNSString *> */
+ZEGO_EXTERN NSString *const kZegoHlsUrlListKey;
+/** flv 播放 url 列表，值为 <NSArrayNSString *> */
+ZEGO_EXTERN NSString *const kZegoFlvUrlListKey;
+
+/** 设备项 */
+/** 摄像头设备 */
+ZEGO_EXTERN NSString *const kZegoDeviceCameraName;
+/** 麦克风设备 */
+ZEGO_EXTERN NSString *const kZegoDeviceMicrophoneName;
 
 ZEGO_EXTERN NSString *const kMixStreamAudioOutputFormat; ///< 混流输出格式，值为 NSNumber，可选 {0, 1}
-ZEGO_EXTERN NSString *const kPublishCustomTarget;        ///< 自定义转推 rtmp 地址
 
-ZEGO_EXTERN NSString *const kZegoConfigKeepAudioSesionActive;  ///< AudioSession相关配置信息的key, 值为 NSString
+/** 自定义转推 RTMP 地址 */
+ZEGO_EXTERN NSString *const kPublishCustomTarget;
+
+/** AudioSession相关配置信息的key, 值为 NSString */
+ZEGO_EXTERN NSString *const kZegoConfigKeepAudioSesionActive;
 
 typedef unsigned int	uint32;
 
@@ -173,6 +184,9 @@ typedef enum : NSUInteger {
 @property int channels;
 /** 混流背景颜色，前三个字节为 RGB，即 0xRRGGBBxx */
 @property int outputBackgroundColor;
+/** 混流背景图，支持预设图片，如 (preset-id://xxx) */
+@property (copy) NSString *outputBackgroundImage;
+
 @end
 
 /** 发布直播的模式 */
@@ -192,12 +206,17 @@ enum ZegoAPIVideoEncoderRateControlStrategy
 enum ZegoAPIPublishFlag
 {
     /**  连麦模式 */
-    ZEGOAPI_JOIN_PUBLISH   = 0,
+    ZEGOAPI_JOIN_PUBLISH    = 0,
+    ZEGO_JOIN_PUBLISH       = ZEGOAPI_JOIN_PUBLISH,
     /**  混流模式 */
-    ZEGOAPI_MIX_STREAM     = 1 << 1,
+    ZEGOAPI_MIX_STREAM      = 1 << 1,
+    ZEGO_MIX_STREAM         = ZEGOAPI_MIX_STREAM,
     /**  单主播模式 */
-    ZEGOAPI_SINGLE_ANCHOR  = 1 << 2,
+    ZEGOAPI_SINGLE_ANCHOR   = 1 << 2,
+    ZEGO_SINGLE_ANCHOR      = ZEGOAPI_SINGLE_ANCHOR,
 };
+
+typedef enum ZegoAPIPublishFlag ZegoApiPublishFlag;
 
 /** 设备模块类型 */
 enum ZegoAPIModuleType
@@ -223,7 +242,30 @@ typedef struct
     
 } ZegoAPIPublishQuality;
 
-typedef ZegoAPIPublishQuality ZegoAPIPlayQuality;
+typedef ZegoAPIPublishQuality ZegoApiPublishQuality;
+
+
+/** 拉流质量 */
+typedef struct
+{
+    /** 视频帧率 */
+    double fps;
+    /** 视频码率(kb/s) */
+    double kbps;
+    /** 音频码率(kb/s) */
+    double akbps;
+    /** 音频卡顿率(次/min) */
+    double audioBreakRate;
+    /** 延时(ms) */
+    int rtt;
+    /** 丢包率(0~255) */
+    int pktLostRate;
+    /** 直播质量(0~3) */
+    int quality;
+    
+} ZegoAPIPlayQuality;
+
+typedef ZegoAPIPlayQuality ZegoApiPlayQuality;
 
 /** 延迟模式 */
 typedef enum : NSUInteger {
@@ -289,5 +331,21 @@ typedef enum :  NSUInteger {
     /** 第二路推流通道, 无法推出声音*/
     ZEGOAPI_CHN_AUX,
 } ZegoAPIPublishChannelIndex;
+
+
+/**
+ 多媒体流附加信息
+ */
+@interface ZegoAPIStreamExtraPlayInfo : NSObject
+
+/** 流参数 */
+@property (copy) NSString* params;
+/** rtmp 地址 */
+@property (strong) NSArray<NSString*>* rtmpUrls;
+/** flv 地址 */
+@property (strong) NSArray<NSString*>* flvUrls;
+
+@end
+
 
 #endif /* zego_api_defines_oc_h */
