@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import com.zego.base.utils.AppLogger;
 import com.zego.zegoliveroom.callback.im.IZegoIMCallback;
 import com.zego.zegoliveroom.constants.ZegoIM;
+import com.zego.zegoliveroom.entity.ZegoBigRoomMessage;
 import com.zego.zegoliveroom.entity.ZegoConversationMessage;
 import com.zego.zegoliveroom.entity.ZegoRoomMessage;
 import com.zego.zegoliveroom.entity.ZegoUser;
@@ -105,7 +106,7 @@ public class ZegoIMCallback implements IZegoIMCallback {
                         index ++;
                     } else {
                         queueMembers.remove(index);
-                        AppLogger.getInstance().writeLog("remove the user %s from queue, because he has not in room", user.userName);
+                        AppLogger.getInstance().writeLog("remove the user %s from queue, because he has not in room", user.userID);
                     }
                 }
             }
@@ -127,14 +128,14 @@ public class ZegoIMCallback implements IZegoIMCallback {
                 }
 
                 if (!found) {
-                    AppLogger.getInstance().writeLog("add new member, userName: %s", state.userName);
+                    AppLogger.getInstance().writeLog("add new member, userName: %s", state.userID);
                     final ZegoUser newUser = new ZegoUser();
                     newUser.userID = state.userID;
                     newUser.userName = state.userName;
 
                     allMembers.add(newUser);
                 } else {
-                    AppLogger.getInstance().writeLog("member has exists, userName: %s", state.userName);
+                    AppLogger.getInstance().writeLog("member has exists, userName: %s", state.userID);
                 }
             }
         });
@@ -155,10 +156,10 @@ public class ZegoIMCallback implements IZegoIMCallback {
                 }
 
                 if (member != null) {
-                    AppLogger.getInstance().writeLog("remove a member from all members, userName: %s", state.userName);
+                    AppLogger.getInstance().writeLog("remove a member from all members, userName: %s", state.userID);
                     allMembers.remove(member);
                 } else {
-                    AppLogger.getInstance().writeLog("can't found the will be remove user in members: %s", state.userName);
+                    AppLogger.getInstance().writeLog("can't found the will be remove user in members: %s", state.userID);
                 }
 
                 List<GameUser> queueMembers = mRoomClient.getQueueUser();
@@ -171,12 +172,16 @@ public class ZegoIMCallback implements IZegoIMCallback {
                 }
 
                 if (member != null) {
-                    AppLogger.getInstance().writeLog("remove a member from queue, userName: %s", state.userName);
+                    AppLogger.getInstance().writeLog("remove a member from queue, userName: %s", state.userID);
                     queueMembers.remove(member);
 
                     mListener.onRoomStateUpdate();  // 预约队列发生改变，需要发送广播通知
                 }
             }
         });
+    }
+
+    @Override
+    public void onRecvBigRoomMessage(String roomId, ZegoBigRoomMessage[] messages) {
     }
 }

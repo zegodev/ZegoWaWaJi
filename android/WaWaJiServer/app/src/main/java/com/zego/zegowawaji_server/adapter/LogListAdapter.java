@@ -34,10 +34,14 @@ public class LogListAdapter extends RecyclerView.Adapter<LogListAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(LogListAdapter.MyViewHolder holder, int position) {
-        holder.tv.setText(mData.get(position));
+        if (mData != null && position >= 0 && position < mData.size()) {
+            holder.tv.setText(mData.get(position));
 
-        holder.tv.setEllipsize(TextUtils.TruncateAt.MARQUEE);
-        holder.tv.requestFocus();
+            holder.tv.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+            holder.tv.requestFocus();
+        } else {
+            holder.tv.setText("");
+        }
     }
 
     @Override

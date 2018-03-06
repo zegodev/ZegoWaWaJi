@@ -15,6 +15,7 @@ import com.zego.base.utils.AppLogger;
 import com.zego.zegowawaji_server.manager.DeviceManager;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
@@ -171,7 +172,13 @@ public class TestActivity extends AppCompatActivity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.init: {
-                    DeviceManager.getInstance().initGameConfig(0.5f, 30);
+                    Random random = new Random(System.currentTimeMillis());
+
+                    int grabPower = Math.max(50, random.nextInt(100));
+                    int upPower = Math.min(grabPower, random.nextInt(100));
+                    int movePower = Math.min(upPower, random.nextInt(100));
+                    int upHeight = random.nextInt(10);
+                    DeviceManager.getInstance().initGameConfig(30, grabPower, upPower, movePower, upHeight);
 
                     updateCtrlsState(1);
                 }

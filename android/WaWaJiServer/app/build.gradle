@@ -11,8 +11,8 @@ android {
         applicationId "com.zego.zegowawaji_server"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 18
-        versionName "1.4.18"
+        versionCode 25
+        versionName "1.4.25"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        externalNativeBuild {
 //            cmake {

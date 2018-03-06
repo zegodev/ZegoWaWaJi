@@ -232,6 +232,8 @@ public class XWawaji extends WawajiDevice {
     }
 
     private class ReadThread extends Thread {
+        static final private int MIN_LENGTH_OF_CMD = 9; // 单条指令的最小长度，包头6字节+长度位1字节+命令位1字节+校验位1字节
+
         private byte[] cmdBuffer = new byte[512];   // 读取的待分析数据
         private int bufferLength = 0;
         private int currentCmdLength = 0;
@@ -258,13 +260,13 @@ public class XWawaji extends WawajiDevice {
                         cmdBuffer[bufferLength++] = buffer[i];
                     }
 
-                    while (bufferLength >= 8) { // 包头6字节+长度位1字节+命令位1字节
-                        if ((cmdBuffer[0] & cmdBuffer[3]) == 0
+                    while (bufferLength >= MIN_LENGTH_OF_CMD) { // 包头6字节+长度位1字节+命令位1字节+校验位1字节
+                        if ((cmdBuffer[0] == (byte)0xfe && (cmdBuffer[3]) == (byte)0x01)
                                 && (cmdBuffer[1] & cmdBuffer[4]) == 0
                                 && (cmdBuffer[2] & cmdBuffer[5]) == 0) {    // 合法
                             currentCmdLength = cmdBuffer[6] & 0xff;
 
-                            if (bufferLength >= currentCmdLength) {
+                            if (bufferLength >= currentCmdLength && (currentCmdLength >= MIN_LENGTH_OF_CMD)) {
                                 boolean isValidate = checkCmdData(cmdBuffer, currentCmdLength);
                                 if (isValidate) {
                                     onResponseCommandReceived(cmdBuffer, currentCmdLength);
@@ -283,6 +285,13 @@ public class XWawaji extends WawajiDevice {
                                 }
                                 cmdBuffer[j] = '\0';
                                 bufferLength = j;
+                            } else if (currentCmdLength < MIN_LENGTH_OF_CMD) {  // 可能是干扰电涌产生的无效数据, 抛弃包头6字节及长度位1字节
+                                int j = 0;
+                                for (int i = 7; i < bufferLength; i++) {
+                                    cmdBuffer[j++] = cmdBuffer[i];
+                                }
+                                cmdBuffer[j] = '\0';
+                                bufferLength = j;
                             } else {
                                 break;
                             }
@@ -290,7 +299,7 @@ public class XWawaji extends WawajiDevice {
                             int pos = -1;
 
                             StringBuilder tmpBuilder = new StringBuilder();
-                            for (int i = 0; i < bufferLength; i++) {
+                            for (int i = 1; i < bufferLength; i++) {
                                 byte b = cmdBuffer[i];
                                 if (b == (byte) 0xfe) {
                                     pos = i;
@@ -318,7 +327,6 @@ public class XWawaji extends WawajiDevice {
                     break;
                 }
 
-
                 if (size < buffer.length) { // 如果不能填满缓冲区，则等待 500ms 后再读，否则立即读取下一段 buffer
                     try {
                         Thread.sleep(500);
@@ -330,11 +338,14 @@ public class XWawaji extends WawajiDevice {
         }
 
         private boolean checkCmdData(byte[] data, int length) {
-            int sum = 0;
-            for (int i = 6; i < length - 1; i++) {  // 最后的校验位不参与校验
-                sum += (data[i] & 0xff);
+            if (length >= MIN_LENGTH_OF_CMD) {  // 可能是干扰电涌产生的无效数据
+                int sum = 0;
+                for (int i = 6; i < length - 1; i++) {  // 最后的校验位不参与校验
+                    sum += (data[i] & 0xff);
+                }
+                return sum % 100 == data[length - 1];
             }
-            return sum % 100 == data[length - 1];
+            return false;
         }
     }
 }

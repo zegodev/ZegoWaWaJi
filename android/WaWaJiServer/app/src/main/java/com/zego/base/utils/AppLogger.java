@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -32,7 +35,9 @@ public class AppLogger {
     static final private int MSG_ID_WRITE_LOG = 1;
     static final private int MSG_ID_CLEAR_LOG = 2;
 
-    static final private int SINGLE_LOG_FILE_MAX_SIZE = 10 * 1024 * 1024;   // 10M
+    static final private int SINGLE_LOG_FILE_MAX_SIZE = 50 * 1024 * 1024;   // 50M
+
+    static final private int SAFE_LOG_ITEM_COUNT = 500;
 
     static private String DEFAULT_LOG_FILE_NAME = "wawaji_server_business.log";
     static private String DEFAULT_LOG_FILE_NAME_BAK = "wawaji_server_business_2.log";
@@ -43,7 +48,7 @@ public class AppLogger {
     static private AppLogger sInstance;
 
     final private LinkedList<String> mLogList = new LinkedList<>();
-    final private List<String> mUnmodifiableList = Collections.unmodifiableList(mLogList);
+    final private List<String> mUnmodifiableList = UnmodifiableListProxy.bind(Collections.unmodifiableList(mLogList));
 
     private HandlerThread mLogThread;
     private Handler mLogHandler;
@@ -52,6 +57,30 @@ public class AppLogger {
 
     private File mLogFile;
     private Writer mLogWriter;
+
+    /**
+     * mUnmodifiableList 会给外部调用，但里面包装的 mLogList 长度可能被修改，导致出现 IndexOutOfBoundsException，
+     * 此类的作用是限定输出给外面的列表最大长度为不会被清除的安全长度，避免索引溢出
+     */
+    static private class UnmodifiableListProxy implements InvocationHandler {
+        private Object target = null;
+        static public List<String> bind(List<String> target) {
+            return (List<String>) Proxy.newProxyInstance(target.getClass().getClassLoader(), target.getClass().getInterfaces(), new UnmodifiableListProxy(target));
+        }
+
+        private UnmodifiableListProxy(List<String> target) {
+            this.target = target;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if ("size".equals(method.getName())) {
+                int count = (int)method.invoke(this.target, args);
+                return Math.min(count, SAFE_LOG_ITEM_COUNT);
+            }
+            return method.invoke(this.target, args);
+        }
+    }
 
     private AppLogger() {
         initLogFile();
@@ -108,8 +137,8 @@ public class AppLogger {
                 }
 
                 int logLength = mLogList.size();
-                if (logLength > 800) {
-                    for (int i = logLength - 1; i >= 500; i--) {
+                if (logLength > SAFE_LOG_ITEM_COUNT + 100) {
+                    for (int i = logLength - 1; i >= SAFE_LOG_ITEM_COUNT; i--) {
                         mLogList.remove(i);
                     }
 

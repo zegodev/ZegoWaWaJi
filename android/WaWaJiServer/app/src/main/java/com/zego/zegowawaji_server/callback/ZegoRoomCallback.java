@@ -261,7 +261,9 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
                     userInfo.putString(Constants.JsonKey.KEY_USER_NAME, mCurrentPlayer.userName);
                     retryMsg.setData(userInfo);
                     mHandler.sendMessageDelayed(retryMsg, HandlerImpl.INTERVAL_RESEND_COMMAND_TIME);
-                } else if (mDeviceIsWaitingResult && !mHandler.hasMessages(HandlerImpl.MSG_RENOTITY_NEXT_PLAYER)) {
+
+                } else if (mDeviceIsWaitingResult && !mHandler.hasMessages(HandlerImpl.MSG_RENOTITY_NEXT_PLAYER)
+                        && mWawajiState != Constants.WawajiState.WaitGrabResult) {
                     AppLogger.getInstance().writeLog("[notifyNextPlayerIfNeed], queue is empty or device is busy. reNotify after 1 second");
                     Message msg = Message.obtain();
                     msg.what = HandlerImpl.MSG_RENOTITY_NEXT_PLAYER;
@@ -1087,7 +1089,7 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
             }
         });
 
-        AppLogger.getInstance().writeLog("[handleGameOver], send game result to %s success? %s  cmdString: %S", userId, success, cmdString);
+        AppLogger.getInstance().writeLog("[handleGameOver], send game result to %s success? %s  cmdString: %s", userId, success, cmdString);
 
         mWaitingPlayer = new GameUser(userId, userName);
         mWaitingPlayer.setSessionId(sessionId);
@@ -1104,14 +1106,12 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
         retryMsg.setData(userInfo);
 
         mHandler.sendMessageDelayed(retryMsg, HandlerImpl.INTERVAL_RESEND_COMMAND_TIME);
-
     }
 
     private String generateGameOverCommand(int result, String userId, String userName, int seq, String sessionId, String customToken) {
 
         JSONObject json = new JSONObject();
         try {
-
             json.put(Constants.JsonKey.KEY_SEQ, seq);
             json.put(Constants.JsonKey.KEY_CMD, Constants.Command.CMD_GAME_RESULT);
             json.put(Constants.JsonKey.KEY_SESSION_ID, sessionId);
@@ -1137,7 +1137,6 @@ public class ZegoRoomCallback implements IZegoRoomCallback {
 
             String encryptContent;
             try {
-
                 //使用约定的密钥串对结果加密
                 byte[] encryptByte = AESUtil.encrypt(encryptResult.toString(), ZegoApplication.getAppContext().getServerSecret());
                 encryptContent = new String(encryptByte, "utf-8");

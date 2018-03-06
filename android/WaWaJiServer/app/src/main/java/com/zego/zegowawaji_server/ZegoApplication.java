@@ -106,7 +106,7 @@ public class ZegoApplication extends Application {
     }
 
     private void setupZegoSDK() {
-        ZegoLiveRoom.setSDKContext(new ZegoLiveRoom.SDKContext() {
+        ZegoLiveRoom.setSDKContext(new ZegoLiveRoom.SDKContextEx() {
             @Override
             public String getSoFullPath() {
                 return null;
@@ -115,6 +115,11 @@ public class ZegoApplication extends Application {
             @Override
             public String getLogPath() {
                 return null;
+            }
+
+            @Override
+            public long getLogFileSize() {
+                return 100 * 1024 * 1024;
             }
 
             @Override
