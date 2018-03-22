@@ -25,6 +25,15 @@ public class ZegoApiManager {
 
     private String mUserID = null;
 
+    public boolean isTest() {
+        return isTest;
+    }
+
+    public void setTest(boolean test) {
+        isTest = test;
+    }
+
+    private boolean isTest = false;
     private ZegoApiManager() {
         mZegoLiveRoom = new ZegoLiveRoom();
     }
@@ -83,15 +92,29 @@ public class ZegoApiManager {
      * 初始化sdk.
      */
     public void initSDK(){
-        long appID = 3671502238L;
+        long appID = 4095207472L;
         byte[] signKey = {
-                (byte)0x30,(byte)0x3a,(byte)0x83,(byte)0x1b,(byte)0xae,(byte)0x23,(byte)0xc6,(byte)0x6e,
-                (byte)0x73,(byte)0xba,(byte)0x23,(byte)0xfc,(byte)0x69,(byte)0xa2,(byte)0x7f,(byte)0xe4,
-                (byte)0x9f,(byte)0xca,(byte)0x1c,(byte)0x03,(byte)0x9f,(byte)0x93,(byte)0x5b,(byte)0x47,
-                (byte)0xf0,(byte)0x6b,(byte)0xa6,(byte)0xf2,(byte)0x81,(byte)0x21,(byte)0x5b,(byte)0xa5
+                (byte)0x75,(byte)0xec,(byte)0xe0,(byte)0x99,(byte)0x85,(byte)0x8a,(byte)0xc9,(byte)0x76,
+                (byte)0x44,(byte)0x95,(byte)0xa0,(byte)0xf9,(byte)0xfb,(byte)0x92,(byte)0xb4,(byte)0x6e,
+                (byte)0x60,(byte)0x2c,(byte)0x70,(byte)0x01,(byte)0xe4,(byte)0x03,(byte)0xf8,(byte)0x9b,
+                (byte)0xb5,(byte)0x50,(byte)0x32,(byte)0x25,(byte)0xba,(byte)0xa7,(byte)0xa2,(byte)0x67
+
         };
+        //是否开启测试环境
+        setTeseEnv(false);
 
         init(appID, signKey);
+    }
+
+    /**
+     * 开启测试环境
+     * @param teseEnv
+     */
+    public void setTeseEnv(boolean teseEnv){
+
+        isTest = teseEnv;
+        mZegoLiveRoom.setTestEnv(teseEnv);
+
     }
 
     public void releaseSDK() {

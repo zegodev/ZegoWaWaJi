@@ -66,7 +66,14 @@ public class RoomController {
                 RequestQueue mQueue = Volley.newRequestQueue(ZegoApplication.sApplicationContext);
 
                 long appID = ZegoApiManager.getInstance().getAppID();
-                String url = String.format("https://liveroom%d-api.%s/demo/roomlist?appid=%s", appID, "zego.im", appID);
+                boolean isTest = ZegoApiManager.getInstance().isTest();
+                String url;
+                if(isTest){
+                    url = String.format("https://test2-liveroom-api.%s/demo/roomlist?appid=%s", "zego.im", appID);
+                }else{
+                    url = String.format("https://liveroom%d-api.%s/demo/roomlist?appid=%s", appID, "zego.im", appID);
+                }
+
 
                 Log.e("url:",url);
                 StringRequest request = new StringRequest(url,
