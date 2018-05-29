@@ -10,8 +10,8 @@
 #import "ZegoManager.h"
 #import "ZegoSetting.h"
 
-static NSString *payType = @"type";
-static int price = 5;
+static NSString *type = @"type";
+static int value = 5;
 
 @interface ZegoCommand()
 
@@ -62,7 +62,7 @@ typedef void(^completionBlock)(NSInteger errorCode, NSString *encryptedConfig);
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     
     // ！！！先从后台获取加密配置。本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取。
-    [self fetchEncryptedConfig:confirm payType:payType price:price sessionId:sessionId timestamp:timestamp completion:^(NSInteger errorCode, NSString *encryptedConfig) {
+    [self fetchEncryptedConfig:confirm type:type value:value sessionId:sessionId timestamp:timestamp completion:^(NSInteger errorCode, NSString *encryptedConfig) {
         if (errorCode == 0) {
             NSDictionary *dict = @{seqKey : [NSNumber numberWithInteger:clientSeq],
                                    cmdKey : @515,
@@ -251,10 +251,11 @@ typedef void(^completionBlock)(NSInteger errorCode, NSString *encryptedConfig);
     return NO;
 }
 
-// !!!本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取
-- (void)fetchEncryptedConfig:(int)confirm payType:(NSString *)payType price:(int)price sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp completion:(completionBlock)block {
+
+//WARNING: !!!本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取
+- (void)fetchEncryptedConfig:(int)confirm type:(NSString *)type value:(int)value sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp completion:(completionBlock)block {
     NSString *baseUrl = [NSString stringWithFormat:@"http://wsliveroom%u-api.zego.im:8181/pay?", [ZegoSetting sharedInstance].appID];
-    NSString *param = [NSString stringWithFormat:@"app_id=%u&id_name=%@&session_id=%@&confirm=%d&time_stamp=%ld&item_type=%@&item_price=%d", [ZegoSetting sharedInstance].appID, [ZegoSetting sharedInstance].userID, sessionId, confirm, timestamp, payType, price];
+    NSString *param = [NSString stringWithFormat:@"app_id=%u&id_name=%@&session_id=%@&confirm=%d&time_stamp=%ld&item_type=%@&item_price=%d", [ZegoSetting sharedInstance].appID, [ZegoSetting sharedInstance].userID, sessionId, confirm, timestamp, type, value];
     
     NSString *requestUrl = [NSString stringWithFormat:@"%@%@", baseUrl, param];
     NSLog(@"fetch encrypted config url: %@", requestUrl);
