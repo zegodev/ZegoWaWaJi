@@ -139,3 +139,6 @@
 
 # 保留 Bugly 的所有代码不被混淆
 -keep class com.tencent.bugly.** {*;}
+
+-dontwarn com.google.protobuf.**
+-keep class com.google.protobuf.** {*;}

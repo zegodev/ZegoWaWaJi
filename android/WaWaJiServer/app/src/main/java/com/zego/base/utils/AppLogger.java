@@ -23,6 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * 娃娃机业务日志工具类。
+ *
  * <p>Copyright © 2017 Zego. All rights reserved.</p>
  *
  * @author realuei on 26/10/2017.
@@ -96,15 +98,30 @@ public class AppLogger {
             public void handleMessage(Message msg) {
                 switch (msg.what) {
                     case MSG_ID_WRITE_LOG: {
-                        flushLogFileIfNeed();
-
                         String message = (String) msg.obj;
+                        int messageLevel = msg.arg1;
 
-                        Log.d(TAG, message);
+                        char levelStr;
+                        if (messageLevel == 0) {
+                            Log.i(TAG, message);
+                            levelStr = 'I';
+                        } else if (messageLevel == 1) {
+                            Log.w(TAG, message);
+                            levelStr = 'W';
+                        } else if (messageLevel == 2) {
+                            Log.e(TAG, message);
+                            levelStr = 'E';
+                        } else {
+                            Log.d(TAG, message);
+                            levelStr = 'D';
+                        }
 
-                        String message_with_time = String.format("%s %s", TimeUtil.getLogStr(), message);
+                        String timeStr = TimeUtil.getLogStr();
+                        String message_with_time = String.format("%s %c/%s", timeStr, levelStr, message);
                         mLogList.addFirst(message_with_time);
                         safeWriteLog2File(message_with_time);
+
+                        flushLogFileIfNeed(messageLevel);
 
                         for (OnLogChangedListener listener : mListeners) {
                             listener.onLogDataChanged();
@@ -123,16 +140,24 @@ public class AppLogger {
 
             }
 
-            private void flushLogFileIfNeed() {
-                loopCnt ++;
-                if (loopCnt >= 10) {
-                    loopCnt = 0;
-                    if (mLogWriter != null) {
-                        try {
-                            mLogWriter.flush();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+            private void flushLogFileIfNeed(int messageLevel) {
+                boolean flushNow = false;
+
+                if (messageLevel > 0) {
+                    flushNow = true;
+                } else {
+                    loopCnt ++;
+                    if (loopCnt >= 10) {
+                        loopCnt = 0;
+                        flushNow = true;
+                    }
+                }
+
+                if (flushNow && mLogWriter != null) {
+                    try {
+                        mLogWriter.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
 
@@ -217,7 +242,7 @@ public class AppLogger {
         }
     }
 
-    public void writeLog(final String format, final Object... args) {
+    private void writeMsg(int level, String format, Object... args) {
         String data;
 
         if (args.length == 0) {
@@ -229,7 +254,20 @@ public class AppLogger {
         Message msg = Message.obtain();
         msg.what = MSG_ID_WRITE_LOG;
         msg.obj = data;
+        msg.arg1 = level;
         mLogHandler.sendMessage(msg);
+    }
+
+    public void writeLog(String format, Object... args) {
+        writeMsg(0, format, args);
+    }
+
+    public void writeWarning(String format, Object... args) {
+        writeMsg(1, format, args);
+    }
+
+    public void writeError(String format, Object... args) {
+        writeMsg(2, format, args);
     }
 
     /**

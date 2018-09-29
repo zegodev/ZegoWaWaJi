@@ -21,6 +21,7 @@
     <string name="bitrate_prefix">码率&#160;<xliff:g id="value">%1$s</xliff:g></string>
 
     <string name="vt_dialog_logout_message">现在下线会中断所有玩家的操作，确认下线？</string>
+    <string name="vt_dialog_camera_device_anomaly">摄像头异常：采集不到数据</string>
     <string name="vt_dialog_btn_positive">确认</string>
     <string name="vt_dialog_btn_cancel">取消</string>
 
@@ -42,6 +43,7 @@
 
     <string name="zg_text_front_stream_info"><strong>正面摄像头:</strong> %1$s</string>
     <string name="zg_text_side_stream_info"><strong>侧面摄像头:</strong> %1$s</string>
+    <string name="zg_text_disable_camera_hint">摄像头被临时禁用</string>
 
     <string name="zg_text_wawaji_name_template">即构娃娃机%1$s</string>
 </resources>

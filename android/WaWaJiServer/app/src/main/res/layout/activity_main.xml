@@ -27,6 +27,17 @@
             android:layout_alignParentLeft="true"/>
 
         <TextView
+            android:id="@+id/main_preview_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/main_preview_view"
+            android:layout_alignBottom="@id/main_preview_view"
+            android:layout_alignRight="@id/main_preview_view"
+            android:layout_alignTop="@id/main_preview_view"
+            android:gravity="center"
+            android:text="@string/zg_text_disable_camera_hint"/>
+
+        <TextView
             android:id="@+id/main_stream_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -42,6 +53,17 @@
             android:layout_height="213dp"
             android:layout_toRightOf="@id/main_preview_view"
             android:layout_marginLeft="10dp" />
+
+        <TextView
+            android:id="@+id/second_preview_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/second_preview_view"
+            android:layout_alignBottom="@id/second_preview_view"
+            android:layout_alignRight="@id/second_preview_view"
+            android:layout_alignTop="@id/second_preview_view"
+            android:gravity="center"
+            android:text="@string/zg_text_disable_camera_hint"/>
 
         <TextView
             android:id="@+id/second_stream_id"

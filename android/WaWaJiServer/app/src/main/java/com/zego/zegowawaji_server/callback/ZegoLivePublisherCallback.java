@@ -4,6 +4,7 @@ import com.zego.base.utils.AppLogger;
 import com.zego.zegoliveroom.callback.IZegoLivePublisherCallback;
 import com.zego.zegoliveroom.entity.AuxData;
 import com.zego.zegoliveroom.entity.ZegoStreamQuality;
+import com.zego.zegowawaji_server.IRoomClient;
 import com.zego.zegowawaji_server.IStateChangedListener;
 
 import java.util.HashMap;
@@ -17,11 +18,12 @@ import java.util.HashMap;
 public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
 
     private IStateChangedListener mListener;
+    private IRoomClient iRoomClient;
     private HashMap<String, Integer> mReceivePublishQuality = new HashMap<>();
-    private HashMap<String, Integer> mPublishNullData = new HashMap<>();
-    private int mNotifyCount = 0;
+    private HashMap<String, Integer> mCaptureFpsAnomaly = new HashMap<>();
 
-    public ZegoLivePublisherCallback(IStateChangedListener listener) {
+    public ZegoLivePublisherCallback(IRoomClient client, IStateChangedListener listener) {
+        iRoomClient = client;
         mListener = listener;
     }
 
@@ -34,14 +36,6 @@ public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
         if (mListener != null) {
             mListener.onPublishStateUpdate(stateCode, streamId);
         }
-    }
-
-    /**
-     * 收到观众的连麦请求
-     */
-    @Override
-    public void onJoinLiveRequest(int seq, String fromUserId, String fromUserName, String roomId) {
-
     }
 
     /**
@@ -60,28 +54,39 @@ public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
         if (count == 20) {
             mReceivePublishQuality.put(streamId, 0);
 
-            AppLogger.getInstance().writeLog("stream: %s's quality update, quality: %d, videoFPS: %.1f", streamId, zegoStreamQuality.quality, zegoStreamQuality.videoFPS);
+            AppLogger.getInstance().writeLog("stream: %s's quality update, quality: %d, videoFPS: %.1f, videoCaptureFPS: %.1f",
+                    streamId, zegoStreamQuality.quality, zegoStreamQuality.videoFPS, zegoStreamQuality.videoCaptureFPS);
         }
 
-        if (zegoStreamQuality.videoBitrate <= 3 && zegoStreamQuality.videoFPS <= 1) {
-            if (mPublishNullData.containsKey(streamId)) {
-                count = mPublishNullData.get(streamId) + 1;
+        if (iRoomClient.cameraIsDisabled()) return;
+
+        if (zegoStreamQuality.videoCaptureFPS <= 3) {
+            if (mCaptureFpsAnomaly.containsKey(streamId)) {
+                count = mCaptureFpsAnomaly.get(streamId) + 1;
             } else {
                 count = 1;
             }
-            mPublishNullData.put(streamId, count);
+            mCaptureFpsAnomaly.put(streamId, count);
 
-            if (count >= 35 && mListener != null) {
-                mNotifyCount ++;
-                mPublishNullData.put(streamId, 0);
+            // 当采集帧率连续5次少于3帧时，认为摄像头出现问题
+            if (count >= 5 && mListener != null) {
+                mCaptureFpsAnomaly.put(streamId, 0);
 
-                mListener.onPublishNullStream(streamId, mNotifyCount);
+                mListener.onCaptureFpsAnomaly(streamId);  // 摄像头采集数据异常
             }
         } else {
-            if (mPublishNullData.containsKey(streamId)) {
-                mPublishNullData.put(streamId, 0);
+            if (mCaptureFpsAnomaly.containsKey(streamId)) {
+                mCaptureFpsAnomaly.put(streamId, 0);
             }
         }
+    }
+
+    /**
+     * 收到观众的连麦请求
+     */
+    @Override
+    public void onJoinLiveRequest(int seq, String fromUserId, String fromUserName, String roomId) {
+
     }
 
     /**

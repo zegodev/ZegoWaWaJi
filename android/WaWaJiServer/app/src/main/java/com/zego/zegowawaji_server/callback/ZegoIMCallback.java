@@ -50,6 +50,8 @@ public class ZegoIMCallback implements IZegoIMCallback {
                 }
             }
         }
+
+        mListener.onUserUpdate();
     }
 
     /**
@@ -70,6 +72,11 @@ public class ZegoIMCallback implements IZegoIMCallback {
 
     @Override
     public void onUpdateOnlineCount(String roomId, int onlineCount) {
+
+    }
+
+    @Override
+    public void onRecvBigRoomMessage(String s, ZegoBigRoomMessage[] zegoBigRoomMessages) {
 
     }
 
@@ -179,9 +186,5 @@ public class ZegoIMCallback implements IZegoIMCallback {
                 }
             }
         });
-    }
-
-    @Override
-    public void onRecvBigRoomMessage(String roomId, ZegoBigRoomMessage[] messages) {
     }
 }

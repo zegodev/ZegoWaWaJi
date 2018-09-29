@@ -21,7 +21,13 @@ public interface IRoomClient {
 
     ZegoLiveRoom getZegoLiveRoom();
 
+    boolean needUpgradeApp();
+
+    void upgradeMySelf();
+
     void runOnWorkThread(Runnable task);
 
     void requireRestart(String desc);
+
+    boolean cameraIsDisabled();
 }

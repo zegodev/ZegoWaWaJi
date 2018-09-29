@@ -149,17 +149,6 @@ public class Constants {
          *         "continue": 1   // 1: 接着玩; 0: 放弃，默认为 0
          *     }
          * }
-         * 其中 config 的明文格式：
-         * {
-         *    "game_time": 30,
-         *     "odds": 0.1,
-         *     "claw_power_grab": 32,
-         *     "claw_power_up": 16,
-         *     "claw_power_move": 10,
-         *     "claw_power_max": 20,
-         *     "up_height": 7,
-         *     "custom_token": "xxx"
-         * }
          */
         static final public int CMD_APPOINTMENT = 0x201;          // 预约上机申请（Client-->Server）
 
@@ -182,7 +171,25 @@ public class Constants {
          *     "session_id": "xxx",
          *     "data": {
          *         "confirm": 1,    // 1: 确认上机, 0: 放弃
+         *         "config": "encrypted-by-shared-secret-key",    // 娃娃机初始化配置信息
          *         "time_stamp": 12345
+         *     }
+         * }
+         *
+         * 其中 config 的明文格式：
+         * {
+         *    "game_config": {
+         *        "game_time": 30,        // 游戏总时长
+         *        "claw_power_grab": 67,  // 表示抓起爪力(1—100)，指下爪时，抓住娃娃的爪力，建议这个值设置大一点
+         *        "claw_power_up": 33,    // 表示到顶爪力(1—100)，指天车提起娃娃到 up_height 指定的高度后将使用该爪力值直至天车到达顶部
+         *        "claw_power_move": 21,  // 表示移动爪力(1—100)，指天车到达顶部后，移动过程中的爪力
+         *        "up_height": 7          // 抓起高度（0–10）底部到顶部分成10份，爪子到达该值指定的高度时就会将爪力减小至到顶爪力
+         *     },
+         *     "authority_info": {
+         *        "session_id": "xxx",    // 同信令中 session_id 值
+         *        "confirm": 1,           // 同信令中 confirm 值
+         *        "time_stamp": 1515508734166,    // 同信令中 time_stamp 值
+         *        "custom_token": "xxx"   // 业务侧自定义鉴权信息，会在游戏结果加密串中带回，用于实现自定义校验, 如支付信息等，该字段长度不要超过 300 个字符
          *     }
          * }
          */

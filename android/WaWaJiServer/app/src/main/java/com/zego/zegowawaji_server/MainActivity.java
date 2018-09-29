@@ -41,6 +41,7 @@ import android.widget.Toast;
 import com.zego.base.utils.AppLogger;
 import com.zego.base.utils.ByteSizeUnit;
 import com.zego.base.utils.DeviceIdUtil;
+import com.zego.base.utils.NetworkUtil;
 import com.zego.base.utils.PkgUtil;
 import com.zego.base.utils.PrefUtil;
 import com.zego.base.widget.CustomSeekBar;
@@ -60,8 +61,11 @@ import com.zego.zegowawaji_server.callback.ZegoRoomCallback;
 import com.zego.zegowawaji_server.entity.GameUser;
 import com.zego.zegowawaji_server.manager.CommandSeqManager;
 import com.zego.zegowawaji_server.manager.DeviceManager;
+import com.zego.zegowawaji_server.manager.UpgradeUtil;
 import com.zego.zegowawaji_server.service.GuardService;
 import com.zego.zegowawaji_server.service.IRemoteApi;
+import com.zego.zegowawaji_server.service.OnSysTimeUpdateFinish;
+import com.zego.zegowawaji_server.manager.UserStateManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,7 +78,7 @@ import java.util.List;
 import im.zego.wawajiservice.apiex.CBUpdateTime;
 import im.zego.wawajiservice.apiex.IWwjsApiEx;
 
-public class MainActivity extends AppCompatActivity implements IStateChangedListener, IRoomClient {
+public class MainActivity extends AppCompatActivity implements IStateChangedListener, IRoomClient, UpgradeStateObserver {
 
     static final private String ROOM_ID_PREFIX = "WWJ_ZEGO";
     static final private String STREAM_ID_PREFIX = "WWJ_ZEGO_STREAM";
@@ -103,9 +107,16 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private TextView mCurrentOperatorView;
     private TextView mCurrentDeviceStateView;
 
+    private TextView mMainPreviewHint;
+    private TextView mSecondPreviewHint;
+
     private String[] mResolutionText;
 
     private ZegoLiveRoom mZegoLiveRoom;
+
+    private UserStateManager mStateManager;
+    private volatile boolean mStateServiceInited = false;
+    private int mWaitStateServiceInitTime = 0;
 
     private HandlerThread mWorkThread;
     private Handler mWorkHandler;
@@ -113,6 +124,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private Handler mRetryHandler;
 
     private Handler mHeartBeatHandler;
+
+    private Binder mBinder = new Binder();
+    private IRemoteApi mRemoteApi;
+    private ServiceConnection mServiceConnection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,14 +139,19 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         if (TextUtils.isEmpty(from)) {
             from = "main";
         }
-        AppLogger.getInstance().writeLog("*** MainActivity.onCreate() from %s, my hash: %s  ***", from, hashCode());
+
+        String reason = startIntent.getStringExtra("reason");
+        if (TextUtils.isEmpty(reason)) {
+            reason = "start";
+        }
+        AppLogger.getInstance().writeLog("*** MainActivity.onCreate() from %s with reason: %s, my hash: %s  ***", from, reason, hashCode());
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         mZegoLiveRoom = ((ZegoApplication) getApplication()).getZegoLiveRoom();
         if (mZegoLiveRoom == null) {
-            showErrorDialog();
+            showErrorDialog(R.string.zg_toast_load_config_failed);
         } else {
             mResolutionText = getResources().getStringArray(R.array.zg_resolutions);
 
@@ -146,11 +166,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
             initCtrls();
 
-            bindGuardService();
-
-            bindWwjExService();
-
-            checkDeviceState();
+            boolean bindSuccess = bindWwjExService();
+            boolean needUpdateSysTime = !bindSuccess;
+            bindGuardService(needUpdateSysTime);
 
             // 初始化房间名及流名信息
             initRoomAndStreamInfo(getIntent());
@@ -178,6 +196,11 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         String versionName = PkgUtil.getAppVersion(this)[0];
         if (!TextUtils.isEmpty(versionName)) {
             titleBuilder.append("-v").append(versionName);
+        }
+
+        String localIp = NetworkUtil.getActiveLocalIP(this);
+        if (!TextUtils.isEmpty(localIp)) {
+            titleBuilder.append(" IP:").append(localIp);
         }
         getSupportActionBar().setTitle(titleBuilder.toString());
     }
@@ -261,13 +284,15 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     protected void onDestroy() {
         super.onDestroy();
 
+        unInitStateReporter();
+
         AppLogger.getInstance().writeLog("*** MainActivity.onDestroy(), my hash: %s ***", hashCode());
     }
 
-    private void showErrorDialog() {
+    private void showErrorDialog(int descResId) {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("")   //R.string.vt_dialog_logout_title
-                .setMessage(R.string.zg_toast_load_config_failed)
+                .setMessage(descResId)
                 .setPositiveButton(R.string.vt_dialog_btn_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -287,16 +312,55 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     /**
      * 通过绑定 Service 达到监听 UI 进程是否异常退出的目的
      */
-    private void bindGuardService() {
+    private void bindGuardService(final boolean needUpdateSysTime) {
+
+        mServiceConnection= new ServiceConnection() {
+
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mRemoteApi = IRemoteApi.Stub.asInterface(service);
+                try {
+                    AppLogger.getInstance().writeLog("call join when onServiceConnected");
+                    mRemoteApi.join(mBinder);   // 此处为 UI 进程异常退出时能重启的关键
+                } catch (RemoteException e) {
+                    AppLogger.getInstance().writeLog("join failed when onServiceConnected. exception: %s", e);
+                }
+
+                try {
+                    String sdkVersion = ZegoLiveRoom.version();
+                    String veVersion = ZegoLiveRoom.version2();
+                    long appId = ZegoApplication.getAppContext().getAppId();
+                    AppLogger.getInstance().writeLog("update bugly info with sdkVersion : %s & veVersion : %s & appId: %d", sdkVersion, veVersion, appId);
+                    mRemoteApi.updateBuglyInfo(sdkVersion, veVersion, appId);
+                } catch (RemoteException e) {
+                    AppLogger.getInstance().writeLog("update bugly info failed when onServiceConnected. exception: %s", e);
+                }
+
+                if (needUpdateSysTime) {
+                    try {
+                        mRemoteApi.requestUpdateSysTime(new UpdateTimeCallbackImpl2());
+                    } catch (RemoteException e) {
+                        AppLogger.getInstance().writeLog("requestUpdateSysTime failed when onServiceConnected. exception: %s", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                AppLogger.getInstance().writeLog("onServiceDisconnected");
+            }
+        };
+
         Intent intent = new Intent(this, GuardService.class);
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
 
         mHeartBeatHandler.sendEmptyMessageDelayed(1, 60 * 1000);
     }
 
-    private void bindWwjExService() {
+    private boolean bindWwjExService() {
         Intent intent = new Intent("im.zego.wwjs.action.SERVICE_EX");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setPackage("im.zego.wawajiservice");
         boolean success = bindService(intent, new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -316,8 +380,9 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         if (!success) {
             AppLogger.getInstance().writeLog("*** package im.zego.wawajiservice not install in this device ***");
-            Toast.makeText(this, "*** package im.zego.wawajiservice not install in this device *** ", Toast.LENGTH_LONG).show();
         }
+
+        return success;
     }
 
     /**
@@ -345,6 +410,8 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         DeviceManager.getInstance().checkDeviceStatus(new DeviceManager.OnDeviceStateChangeObserver() {
             @Override
             public void onDeviceStateChanged(final int errorCode) {
+                mStateManager.sendDeviceState(errorCode, PrefUtil.getInstance().getRoomId(), System.currentTimeMillis());
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -354,9 +421,6 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                             mCurrentDeviceStateView.setText(Html.fromHtml(getString(R.string.zg_text_device_error)));
                         } else {
                             mCurrentDeviceStateView.setText(getString(R.string.zg_text_current_device_state, errorCode));
-                            if (errorCode != 0) {
-                                // 设备上报状态
-                            }
                         }
                     }
                 });
@@ -423,6 +487,12 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mCurrentDeviceStateView = (TextView) findViewById(R.id.zg_current_device_state);
         mCurrentDeviceStateView.setText(getString(R.string.zg_text_current_device_state, 0));
+
+        mMainPreviewHint = (TextView) findViewById(R.id.main_preview_hint);
+        mMainPreviewHint.setVisibility(View.GONE);
+
+        mSecondPreviewHint = (TextView) findViewById(R.id.second_preview_hint);
+        mSecondPreviewHint.setVisibility(View.GONE);
     }
 
     private boolean checkOrRequestPermission() {
@@ -440,12 +510,14 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private void startPreview() {
         mZegoLiveRoom.enableMic(false);
 
-        AppLogger.getInstance().writeLog("Start preview");
+        boolean isAutoDisableCamera = ZegoApplication.getAppContext().isAutoDisableCamera();
+        boolean enableCamera = !isAutoDisableCamera;
+        AppLogger.getInstance().writeLog("Start preview with enableCamera ? %s", enableCamera);
 
         mZegoLiveRoom.enablePreviewMirror(false);
         mZegoLiveRoom.setPreviewView(mMainPreviewView);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill);
-        mZegoLiveRoom.enableCamera(true);
+        mZegoLiveRoom.enableCamera(enableCamera);
         mZegoLiveRoom.setFrontCam(true);
         mZegoLiveRoom.startPreview();
 
@@ -453,17 +525,15 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 
         mZegoLiveRoom.setPreviewView(mSecondPreviewView, channelIndex);
         mZegoLiveRoom.setPreviewViewMode(ZegoVideoViewMode.ScaleAspectFill, channelIndex);
-        mZegoLiveRoom.enableCamera(true, channelIndex);
+        mZegoLiveRoom.enableCamera(enableCamera, channelIndex);
         mZegoLiveRoom.setFrontCam(false, channelIndex);
         mZegoLiveRoom.startPreview(channelIndex);
 
-//        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN);
-//        mZegoLiveRoom.setSharpenFactor(0.15f);
-//        mZegoLiveRoom.enableBeautifying(ZegoBeauty.SHARPEN, channelIndex);
-//        mZegoLiveRoom.setSharpenFactor(0.15f, channelIndex);
+        toggleCameraPreviewView(enableCamera);
 
-        AppLogger.getInstance().writeLog("pause audio module");
-        mZegoLiveRoom.pauseModule(ZegoConstants.ModuleType.AUDIO);
+        // 此 API 在使用某些摄像头时，可能会卡死。已通过外部音频采集方案实现，见 ZegoExternalAudioDevice.enableExternalAudioDevice(true);
+//        AppLogger.getInstance().writeLog("pause audio module");
+//        mZegoLiveRoom.pauseModule(ZegoConstants.ModuleType.AUDIO);
     }
 
     private void loginRoomAndPublishStream() {
@@ -521,6 +591,37 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
+     * 初始化状态上报长链接（需在更新系统时间以后）
+     */
+    private void initStateReporter() {
+        mStateManager = UserStateManager.createInstance();
+        mStateManager.setUpgradeObserver(this);
+
+        long appId = ZegoApplication.getAppContext().getAppId();
+        String deviceId = DeviceIdUtil.generateDeviceId(this);
+        mStateManager.init(getApplicationContext(), appId, deviceId, new UserStateManager.OnInitCompleteCallback() {
+            @Override
+            public void onInitComplete(int errorCode) {
+                mStateServiceInited = true;
+
+                if (errorCode != 0) {
+                    AppLogger.getInstance().writeLog("** init state report service error(code:%d), can't report the game result to busyness server **", errorCode);
+                }
+
+                checkDeviceState();
+            }
+        });
+    }
+
+    private void unInitStateReporter() {
+        if (mStateManager != null) {
+            if (mStateServiceInited) {
+                mStateManager.unInit();
+            }
+        }
+    }
+
+    /**
      * 登录房间
      * @param retry 是否为失败后重试逻辑
      * @return
@@ -530,34 +631,47 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
             setupCallbacks();
         }
 
-        if (sysTimeUpdateSuccess()) {
-            mZegoLiveRoom.setRoomConfig(false, true);
-            String roomId = PrefUtil.getInstance().getRoomId();
-            String roomName = PrefUtil.getInstance().getRoomName();
-            AppLogger.getInstance().writeLog("login room with roomId & roomName: %s, %s", roomId, roomName);
-            boolean success = mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
-                @Override
-                public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
-                    AppLogger.getInstance().writeLog("onLoginCompletion, errorCode: %d", errorCode);
-                    if (errorCode == 0) {
-                        publishStream(-1);
-                    } else {
-                        Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
-
-                        mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
-                        mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
-                    }
-                }
-            });
-
-            if (!success) {
-                AppLogger.getInstance().writeLog("login room failed");
-                Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
-            }
-        } else {
+        if (!sysTimeUpdateSuccess()) {
             AppLogger.getInstance().writeLog("wait time sync to finish");
             mRetryHandler.removeMessages(RetryHandler.MSG_WAIT_TIME_SYNC_FINISH);
             mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_WAIT_TIME_SYNC_FINISH, 1000);
+            return;
+        }
+
+
+        if (!mStateServiceInited) {
+            if (++mWaitStateServiceInitTime >= 15) {    // 如果等待 15s，user state service 还没有初始化成功，则不再等待，继续后继逻辑
+                mWaitStateServiceInitTime = 0;
+            } else {
+                AppLogger.getInstance().writeLog("wait user state service init finish.");
+                mRetryHandler.removeMessages(RetryHandler.MSG_WAIT_USER_STATE_SERVICE_INIT_FINISH);
+                mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_WAIT_USER_STATE_SERVICE_INIT_FINISH, 1000);
+                return;
+            }
+        }
+
+        mZegoLiveRoom.setRoomConfig(false, true);
+        String roomId = PrefUtil.getInstance().getRoomId();
+        String roomName = PrefUtil.getInstance().getRoomName();
+        AppLogger.getInstance().writeLog("login room with roomId & roomName: %s, %s", roomId, roomName);
+        boolean success = mZegoLiveRoom.loginRoom(roomId, roomName, ZegoConstants.RoomRole.Anchor, new IZegoLoginCompletionCallback() {
+            @Override
+            public void onLoginCompletion(int errorCode, ZegoStreamInfo[] streamList) {
+                AppLogger.getInstance().writeLog("onLoginCompletion, errorCode: %d", errorCode);
+                if (errorCode == 0) {
+                    publishStream(-1);
+                } else {
+                    Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
+
+                    mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
+                    mRetryHandler.sendEmptyMessageDelayed(RetryHandler.MSG_RELOGIN_ROOM, 60 * 1000);
+                }
+            }
+        });
+
+        if (!success) {
+            AppLogger.getInstance().writeLog("login room failed");
+            Toast.makeText(MainActivity.this, R.string.zg_toast_login_room_failed, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -567,7 +681,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     private void setupCallbacks() {
-        mZegoLiveRoom.setZegoLivePublisherCallback(new ZegoLivePublisherCallback(this));
+        mZegoLiveRoom.setZegoLivePublisherCallback(new ZegoLivePublisherCallback(this, this));
         mZegoLiveRoom.setZegoLivePublisherCallback2(new ZegoLivePublisherCallback2(this));
         mZegoLiveRoom.setZegoRoomCallback(new ZegoRoomCallback(this, this));
         mZegoLiveRoom.setZegoIMCallback(new ZegoIMCallback(this, this));
@@ -698,6 +812,37 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         System.exit(0);
     }
 
+    private void toggleCameraPreviewView(final boolean enable) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (enable) {
+                    if (mMainPreviewHint != null) {
+                        mMainPreviewHint.setVisibility(View.GONE);
+                        mMainPreviewView.setVisibility(View.VISIBLE);
+                    }
+
+                    if (mSecondPreviewHint != null) {
+                        mSecondPreviewHint.setVisibility(View.GONE);
+                        mSecondPreviewView.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    if (mMainPreviewHint != null) {
+                        mMainPreviewView.setVisibility(View.INVISIBLE);
+                        mMainPreviewHint.setVisibility(View.VISIBLE);
+                        mMainPreviewHint.setText(R.string.zg_text_disable_camera_hint);
+                    }
+
+                    if (mSecondPreviewHint != null) {
+                        mSecondPreviewView.setVisibility(View.INVISIBLE);
+                        mSecondPreviewHint.setVisibility(View.VISIBLE);
+                        mSecondPreviewHint.setText(R.string.zg_text_disable_camera_hint);
+                    }
+                }
+            }
+        });
+    }
+
     private void changeResolution(int level, boolean showToast) {
         if (level < ZegoAvConfig.VIDEO_BITRATES.length) {
             mResolutionView.setEnabled(false);
@@ -743,7 +888,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
 //                startPreview();
                 loginRoomAndPublishStream();
             }
-        }, 5000);
+        }, 100 * 1000); // 等待 100 秒后再重新推流（服务端需要等待 90 秒后发现没有流才会通过回调通知客户端）
     }
 
     private List<ZegoUser> mTotalUsers = Collections.synchronizedList(new ArrayList<ZegoUser>());
@@ -751,7 +896,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     private GameUser mCurrentPlayer = new GameUser();
 
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
      */
     @Override
     public void onRoomStateUpdate() {
@@ -795,8 +940,78 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         });
     }
 
+    private Handler mCameraControlHandler = new Handler(Looper.getMainLooper());
+    private volatile boolean mCurrentCameraDisabled = false;
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
+     */
+    @Override
+    public void onUserUpdate() {
+        runOnWorkThread(new Runnable() {
+            private void updateRoomInfo() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int totalCount = mTotalUsers.size();
+                        int queueCount = mQueueUsers.size();
+                        boolean isPlaying = !TextUtils.isEmpty(mCurrentPlayer.userID);
+
+                        AppLogger.getInstance().writeWarning("onUserUpdate, total user: %d, queue size: %d", totalCount, queueCount);
+
+                        mTotalUserView.setText(Html.fromHtml(getString(R.string.zg_text_current_total_user, totalCount)));
+                        mQueueUserView.setText(Html.fromHtml(getString(R.string.zg_text_current_queue_user, queueCount)));
+                        if (isPlaying) {
+                            mCurrentOperatorView.setText(Html.fromHtml(getString(R.string.zg_text_current_player, mCurrentPlayer.userName)));
+                        } else {
+                            mCurrentOperatorView.setText(getString(R.string.zg_text_current_no_player));
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void run() {
+                // 更新页面信息（必须在 work 线程获取人数信息，因为变更的更新也是在 work 线程完成的）
+                updateRoomInfo();
+
+                // 判断当前应用是否需要支持自动省流量，仅在需要自动省流量时，才需要动态控制摄像头
+                boolean autoDisableCamera = ZegoApplication.getAppContext().isAutoDisableCamera();
+                if (!autoDisableCamera) return;
+
+                mCameraControlHandler.removeCallbacksAndMessages(null);
+
+                if ((mTotalUsers.size() > 0 || !TextUtils.isEmpty(mCurrentPlayer.userID)) && mCurrentCameraDisabled) {
+                    mCameraControlHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            AppLogger.getInstance().writeLog("== enable camera ==");
+                            mZegoLiveRoom.enableCamera(true);
+                            mZegoLiveRoom.enableCamera(true, ZegoConstants.PublishChannelIndex.AUX);
+                            mCurrentCameraDisabled = false;
+                        }
+                    });
+
+                    toggleCameraPreviewView(true);
+                } else if ((mTotalUsers.size() == 0 && TextUtils.isEmpty(mCurrentPlayer.userID)) && !mCurrentCameraDisabled) {
+                    int disableCameraInterval = ZegoApplication.getAppContext().getDisableCameraInterval();
+                    mCameraControlHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            AppLogger.getInstance().writeLog("== disable camera ==");
+                            mZegoLiveRoom.enableCamera(false);
+                            mZegoLiveRoom.enableCamera(false, ZegoConstants.PublishChannelIndex.AUX);
+                            mCurrentCameraDisabled = true;
+
+                            toggleCameraPreviewView(false);
+                        }
+                    }, disableCameraInterval * 1000);  // 当房间内没有人时，延时启动配置中指定秒数关闭摄像头以达到节省流量的目的
+                }
+            }
+        });
+    }
+
+    /**
+     * override from {@link IStateChangedListener}
      * @param width
      * @param height
      * @param channelIndex
@@ -821,7 +1036,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
      */
     @Override
     public void onPublishStateUpdate(int stateCode, String streamId) {
@@ -842,7 +1057,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
      */
     @Override
     public void onDisconnect() {
@@ -850,7 +1065,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
      * @param errorCode 错误码
      */
     @Override
@@ -866,23 +1081,57 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IStateChangedListener
+     * override from {@link IStateChangedListener}
      * @param streamId 流 ID
-     * @param count 发送此通知的次数
      */
     @Override
-    public void onPublishNullStream(String streamId, int count) {
-        boolean restartApp = (count >= 3); // 如果出现 3 次这种情况, 则重启应用后再推流
-        if (restartApp) {
-            AppLogger.getInstance().writeLog("discover null stream: %s, quit the main process then restart it with guard", streamId);
-            quit(false);
-        } else {
-            reLoginRoomAndPublishStream(String.format("discover null stream: %s, relogin room and then republish stream", streamId));
-        }
+    public void onCaptureFpsAnomaly(final String streamId) {
+        runOnWorkThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mCurrentCameraDisabled) {
+                    AppLogger.getInstance().writeLog("camera is disable just now, ignore null stream action");
+                    return;
+                }
+
+                AppLogger.getInstance().writeError("capture fps anomaly, may be camera is not working just now! stop publish stream");
+
+                mRetryHandler.removeMessages(RetryHandler.MSG_RELOGIN_ROOM);
+                mRetryHandler.removeMessages(RetryHandler.MSG_REPUBLISH_STREAM);
+
+                mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.MAIN);
+                mZegoLiveRoom.stopPublishing(ZegoConstants.PublishChannelIndex.AUX);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showErrorDialog(R.string.vt_dialog_camera_device_anomaly);
+                    }
+                });
+
+            }
+        });
     }
 
     /**
-     * override from IRoomClient
+     * 用户状态变更（预约上机 | 开始上机 | 中断上机 | 结束上机）
+     * @param state 1: 预约; 2: 开始上机; 3:放弃上机; 4: 结束上机。详见 WawajiAdmin.E_USER_STATE
+     * @param stateResult 当前状态对应的结果信息，如是否抓中（1：抓中；0：未抓中）
+     * @param stateDetail 当前详细的结果信息，用于对 stateResult 的补充，一般为一个 JSON 字符串
+     * @param userId 用户 ID
+     * @param nickName 用户名
+     * @param playSession 当前上机的 Session
+     * @param timestamp 本次状态的时间戳
+     */
+    @Override
+    public void onUserStateChanged(int state, int stateResult, String stateDetail,
+                                   String userId, String nickName, String playSession, long timestamp) {
+        mStateManager.sendUserState(state, stateResult, stateDetail, userId, nickName,
+                PrefUtil.getInstance().getRoomId(), playSession, timestamp);
+    }
+
+    /**
+     * override from {@link IRoomClient}
      * @return
      */
     @Override
@@ -891,7 +1140,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IRoomClient
+     * override from {@link IRoomClient}
      * @return
      */
     @Override
@@ -900,7 +1149,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IRoomClient
+     * override from {@link IRoomClient}
      */
     @Override
     public void updateCurrentPlayerInfo(final String userId, final String userName) {
@@ -915,7 +1164,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
     }
 
     /**
-     * override from IRoomClient
+     * override from {@link IRoomClient}
      * @return
      */
     @Override
@@ -923,6 +1172,39 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         return mZegoLiveRoom;
     }
 
+    private Object mUpgradeLock = new Object();
+    private boolean isAppNeedUpgrade = false;
+    /**
+     * override from {@link IRoomClient}
+     * @return 如果当前应用准备升级，则返回 true, 否则返回 false
+     */
+    @Override
+    public boolean needUpgradeApp() {
+        synchronized (mUpgradeLock) {
+            return isAppNeedUpgrade;
+        }
+    }
+
+    private String localApkPath;
+
+    /**
+     * override form {@link IRoomClient}
+     */
+    @Override
+    public void upgradeMySelf() {
+        AppLogger.getInstance().writeLog("begin upgrade");
+
+        runOnWorkThread(new Runnable() {
+            @Override
+            public void run() {
+                UpgradeUtil.installApkSilent(localApkPath, MainActivity.this);
+            }
+        });
+    }
+
+    /**
+     * override from {@link IRoomClient}
+     */
     @Override
     public void runOnWorkThread(Runnable task) {
         if (Looper.myLooper() == mWorkHandler.getLooper()) {
@@ -932,6 +1214,10 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }
     }
 
+    /**
+     * override from {@link IRoomClient}
+     * @return
+     */
     @Override
     public void requireRestart(String reason) {
         AppLogger.getInstance().writeLog(reason);
@@ -943,48 +1229,60 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         }, 500);
     }
 
+    @Override
+    public boolean cameraIsDisabled() {
+        return mCurrentCameraDisabled;
+    }
+
+    /**
+     * override from {@link UpgradeStateObserver}
+     * @param needUpgrade
+     * @param localApkPath
+     */
+    @Override
+    public void onUpgradeStateChanged(boolean needUpgrade, final String localApkPath) {
+        synchronized (mUpgradeLock) {
+            this.isAppNeedUpgrade = needUpgrade;
+            this.localApkPath = localApkPath;
+        }
+
+        runOnWorkThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mQueueUsers.size() == 0 && TextUtils.isEmpty(mCurrentPlayer.userID)) {
+                    UpgradeUtil.installApkSilent(localApkPath, MainActivity.this);
+                }
+            }
+        });
+    }
+
     private class UpdateTimeCallbackImpl extends CBUpdateTime.Stub {
         @Override
         public void onSysTimeUpdated(boolean success) throws RemoteException {
             mTimeUpdateSuccess = success;
             AppLogger.getInstance().writeLog("update time success? " + success);
 
-            if (!success) { // 时间更新失败，退出应用
+            if (success) {
+                initStateReporter();
+            } else { // 时间更新失败，退出应用
                 requireRestart("update time failed");
             }
         }
     }
 
-    private Binder mBinder = new Binder();
-    private IRemoteApi mRemoteApi;
-
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-
+    private class UpdateTimeCallbackImpl2 extends OnSysTimeUpdateFinish.Stub {
         @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mRemoteApi = IRemoteApi.Stub.asInterface(service);
-            try {
-                AppLogger.getInstance().writeLog("call join when onServiceConnected");
-                mRemoteApi.join(mBinder);   // 此处为 UI 进程异常退出时能重启的关键
-            } catch (RemoteException e) {
-                AppLogger.getInstance().writeLog("join failed when onServiceConnected. exception: %s", e);
-            }
+        public void onSysTimeUpdateFinish(boolean success) throws RemoteException {
+            mTimeUpdateSuccess = success;
+            AppLogger.getInstance().writeLog("update time success? " + success);
 
-            try {
-                String sdkVersion = ZegoLiveRoom.version();
-                String veVersion = ZegoLiveRoom.version2();
-                AppLogger.getInstance().writeLog("update bugly info with sdkVersion : %s & veVersion : %s", sdkVersion, veVersion);
-                mRemoteApi.updateBuglyInfo(sdkVersion, veVersion);
-            } catch (RemoteException e) {
-                AppLogger.getInstance().writeLog("update bugly info failed when onServiceConnected. exception: %s", e);
+            if (success) {
+                initStateReporter();
+            } else { // 时间更新失败，退出应用
+                requireRestart("update time failed");
             }
         }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            AppLogger.getInstance().writeLog("onServiceDisconnected");
-        }
-    };
+    }
 
     private AppCompatSeekBar.OnSeekBarChangeListener mSeekBarChangeListener = new AppCompatSeekBar.OnSeekBarChangeListener() {
         @Override
@@ -1030,6 +1328,7 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
         static final int MSG_RELOGIN_ROOM = 1;
         static final int MSG_REPUBLISH_STREAM = 2;
         static final int MSG_WAIT_TIME_SYNC_FINISH = 3;
+        static final int MSG_WAIT_USER_STATE_SERVICE_INIT_FINISH = 4;
 
         public RetryHandler(Looper looper) {
             super(looper);
@@ -1050,7 +1349,12 @@ public class MainActivity extends AppCompatActivity implements IStateChangedList
                     break;
 
                 case MSG_WAIT_TIME_SYNC_FINISH:
-                    AppLogger.getInstance().writeLog("relogin room with wait time sync");
+                    AppLogger.getInstance().writeLog("retry login room with wait time sync");
+                    loginRoom(true);
+                    break;
+
+                case MSG_WAIT_USER_STATE_SERVICE_INIT_FINISH:
+                    AppLogger.getInstance().writeLog("retry login room with wait user state service init finish");
                     loginRoom(true);
                     break;
 

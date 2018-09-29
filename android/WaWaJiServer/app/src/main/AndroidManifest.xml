@@ -45,7 +45,16 @@
         <activity android:name=".TestActivity">
         </activity>
 
-        <receiver android:name=".BootCompletedReceiver"
+        <receiver android:name=".receive.PackageReplacedReceiver"
+            android:process=":guard"
+            android:exported="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".receive.BootCompletedReceiver"
             android:process=":guard">
             <intent-filter android:priority="1000" >
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

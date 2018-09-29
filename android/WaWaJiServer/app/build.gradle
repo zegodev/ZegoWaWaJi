@@ -11,8 +11,8 @@ android {
         applicationId "com.zego.zegowawaji_server"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 25
-        versionName "1.4.25"
+        versionCode 33
+        versionName "1.6.33"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 //        externalNativeBuild {
 //            cmake {
@@ -81,7 +81,8 @@ dependencies {
     compile 'com.android.support:design:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:support-v4:26.+'
-    compile 'com.tencent.bugly:crashreport:2.2.2'
-    compile 'com.tencent.bugly:nativecrashreport:3.0'
+    compile 'com.tencent.bugly:crashreport:2.6.6'
+    compile 'com.tencent.bugly:nativecrashreport:3.3.1'
+
     testCompile 'junit:junit:4.12'
 }

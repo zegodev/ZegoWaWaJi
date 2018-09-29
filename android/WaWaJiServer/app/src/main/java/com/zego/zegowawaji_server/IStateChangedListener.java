@@ -17,5 +17,10 @@ public interface IStateChangedListener {
 
     void onCameraError(int errorCode);
 
-    void onPublishNullStream(String streamId, int count);
+    void onCaptureFpsAnomaly(String streamId);
+
+    void onUserUpdate();
+
+    void onUserStateChanged(int state, int stateResult, String stateDetail,
+                            String userId, String nickName, String playSession, long timestamp);
 }

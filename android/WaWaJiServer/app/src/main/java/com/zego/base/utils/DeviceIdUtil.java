@@ -71,7 +71,7 @@ public class DeviceIdUtil {
      * 获取有线网卡的 MAC 地址
      * @return
      */
-    static private String getEthernetMac() {
+    static public String getEthernetMac() {
         String macSerial = null;
         String str = "";
         try {

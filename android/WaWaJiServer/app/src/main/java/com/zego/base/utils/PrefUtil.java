@@ -42,6 +42,7 @@ public class PrefUtil {
     static private String KEY_ENCRYPTED_GAME_CONFIG = "_zego_encrypted_game_config";
 
     static private String KEY_USE_TEST_ENV = "_zego_use_test_env";
+    static private String KEY_APK_DOWNLOAD_ID = "_zego_apk_download_id";
 
     private SharedPreferences mPref;
 
@@ -228,6 +229,14 @@ public class PrefUtil {
 
     public boolean isUseTestEnv() {
         return mPref.getBoolean(KEY_USE_TEST_ENV, false);
+    }
+
+    public void setDownloadId(long id) {
+        setLong(KEY_APK_DOWNLOAD_ID, id);
+    }
+
+    public long getDownloadId() {
+        return mPref.getLong(KEY_APK_DOWNLOAD_ID, -1);
     }
 
     public void clearAll() {

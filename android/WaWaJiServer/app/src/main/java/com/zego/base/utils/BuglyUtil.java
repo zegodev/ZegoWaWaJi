@@ -14,22 +14,27 @@ import com.tencent.bugly.crashreport.CrashReport;
 public class BuglyUtil {
     static final private  String BUGLY_APP_KEY = "e8f51c6215";
 
-    static public void initCrashReport(Context context, boolean isUploadProcess, String sdkVersion, String veVersion) {
+    static public void initCrashReport(Context context, boolean isUploadProcess, String sdkVersion, String veVersion, long appId) {
+        updateVersionInfo(context, sdkVersion, veVersion, appId);
+
+        CrashReport.putUserData(context, "deviceId", DeviceIdUtil.generateDeviceId(context));
+
         CrashReport.UserStrategy strategy = new CrashReport.UserStrategy(context);
         strategy.setBuglyLogUpload(isUploadProcess);
+        strategy.setAppChannel(String.format("app_id_%d", appId));
         CrashReport.initCrashReport(context, BUGLY_APP_KEY, false, strategy);
-
-        CrashReport.setUserId(DeviceIdUtil.generateDeviceId(context));
-
-        updateVersionInfo(context, sdkVersion, veVersion);
     }
 
-    static public void updateVersionInfo(Context context, String sdkVersion, String veVersion) {
+    static public void updateVersionInfo(Context context, String sdkVersion, String veVersion, long appId) {
         if (!TextUtils.isEmpty(sdkVersion)) {
-            CrashReport.setSdkExtraData(context, "zego_liveroom_version", sdkVersion);
+            CrashReport.putUserData(context, "zegoLiveroomVersion", sdkVersion);
         }
         if (!TextUtils.isEmpty(veVersion)) {
-            CrashReport.setSdkExtraData(context, "zego_ve_version", veVersion);
+            CrashReport.putUserData(context, "zegoVeVersion", veVersion);
+        }
+
+        if (appId != 0) {
+            CrashReport.setAppChannel(context, String.format("app_id_%d", appId));
         }
     }
 }

@@ -12,6 +12,7 @@ import com.zego.base.utils.DeviceIdUtil;
 import com.zego.base.utils.OSUtils;
 import com.zego.base.utils.PkgUtil;
 import com.zego.base.utils.PrefUtil;
+import com.zego.zegoavkit2.audiodevice.ZegoExternalAudioDevice;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.constants.ZegoAvConfig;
 import com.zego.zegoliveroom.constants.ZegoConstants;
@@ -33,6 +34,8 @@ public class ZegoApplication extends Application {
     private byte[] mServerSecret;
     private String mCompanyName;
     private GameConfig mDefaultGameConfig;
+    private boolean mAutoDisableCamera;
+    private int mDisableCameraInterval;
 
     private ZegoLiveRoom mZegoLiveRoom;
 
@@ -57,10 +60,13 @@ public class ZegoApplication extends Application {
             String[] appVersion = PkgUtil.getAppVersion(this);
             AppLogger.getInstance().writeLog("=== current app versionName: %s; versionCode: %s ===", appVersion[0], appVersion[1]);
 
-            BuglyUtil.initCrashReport(this, true, ZegoLiveRoom.version(), ZegoLiveRoom.version2());
-
             boolean success = loadActivateConfig();
             if (success) {
+                String sdkVersion = ZegoLiveRoom.version();
+                String veVersion = ZegoLiveRoom.version2();
+                long appId = ZegoApplication.getAppContext().getAppId();
+                BuglyUtil.initCrashReport(this, true, sdkVersion, veVersion, appId);
+
                 startGuardService();
 
                 initUserInfo();
@@ -88,6 +94,8 @@ public class ZegoApplication extends Application {
         mServerSecret = "f4ef312166bb1ae7787b66b438561813".getBytes();
         mCompanyName = "客户体验_Debug";
         mDefaultGameConfig = new GameConfig();
+        mAutoDisableCamera = false;
+        mDisableCameraInterval = 120;
 
         return true;
     }
@@ -133,8 +141,13 @@ public class ZegoApplication extends Application {
         AppLogger.getInstance().writeLog("set userId & userName with : %s, %s", userId, userName);
 
         ZegoLiveRoom.setUser(userId, userName);
-        ZegoLiveRoom.requireHardwareEncoder(true);
-        ZegoLiveRoom.requireHardwareDecoder(true);
+
+        // 目前娃娃机上使用的Android板在开启硬编硬解时，会导致 CPU 占用率升高 20% 左右
+        ZegoLiveRoom.requireHardwareEncoder(false);
+        ZegoLiveRoom.requireHardwareDecoder(false);
+
+        // 开启外部音频采集，以关闭 ve 内置音频模块，到达降低 CPU 占用率的目的
+        ZegoExternalAudioDevice.enableExternalAudioDevice(true);
 
         AppLogger.getInstance().writeLog("use test env ? %s", mIsUseTestEnv);
         ZegoLiveRoom.setTestEnv(mIsUseTestEnv);
@@ -149,7 +162,7 @@ public class ZegoApplication extends Application {
     private void initZegoSDK(ZegoLiveRoom liveRoom) {
         boolean success = liveRoom.initSDK(mAppId, mSignKey);
         if (!success) {
-            AppLogger.getInstance().writeLog("Init ZegoLiveRoom SDK failed");
+            AppLogger.getInstance().writeError("Init ZegoLiveRoom SDK failed");
             Toast.makeText(sInstance, "", Toast.LENGTH_LONG).show();
             return;
         }
@@ -201,6 +214,10 @@ public class ZegoApplication extends Application {
         liveRoom.setAVConfig(config, ZegoConstants.PublishChannelIndex.AUX);
     }
 
+    public long getAppId() {
+        return mAppId;
+    }
+
     public byte[] getServerSecret(){
         return mServerSecret;
     }
@@ -211,5 +228,13 @@ public class ZegoApplication extends Application {
 
     public GameConfig getDefaultGameConfig(){
         return mDefaultGameConfig;
+    }
+
+    public boolean isAutoDisableCamera() {
+        return mAutoDisableCamera;
+    }
+
+    public int getDisableCameraInterval() {
+        return mDisableCameraInterval;
     }
 }
