@@ -115,6 +115,28 @@ typedef enum
 
 @end
 
+
+/** 房间不可靠消息 */
+@interface ZegoBigRoomMessage : NSObject
+
+/** 来源用户 Id */
+@property (nonatomic, copy) NSString *fromUserId;
+/** 来源用户名 */
+@property (nonatomic, copy) NSString *fromUserName;
+/** 消息 Id */
+@property (nonatomic, copy) NSString *messageId;
+/** 内容 */
+@property (nonatomic, copy) NSString *content;
+/** 消息类型 */
+@property (nonatomic, assign) ZegoMessageType type;
+/** 消息优先级 */
+@property (nonatomic, assign) ZegoMessagePriority priority;
+/** 消息类别 */
+@property (nonatomic, assign) ZegoMessageCategory category;
+
+@end
+
+
 /** 用户 */
 @interface ZegoUser : NSObject
 

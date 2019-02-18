@@ -25,6 +25,15 @@
 - (bool)setPublisherDelegate:(id<ZegoLivePublisherDelegate>)publisherDelegate;
 
 /**
+ 设置选用分层编码
+ 
+ @param codecId 是否选用分层编码
+ @return true 成功，false 失败
+ @discussion 设置选用分层编码,在InitSDK后，推流前调用有效
+ */
+- (bool)setVideoCodecId:(ZegoVideoCodecAvc)codecId ofChannel:(ZegoAPIPublishChannelIndex)channel;
+
+/**
  设置本地预览视图
  
  @param view 用于渲染本地预览视频的视图
@@ -92,7 +101,7 @@
 /**
  自定义推流配置
  
- @param config 配置信息 key-value，目前 key 仅支持 kPublishCustomTarget ，value 为用户自定义的转推 RTMP 地址。参考 ZegoLiveRoomApiDefines.h 中相关定义
+ @param config 配置信息 key-value，目前 key 仅支持 kPublishCustomTarget ，value 为用户自定义的转推 RTMP 地址。参考 zego-api-defines-oc.h 中相关定义
  @discussion 开发者如果使用自定义转推功能，推流开始前，必须调用此接口设置转推 RTMP 地址（SDK 推流方式必须为 UDP，转推地址必须为 RTMP），否则可能导致转推失败。
  */
 - (void)setPublishConfig:(NSDictionary *)config;
@@ -273,6 +282,16 @@
 - (bool)enableCaptureMirror:(bool)enable;
 
 /**
+ 是否启用预览和推流镜像
+ 
+ @param mode 镜像模式
+ @return true 成功，false 失败
+ @discussion 推流时可调用本 API 进行参数配置
+ @note 默认启用预览镜像，不启用推流镜像
+ */
+- (bool)setVideoMirrorMode:(ZegoVideoMirrorMode)mode;
+
+/**
  是否开启码率控制
  
  @param enable true 启用，false 不启用。默认不启用
@@ -280,6 +299,14 @@
  @discussion 开启后，在带宽不足的情况下码率自动适应当前带宽
  */
 - (bool)enableRateControl:(bool)enable;
+
+/**
+ 设置编码器码率控制策略
+ 
+ @param strategy 策略配置，参考 ZegoVideoEncoderRateControlStrategy
+ @param encoderCRF 当策略为恒定质量（ZEGOAPI_RC_VBR/ZEGOAPI_RC_CRF）有效，取值范围 [0~51]，越小质量越好，但是码率会相应变大。建议取值范围 [18, 28]
+ */
+- (void)setVideoEncoderRateControlConfig:(ZegoAPIVideoEncoderRateControlStrategy)strategy encoderCRF:(int)encoderCRF;
 
 /**
  是否使用前置摄像头
@@ -337,10 +364,18 @@
 /**
  设置采集监听音量
  
- @param volume 音量大小，取值（0, 100）。默认 100
+ @param volume 音量大小，取值（0, 100）。默认 80
  @discussion 推流时可调用本 API 进行参数配置
  */
 - (void)setLoopbackVolume:(int)volume;
+
+/**
+ 设置采集音量
+ 
+ @param volume 音量大小，取值（0, 100）。默认 100
+ @discussion SDK初始化成功后调用
+ */
+- (void)setCaptureVolume:(int)volume;
 
 /**
  混音开关
@@ -480,7 +515,9 @@
  设置推流音频声道数
  
  @param count 声道数，1 或 2，默认为 1（单声道）
- @discussion 必须在初始化 SDK 后，调用推流前设置。setLatencyMode 设置为 ZEGOAPI_LATENCY_MODE_NORMAL 或 ZEGOAPI_LATENCY_MODE_NORMAL2 才能设置双声道，在移动端双声道通常需要配合音频前处理才能体现效果
+ @discussion 必须在初始化 SDK 后，调用推流前设置。
+ @discussion setLatencyMode 设置为 ZEGO_LATENCY_MODE_NORMAL, ZEGO_LATENCY_MODE_NORMAL2, ZEGO_LATENCY_MODE_LOW3 才能设置双声道
+ @discusssion 在移动端双声道通常需要配合音频前处理才能体现效果
  */
 - (void)setAudioChannelCount:(int)count;
 
@@ -503,8 +540,9 @@
 /**
  是否开启流量控制
  
- @param enable true 开启；false 关闭。默认开启流量控制，property 为 ZEGOAPI_TRAFFIC_FPS
+ @param enable true 开启；false 关闭。默认开启流量控制，property 为 ZEGOAPI_TRAFFIC_CONTROL_ADAPTIVE_FPS
  @param properties 流量控制属性 (帧率，分辨率）可以多选, 参考ZegoAPITrafficControlProperty定义
+ @discussion enable设置为false时，properties参数会被忽略
  @discussion 在推流前调用，在纯 UDP 方案才可以调用此接口
  */
 - (void)enableTrafficControl:(bool)enable properties:(NSUInteger)properties;
@@ -516,6 +554,14 @@
  @return true 调用成功，false 调用失败
  */
 - (bool)enableNoiseSuppress:(bool)enable;
+
+/**
+ 设置推流质量监控周期
+ 
+ @param timeInMS 时间周期，单位为毫秒，取值范围为(500, 60000)。默认为 3000
+ @discussion 必须在推流前调用才能生效。该设置会影响 [ZegoLivePublisherDelegate -onPublishQualityUpdate:quality:] 的回调频率
+ */
++ (void)setPublishQualityMonitorCycle:(unsigned int)timeInMS;
 
 @end
 
@@ -609,14 +655,34 @@
 
 /**
  混音数据输入回调
- 
  @param pData 混音数据
- @param pDataLen 缓冲区长度。实际填充长度必须为 0 或是缓冲区长度。0 代表无混音数据
+ <p><b>注意：</b>
+ 1. 最大支持 48k 采样率、双声道、16位深的 PCM 音频数据；<br>
+ 2. 实际数据长度应根据当前音频数据的采样率及声道数决定；<br>
+ 3. 为确保混音效果，请不要在此 API 中执行耗时操作</p>
+ @param pDataLen pDataLen既是输入参数也是输出参数；
+                 作为输入参数，SDK会提供好长度值，用户按照这个长度写入数据即可，数据充足的情况下，无需更改*pDataLen的值
+                 作为输出参数，如果填写的数据不足SDK提供的长度值，则*pDataLen = 0,
+                 或者最后的尾音不足 SDK提供的长度值，可以用静音数据补齐。
  @param pSampleRate 混音数据采样率，支持16k、32k、44.1k、48k
  @param pChannelCount 混音数据声道数，支持1、2
  @discussion 用户调用该 API 将混音数据传递给 SDK。混音数据 bit depth 必须为 16
  */
 - (void)onAuxCallback:(void *)pData dataLen:(int *)pDataLen sampleRate:(int *)pSampleRate channelCount:(int *)pChannelCount;
+
+/**
+ 转推CDN状态信息更新
+ @param statesInfo CDN状态信息
+ @param streamID 推流的流ID
+ */
+- (void)onRelayCDNStateUpdate:(NSArray<ZegoAPIStreamRelayCDNInfo *> *)statesInfo streamID:(NSString*)streamID;
+
+/**
+ 采集视频的首帧通知
+ */
+- (void)onCaptureVideoFirstFrame;
+
+- (void)onCaptureVideoFirstFrame:(ZegoAPIPublishChannelIndex)index;
 
 @end
 

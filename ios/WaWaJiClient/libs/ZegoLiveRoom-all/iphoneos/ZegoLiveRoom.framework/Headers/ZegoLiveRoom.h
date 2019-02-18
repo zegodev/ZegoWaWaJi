@@ -19,7 +19,9 @@ FOUNDATION_EXPORT const unsigned char ZegoLiveRoomVersionString[];
 #import <ZegoLiveRoom/ZegoLiveRoomApi-Publisher.h>
 #import <ZegoLiveRoom/ZegoLiveRoomApi-IM.h>
 #import <ZegoLiveRoom/ZegoLiveRoomApi-ReplayLive.h>
+#import <ZegoLiveRoom/ZegoLiveRoomApi-Relay.h>
 #import <ZegoLiveRoom/ZegoLiveRoomApiDefines.h>
 #import <ZegoLiveRoom/ZegoLiveRoomApiDefines-Publisher.h>
 #import <ZegoLiveRoom/ZegoLiveRoomApiDefines-IM.h>
+#import <ZegoLiveRoom/ZegoLiveRoomApiDefines-Relay.h>
 #import <ZegoLiveRoom/ZegoChatRoomApi.h>

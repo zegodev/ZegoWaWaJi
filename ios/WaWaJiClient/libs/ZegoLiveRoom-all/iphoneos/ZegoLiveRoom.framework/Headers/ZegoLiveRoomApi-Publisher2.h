@@ -101,7 +101,7 @@
 /**
  自定义推流配置
  
- @param config 配置信息 key-value，目前 key 仅支持 kPublishCustomTarget ，value 为用户自定义的转推 RTMP 地址。参考 ZegoLiveRoomApiDefines.h 中相关定义
+ @param config 配置信息 key-value，目前 key 仅支持 kPublishCustomTarget ，value 为用户自定义的转推 RTMP 地址。参考 zego-api-defines-oc.h 中相关定义
  @param index 推流 channel Index
  @discussion 开发者如果使用自定义转推功能，推流开始前，必须调用此接口设置转推 RTMP 地址（SDK 推流方式必须为 UDP，转推地址必须为 RTMP），否则可能导致转推失败。
  */
@@ -116,6 +116,16 @@
  @discussion 推流开始前调用本 API 进行视频采集参数配置
  */
 - (bool)setAVConfig:(ZegoAVConfig *)config channelIndex:(ZegoAPIPublishChannelIndex)index;
+
+/**
+ 设置视频关键帧间隔
+ 
+ @param intervalSecond 关键帧间隔，单位为秒，默认2秒
+ @param index 推流 channel Index
+ @return true 成功，false 失败
+ @attention 推流开始前调用本 API 进行参数配置
+ */
+- (bool)setVideoKeyFrameInterval:(int)intervalSecond channelIndex:(ZegoAPIPublishChannelIndex)index;
 
 #if TARGET_OS_IPHONE
 /**
@@ -231,6 +241,17 @@
 - (bool)enableCaptureMirror:(bool)enable channelIndex:(ZegoAPIPublishChannelIndex)index;
 
 /**
+ 是否启用预览和推流镜像
+ 
+ @param mode 镜像模式
+ @param index 推流 channel Index
+ @return true 成功，false 失败
+ @discussion 推流时可调用本 API 进行参数配置
+ @note 默认启用预览镜像，不启用推流镜像
+ */
+- (bool)setVideoMirrorMode:(ZegoVideoMirrorMode)mode channelIndex:(ZegoAPIPublishChannelIndex)index;
+
+/**
  是否开启码率控制
  
  @param enable true 启用，false 不启用。默认不启用
@@ -239,6 +260,15 @@
  @discussion 开启后，在带宽不足的情况下码率自动适应当前带宽
  */
 - (bool)enableRateControl:(bool)enable channelIndex:(ZegoAPIPublishChannelIndex)index;
+
+/**
+ 设置编码器码率控制策略
+ 
+ @param strategy 策略配置，参考 ZegoVideoEncoderRateControlStrategy
+ @param encoderCRF 当策略为恒定质量（ZEGOAPI_RC_VBR/ZEGOAPI_RC_CRF）有效，取值范围 [0~51]，越小质量越好，但是码率会相应变大。建议取值范围 [18, 28]
+ @param index 推流 channel Index
+ */
+- (void)setVideoEncoderRateControlConfig:(ZegoAPIVideoEncoderRateControlStrategy)strategy encoderCRF:(int)encoderCRF channelIndex:(ZegoAPIPublishChannelIndex)index;
 
 /**
  是否使用前置摄像头

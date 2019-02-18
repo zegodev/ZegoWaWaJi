@@ -57,6 +57,16 @@ typedef struct {
     ZegoVideoCodecType codecType;
 } ZegoVideoCodecConfig;
 
+/** 翻转模式 */
+typedef enum : NSUInteger {
+    /** 不翻转 */
+    ZegoVideoFlipNone = 0,
+    /** 水平翻转，镜像 */
+    ZegoVideoFlipHorizontal = 1 << 0,
+    /** 垂直翻转 */
+    ZegoVideoFlipVertical = 1 << 1,
+} ZegoVideoFlipMode;
+
 /** 视频外部采集代理 */
 @protocol ZegoVideoCaptureDelegate <NSObject>
 
@@ -117,7 +127,22 @@ typedef struct {
  */
 - (void)onError:(nullable NSString*)reason;
 
+
+/**
+ 设置图像填充模式
+
+ @param mode 填充模式
+ */
 - (void)setFillMode:(ZegoVideoFillMode)mode;
+
+/**
+ 设置图像翻转模式
+
+ @param mode 翻转模式, 参考ZegoVideoFlipMode的定义
+ @discussion supportBufferType 为 ZegoVideoCaptureDeviceOutputBufferTypeGlTexture2D 时有效
+ @discussion 默认值 ZegoVideoFlipVertical, 如果不需要，设置成ZegoVideoFlipNone
+ */
+- (void)setFlipMode:(int)mode;
 
 @end
 

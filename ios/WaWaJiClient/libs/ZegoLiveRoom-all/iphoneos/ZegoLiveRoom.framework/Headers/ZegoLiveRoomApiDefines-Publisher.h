@@ -8,6 +8,11 @@
 #ifndef ZegoLiveRoomApiDefines_Publisher_h
 #define ZegoLiveRoomApiDefines_Publisher_h
 
+/** 外部渲染推流第一路流 */
+ZEGO_EXTERN NSString *const kZegoVideoDataMainPublishingStream;
+/** 外部渲染推流第二路流 */
+ZEGO_EXTERN NSString *const kZegoVideoDataAuxPublishingStream;
+
 /** 预设直播配置 */
 typedef enum {
     /** 超低质量 */
@@ -76,6 +81,8 @@ typedef enum {
 @property (assign) int fps;
 /**  视频码率 */
 @property (assign) int bitrate;
+/**  音频码率 */
+@property (assign) int audioBitrate;
 
 @end
 

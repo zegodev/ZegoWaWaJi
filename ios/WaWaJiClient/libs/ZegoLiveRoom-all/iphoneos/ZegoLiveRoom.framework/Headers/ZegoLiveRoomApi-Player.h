@@ -119,6 +119,7 @@
  @param bOn true 打开，false 关闭。默认 true
  @return true 成功，false 失败
  @discussion 设置为关闭后，扬声器无声音，耳机仍有声音输出
+ @discussion 在推流之前设置, 且 setAudioDeviceMode 设置为 ZEGOAPI_AUDIO_DEVICE_MODE_COMMUNICATION 时有效
  */
 - (bool)setBuiltInSpeakerOn:(bool)bOn;
 
@@ -187,7 +188,7 @@
  @param streamID 播放流 ID
  @param active true 接收，false 不接收
  @return 0 成功，否则失败
- @discussion 仅拉 UDP 流有效
+ @discussion 仅拉 UDP 流有效，必须在拉流后调用才有效
  */
 - (int)activateAudioPlayStream:(NSString *)streamID active:(bool)active;
 
@@ -197,9 +198,20 @@
  @param streamID 播放流 ID
  @param active true 接收，false 不接收
  @return 0 成功，否则失败
- @discussion 仅拉 UDP 流有效
+ @discussion 仅拉 UDP 流有效，必须在拉流后调用才有效
  */
-- (int)activateVedioPlayStream:(NSString *)streamID active:(bool)active;
+- (int)activateVideoPlayStream:(NSString *)streamID active:(bool)active;
+
+/**
+ 拉流是否接收视频数据
+ 
+ @param streamID 播放流 ID
+ @param active true 接收，false 不接收
+ @param videoLayer 视频分层类型
+ @return 0 成功，否则失败
+ @discussion 仅拉 UDP 流有效，必须在拉流后调用才有效
+ */
+- (int)activateVideoPlayStream:(NSString *)streamID active:(bool)active videoLayer:(VideoStreamLayer)videoLayer;
 
 /**
  设置拉流质量监控周期
@@ -212,6 +224,8 @@
 /**
  设置外部渲染
  
+ @warning Deprecated，请使用 ZegoExternalVideoRender
+ 
  @param bEnable 是否外部渲染，true 是，false 不是。默认 false
  @discussion 必须在初始化 SDK 前调用。启用外部渲染后，需要设置外部渲染回调代理对象。SDK 提供给用户外部渲染的源数据格式为 BGRA32
  */
@@ -219,6 +233,8 @@
 
 /**
  设置外部渲染回调对象
+ 
+ @warning Deprecated，请使用 ZegoExternalVideoRender
  
  @param renderDelegate 遵循 ZegoLiveApiRenderDelegate 协议的代理对象
  @discussion 使用外部渲染功能，需要设置代理对象。未设置代理对象，或对象设置错误，可能导致无法正常收到相关回调
@@ -378,7 +394,7 @@
  
  @param pixelBuffer 拷贝完成的 PixelBuffer 地址
  @param streamID 流名
- @discussion SDK 通过此回调通知用户数据拷贝完成
+ @discussion SDK 通过此回调通知用户数据拷贝完成。当外部渲染拉流数据，streamID 为拉流流名；当外部渲染推流数据，streamID 为常量 kZegoVideoDataMainPublishingStream 时表示第一路推流数据；streamID 为常量 kZegoVideoDataAuxPublishingStream 时表示第二路推流数据
  */
 - (void)onPixelBufferCopyed:(CVPixelBufferRef)pixelBuffer ofStream:(NSString *)streamID;
 
@@ -397,7 +413,7 @@
  @param numOfChannels 通道数量，单通道
  @param bitDepth 位深度，16 bit
  @param type 音源类型，参考 ZegoAPIAudioRecordMask
- @discussion 开启音频录制并设置成功代理对象后，用户调用此 API 获取 SDK 录制的音频数据。用户可自行对数据进行处理，例如：存储等。SDK 发送音频数据的周期为 20ms。存储数据时注意取 sampleRate、numOfChannels、bitDepth 参数写包头信息。退出房间后或停止录制后，该回调不再被调用
+ @discussion 开启音频录制并设置成功代理对象后，用户调用此 API 获取 SDK 录制的音频数据。用户可自行对数据进行处理，例如：存储等。存储数据时注意取 sampleRate、numOfChannels、bitDepth 参数写包头信息。退出房间后或停止录制后，该回调不再被调用
  */
 - (void)onAudioRecord:(NSData *)audioData sampleRate:(int)sampleRate numOfChannels:(int)numOfChannels bitDepth:(int)bitDepth type:(unsigned int)type;
 

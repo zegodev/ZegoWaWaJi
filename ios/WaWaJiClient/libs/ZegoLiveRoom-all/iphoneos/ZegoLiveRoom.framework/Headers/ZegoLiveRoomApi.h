@@ -14,6 +14,7 @@
 @protocol ZegoDeviceEventDelegate;
 @protocol ZegoAVEngineDelegate;
 
+typedef void(^ZegoInitSDKCompletionBlock)(int errorCode);
 typedef void(^ZegoLoginCompletionBlock)(int errorCode, NSArray<ZegoStream*> *streamList);
 typedef void(^ZegoResponseBlock)(int result, NSString *fromUserID, NSString *fromUserName);
 typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
@@ -94,6 +95,17 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  */
 - (instancetype)initWithAppID:(unsigned int)appID appSignature:(NSData*)appSignature;
 
+/**  
+ 初始化 SDK
+ 
+ @param appID  Zego 派发的数字 ID, 开发者的唯一标识
+ @param appSignature  Zego 派发的签名, 用来校验对应 appID 的合法性
+ @param blk 回调 block
+ @return SDK 实例，nil 表示初始化失败
+ @discussion 初始化 SDK 时调用。初始化 SDK 失败可能导致 SDK 功能异常
+ */
+- (instancetype)initWithAppID:(unsigned int)appID appSignature:(NSData*)appSignature completionBlock:(ZegoInitSDKCompletionBlock)blk;
+
 /**
  设置 room 代理对象
  
@@ -111,6 +123,14 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  @discussion 在 userStateUpdate 为 true 的情况下，用户进入、退出房间会触发 [ZegoLiveRoomApi (IM) -onUserUpdate:updateType:] 回调
  */
 - (void)setRoomConfig:(bool)audienceCreateRoom userStateUpdate:(bool)userStateUpdate;
+
+/**
+ 设置自定义token信息
+ 
+ @param thirdPartyToken 第三方传入的token
+ @discussion 使用此方法验证登录时用户的合法性，登录房间前调用，token的生成规则请联系即构。若不需要验证用户合法性，不需要调用此函数。
+ */
+- (void)setCustomToken:(NSString *)thirdPartyToken;
 
 /**
  登录房间
@@ -163,8 +183,6 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  */
 - (bool)setLiveEventDelegate:(id<ZegoLiveEventDelegate>)liveEventDelegate;
 
-
-#if TARGET_OS_IPHONE
 /**
  设置音视频设备错误回调代理对象
  
@@ -174,6 +192,8 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  */
 - (bool)setDeviceEventDelegate:(id<ZegoDeviceEventDelegate>)deviceEventDelegate;
 
+
+#if TARGET_OS_IPHONE
 /**
  暂停模块
  
@@ -189,6 +209,16 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  @discussion 用于需要恢复指定模块的场合，例如来电结束后恢复音频模块。暂停指定模块后，注意在合适时机下恢复模块
  */
 - (void)resumeModule:(int)moduleType;
+
+/**
+ 设置是否允许SDK使用麦克风设备
+ 
+ @param enable YES 表示允许使用麦克风，NO 表示禁止使用麦克风，此时如果SDK在占用麦克风则会立即释放。
+ @return YES 调用成功 NO 调用失败
+ @discussion 调用时机为引擎创建后的任意时刻。
+ @note 接口由于涉及对设备的操作，极为耗时，不建议随便调用，只在真正需要让出麦克风给其他应用的时候才调用
+ */
+- (BOOL)enableMicDevice:(BOOL)enable;
 #endif
 
 #if TARGET_OS_OSX
@@ -202,6 +232,169 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  */
 + (bool)setVideoDevice:(NSString *)deviceId;
 
+/**
+ 设置音频设备
+ 
+ @param deviceId 设备 Id
+ @param deviceType 设备类型
+ @return true 成功，false 失败
+ @discussion 本接口用于 Mac PC 端的业务开发
+ */
++ (bool)setAudioDevice:(NSString *)deviceId type:(ZegoAPIAudioDeviceType)deviceType;
+
+/**
+ 获取音频设备列表
+ 
+ @param deviceType 设备类型
+ @return 设备信息列表
+ */
+- (NSArray<ZegoAPIDeviceInfo *> *)getAudioDeviceList:(ZegoAPIAudioDeviceType)deviceType;
+
+/**
+ 获取视频设备列表
+ 
+ @return 设备信息列表
+ */
+- (NSArray<ZegoAPIDeviceInfo *> *)getVideoDeviceList;
+
+/**
+ 系统声卡声音采集开关
+ 
+ @param enable 是否打开
+ */
+- (void)enableMixSystemPlayout:(bool)enable;
+
+/**
+ 获取麦克风音量
+ 
+ @param deviceId 设备ID
+ @return -1: 获取失败 0 ~100 麦克风音量
+ @discussion 切换麦克风后需要重新获取麦克风音量
+ */
+- (int)getMicDeviceVolume:(NSString *)deviceId;
+
+/**
+ 设置麦克风音量
+ 
+ @param deviceId 设备ID
+ @param volume 音量 0 ~ 100
+ */
+- (void)setMicDevice:(NSString *)deviceId volume:(int)volume;
+
+/**
+ 获取扬声器音量
+ 
+ @param deviceId 设备ID
+ @return -1: 获取失败 0 ~100 音量
+ */
+- (int)getSpeakerDeviceVolume:(NSString *)deviceId;
+
+/**
+ 设置扬声器音量
+ 
+ @param deviceId 设备ID
+ @param volume 音量 0 ~ 100
+ */
+- (void)setSpeakerDevice:(NSString *)deviceId volume:(int)volume;
+
+/**
+ 获取app中扬声器音量
+ 
+ @param deviceId 设备ID
+ @return -1: 获取失败 0 ~100 音量
+ */
+- (int)getSpeakerSimpleVolume:(NSString *)deviceId;
+
+/**
+ 设置app中扬声器音量
+ 
+ @param deviceId 设备ID
+ @param volume 音量 0 ~ 100
+ */
+- (void)setSpeaker:(NSString *)deviceId simpleVolume:(int)volume;
+
+/**
+ 获取扬声器是否静音
+ 
+ @param deviceId 设备ID
+ @return true 静音 false 非静音
+ */
+- (bool)getSpeakerDeviceMute:(NSString *)deviceId;
+
+/**
+ 设置扬声器静音
+ 
+ @param deviceId 设备ID
+ @param mute 是否静音
+ */
+- (void)setSpeakerDevice:(NSString *)deviceId mute:(bool)mute;
+
+/**
+ 获取麦克风是否静音
+ 
+ @param deviceId 设备ID
+ @return true 静音 false 非静音
+ */
+- (bool)getMicDeviceMute:(NSString *)deviceId;
+
+/**
+ 设置麦克风静音
+ 
+ @param deviceId 设备ID
+ @param mute 是否静音
+ */
+- (void)setMicDevice:(NSString *)deviceId mute:(bool)mute;
+
+/**
+ 获取app中扬声器是否静音
+ 
+ @param deviceId 设备ID
+ @return true 静音 false 非静音
+ */
+- (bool)getSpeakerSimpleMute:(NSString *)deviceId;
+
+/**
+ 设置app中扬声器是否静音
+ 
+ @param deviceId 设备ID
+ @param mute 是否静音
+ */
+- (void)setSpeaker:(NSString *)deviceId simpleMute:(bool)mute;
+
+/**
+ 获取默认的视频设备
+ 
+ @return deviceId
+ */
+- (NSString *)getDefaultVideoDeviceId;
+
+/**
+ 获取默认的音频设备
+ 
+ @param deviceType 音频类型
+ @return deviceId
+ */
+- (NSString *)getDefaultAudioDeviceId:(ZegoAPIAudioDeviceType)deviceType;
+
+/**
+ 监听设备的音量变化
+ 
+ @param deviceId 设备ID
+ @param deviceType 设备类型
+ @return 设置是否成功
+ @discussion 设置后如果有音量变化（包括app音量）通过ZegoDeviceEventDelegate::zego_onDevice:error:回调
+ */
+- (bool)setAudioVolumeNotify:(NSString *)deviceId type:(ZegoAPIAudioDeviceType)deviceType;
+
+/**
+ 停止监听设备的音量变化
+ 
+ @param deviceId 设备ID
+ @param deviceType 设备类型
+ @return 设置是否成功
+ */
+- (bool)stopAudioVolumeNotify:(NSString *)deviceId type:(ZegoAPIAudioDeviceType)deviceType;
+
 #endif
 
 /**
@@ -211,10 +404,15 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
 - (bool)setAVEngineDelegate:(id<ZegoAVEngineDelegate>)avEngineDelegate;
 
 /**
- 设置配置信息
+ 设置配置信息，如果没有特殊说明，必须确保在 InitSDK 前调用
  
- @param config 配置信息
- @discussion   确保在 InitSDK 前调用，但开启拉流加速(config为“prefer_play_ultra_source=1”)可在 InitSDK 之后，拉流之前调用
+ @param config 配置信息，如"keep_audio_session_active=true", 等号后面值的类型要看下面每一项的定义
+ 
+ @discussion "prefer_play_ultra_source", int value(1/0), default: 0. 可在 InitSDK 之后，拉流之前调用
+ @discussion "keep_audio_session_active", bool value, default: false. if set true, app need to set the session inactive yourself
+ @discussion "enforce_audio_loopback_in_sync", bool value, default: false. enforce audio loopback in synchronous method
+ @discussion "audio_session_mix_with_others", bool value, default: true. set AVAudioSessionCategoryOptionMixWithOthers
+ @discussion "support_general_mode_below_ios9", bool value, default: false. support general mode below ios 9.0
  */
 + (void)setConfig:(NSString *)config;
 
@@ -226,9 +424,9 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
 @optional
 
 /**
- 因为使用同一个 UserId 登录，用户被挤出聊天室
+ 用户被踢出房间
  
- @param reason 被踢出原因
+ @param reason 被踢出原因，16777219 表示该账户多点登录被踢出，16777220 表示该账户是被手动踢出，16777221 表示房间会话错误被踢出。
  @param roomID 房间 ID
  @discussion 可在该回调中处理用户被踢出房间后的下一步处理（例如报错、重新登录提示等）
  */
@@ -265,7 +463,7 @@ typedef void(^ZegoCustomCommandBlock)(int errorCode, NSString *roomID);
  @param type 更新类型，详见 ZegoStreamType 定义
  @param streamList 直播流列表，列表中包含的是变更流的信息，非房间全部流信息
  @param roomID 房间 ID
- @discussion 房间内增加流、删除流，均会触发此更新。建议对流增加和流删除分别采取不同的处理
+ @discussion 房间内增加流、删除流，均会触发此更新。主播推流，自己不会收到此回调，房间内其他成员会收到。建议对流增加和流删除分别采取不同的处理。
  */
 - (void)onStreamUpdated:(int)type streams:(NSArray<ZegoStream*> *)streamList roomID:(NSString *)roomID;
 
@@ -319,7 +517,7 @@ typedef enum : NSUInteger {
  直播事件回调
  
  @param event 直播事件状态，参考 ZegoLiveEvent 定义
- @param info 信息，目前为空
+ @param info 信息
  @discussion 调用 [ZegoLiveRoomApi -setLiveEventDelegate] 设置直播事件代理对象后，在此回调中获取直播事件状态
  */
 - (void)zego_onLiveEvent:(ZegoLiveEvent)event info:(NSDictionary<NSString*, NSString*>*)info;
@@ -331,15 +529,58 @@ typedef enum : NSUInteger {
 /**
  设备事件回调
  
- @param deviceName 设备名，支持摄像头和麦克风设备，参考 ZegoLiveRoomApiDefines.h 中定义
- @param errorCode 错误码。设备无错误不会回调，目前出错后的错误码均为 -1
+ @param deviceName 设备名，支持摄像头和麦克风设备，参考 zego-api-defines-oc.h 中定义
+ @param errorCode 错误码。设备无错误不会回调，目前没有权限的错误码为-3，其他错误情况的错误码均为-1
  @discussion 调用 [ZegoLiveRoomApi -setDeviceEventDelegate] 设置设备事件代理对象后，在此回调中获取设备状态或错误
  */
 - (void)zego_onDevice:(NSString *)deviceName error:(int)errorCode;
 
+#if TARGET_OS_OSX
+
+@optional
+
+/**
+ 音频设备改变状态的回调
+ 
+ @param deviceId 设备ID
+ @param deviceName 设备名
+ @param deviceType 设备类型，参考 zego-api-defines-oc.h 中 ZegoAPIAudioDeviceType 的定义
+ @param state   设备状态，参考 zego-api-defines-oc.h 中 ZegoAPIDeviceState 的定义
+ @discussion 调用 [ZegoLiveRoomApi -setDeviceEventDelegate] 设置设备事件代理对象后，在此回调中获取音频设备改变状态的信息
+ */
+- (void)zego_onAudioDevice:(NSString *)deviceId deviceName:(NSString *)deviceName deviceType:(ZegoAPIAudioDeviceType)deviceType changeState:(ZegoAPIDeviceState)state;
+
+/**
+ 音频设备音量变化的回调
+ 
+ @param deviceId 设备ID
+ @param deviceType 设备类型，参考 zego-api-defines-oc.h 中 ZegoAPIAudioDeviceType 的定义
+ @param volume 音量，有效值 0 ~ 100
+ @param volumeType  音量类型，参考 zego-api-defines-oc.h 中 ZegoAPIVolumeType 的定义
+ @discussion 调用 [ZegoLiveRoomApi -setDeviceEventDelegate] 设置设备事件代理对象后，在此回调中获取音频设备音量变化的信息
+ */
+- (void)zego_onAudioDevice:(NSString *)deviceId deviceType:(ZegoAPIAudioDeviceType)deviceType changeVolume:(uint32_t)volume volumeType:(ZegoAPIVolumeType)volumeType mute:(bool)mute;
+
+/**
+ 视频设备改变状态的回调
+ 
+ @param deviceId 设备ID
+ @param deviceName 设备名
+ @param state   设备状态，参考 zego-api-defines-oc.h 中 ZegoAPIDeviceState 的定义
+ @discussion 调用 [ZegoLiveRoomApi -setDeviceEventDelegate] 设置设备事件代理对象后，在此回调中获取视频设备改变状态的信息
+ */
+- (void)zego_onVideoDevice:(NSString *)deviceId deviceName:(NSString *)deviceName changeState:(ZegoAPIDeviceState)deviceState;
+
+#endif
+
 @end
 
 @protocol ZegoAVEngineDelegate <NSObject>
+
+/**
+ 音视频引擎开始时回调
+ */
+- (void)onAVEngineStart;
 
 /**
  音视频引擎停止时回调
