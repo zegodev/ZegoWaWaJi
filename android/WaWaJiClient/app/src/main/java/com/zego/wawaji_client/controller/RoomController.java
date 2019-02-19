@@ -69,9 +69,9 @@ public class RoomController {
                 boolean isTest = ZegoApiManager.getInstance().isTest();
                 String url;
                 if(isTest){
-                    url = String.format("https://test2-liveroom-api.%s/demo/roomlist?appid=%s", "zego.im", appID);
+                     url = String.format("https://test2-liveroom-api.%s/demo/roomlist?appid=%s", "zego.im", appID);
                 }else{
-                    url = String.format("https://liveroom%d-api.%s/demo/roomlist?appid=%s", appID, "zego.im", appID);
+                     url = String.format("https://liveroom%d-api.%s/demo/roomlist?appid=%s", appID, "zego.im", appID);
                 }
 
 

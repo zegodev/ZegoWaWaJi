@@ -12,9 +12,12 @@ import android.view.View;
 
 import com.zego.wawaji.R;
 import com.zego.wawaji_client.adapter.LogListAdapter;
+import com.zego.wawaji_client.utils.AppLogger;
 import com.zego.wawaji_client.utils.PreferenceUtil;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -30,11 +33,13 @@ public class LogListActivity extends AppCompatActivity {
 
     private LogListAdapter mLogListAdapter;
 
-    private LinkedList<String> mLinkedListData;
+    private List<String> mLinkedListData;
 
     private PreferenceUtil.OnChangeListener mOnChangeListener;
 
-    public static void actionStart(Activity activity){
+    private AppLogger.OnLogChangedListener onLogChangedListener;
+
+    public static void actionStart(Activity activity) {
         Intent intent = new Intent(activity, LogListActivity.class);
         activity.startActivity(intent);
     }
@@ -44,24 +49,32 @@ public class LogListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_list);
 
-        mLinkedListData = (LinkedList<String>) PreferenceUtil.getInstance().getObjectFromString(KEY_LIST_LOG);
+        mLinkedListData = AppLogger.getInstance().getAllLog();
         if (mLinkedListData == null) {
-            mLinkedListData = new LinkedList<>();
+            mLinkedListData = new ArrayList<>();
         }
-        mOnChangeListener = new PreferenceUtil.OnChangeListener() {
+
+
+        onLogChangedListener = new AppLogger.OnLogChangedListener() {
             @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (KEY_LIST_LOG.equals(key)) {
-                    mLinkedListData.clear();
-                    LinkedList<String> data = (LinkedList<String>) PreferenceUtil.getInstance().getObjectFromString(KEY_LIST_LOG);
-                    if (data != null) {
-                        mLinkedListData.addAll(data);
+            public void onLogDataChanged() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        List<String> data = AppLogger.getInstance().getAllLog();
+                        if (data != null) {
+                          //  mLinkedListData.addAll(data);
+                            mLogListAdapter.setDatas(data);
+                        }
+
                     }
-                    mLogListAdapter.notifyDataSetChanged();
-                }
+                });
             }
         };
-        PreferenceUtil.getInstance().registerOnChangeListener(mOnChangeListener);
+
+        AppLogger.getInstance().registerLogChangedListener(onLogChangedListener);
+
 
         recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -72,9 +85,15 @@ public class LogListActivity extends AppCompatActivity {
         findViewById(R.id.tv_back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PreferenceUtil.getInstance().unregisterOnChangeListener(mOnChangeListener);
                 finish();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        AppLogger.getInstance().unregisterLogChangedListener(onLogChangedListener);
+
     }
 }

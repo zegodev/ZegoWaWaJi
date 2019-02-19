@@ -13,6 +13,8 @@ public class ZegoApplication extends Application{
 
     public static Context sApplicationContext;
 
+
+
     @Override
     public void onCreate() {
         super.onCreate();

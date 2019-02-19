@@ -51,7 +51,7 @@ import com.zego.zegoliveroom.callback.IZegoLivePlayerCallback;
 import com.zego.zegoliveroom.callback.IZegoLoginCompletionCallback;
 import com.zego.zegoliveroom.callback.IZegoRoomCallback;
 import com.zego.zegoliveroom.entity.ZegoStreamInfo;
-import com.zego.zegoliveroom.entity.ZegoStreamQuality;
+import com.zego.zegoliveroom.entity.ZegoPlayStreamQuality;
 import com.zego.zegoliveroom.entity.ZegoUser;
 
 import java.util.ArrayList;
@@ -510,7 +510,7 @@ public class PlayActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPlayQualityUpdate(String streamID, ZegoStreamQuality zegoStreamQuality) {
+            public void onPlayQualityUpdate(String streamID, ZegoPlayStreamQuality zegoStreamQuality) {
                 // 当前显示的流质量
                 if (mListStream.get(mSwitchCameraTimes % 2).getStreamID().equals(streamID)) {
                     switch (zegoStreamQuality.quality) {
@@ -941,12 +941,8 @@ public class PlayActivity extends AppCompatActivity {
                 public void onFinish() {
                     if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
                         mDialogGameResult.dismiss();
-                        CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
-                            @Override
-                            public void onSendFail() {
-                                sendCMDFail("ConfirmBoard(false)");
-                            }
-                        });
+
+                        CMDCenter.getInstance().getEntrptedConfig(false);
                         reinitGame(true);
                     }
                 }
@@ -972,7 +968,7 @@ public class PlayActivity extends AppCompatActivity {
                 // 按钮不能再点击
                 mIBtnApply.setEnabled(false);
 
-                CMDCenter.getInstance().getEntrptedConfig();
+                CMDCenter.getInstance().getEntrptedConfig(true);
 
 
             }
@@ -984,13 +980,9 @@ public class PlayActivity extends AppCompatActivity {
                     mCountDownTimer.cancel();
                 }
 
-                CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
-                    @Override
-                    public void onSendFail() {
-                        sendCMDFail("ConfirmBoard(false)");
-                    }
-                });
+                Log.e("CMDCenter_confirmBoard",CMDCenter.getInstance().getCurrentBoardSate().name());
 
+                CMDCenter.getInstance().getEntrptedConfig(false);
                 reinitGame(true);
             }
 
@@ -1011,12 +1003,7 @@ public class PlayActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 if (CMDCenter.getInstance().getCurrentBoardSate() == BoardState.WaitingBoard) {
-                    CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
-                        @Override
-                        public void onSendFail() {
-                            sendCMDFail("ConfirmBoard(false)");
-                        }
-                    });
+                    CMDCenter.getInstance().getEntrptedConfig(false);
                     mDialogConfirmGameReady.dismiss();
                     reinitGame(true);
                 }
@@ -1162,7 +1149,8 @@ public class PlayActivity extends AppCompatActivity {
                 dialog.dismiss();
                 //TODO 游戏返回结果之后用户点击继续玩
                 //mContinueToPlay = true;
-                CMDCenter.getInstance().getEntrptedConfig();
+                //发送确认上机信令
+                CMDCenter.getInstance().getEntrptedConfig(true);
 
             }
 
@@ -1173,14 +1161,8 @@ public class PlayActivity extends AppCompatActivity {
                 }
                 dialog.dismiss();
 
+                CMDCenter.getInstance().getEntrptedConfig(false);
                 //设置状态为等待上机状态,然后发送取消上机
-                CMDCenter.getInstance().setCurrentBoardSate(BoardState.WaitingBoard);
-                CMDCenter.getInstance().confirmBoard(false, null, System.currentTimeMillis(), new CMDCenter.OnCommandSendCallback() {
-                    @Override
-                    public void onSendFail() {
-                        sendCMDFail("ConfirmBoard(false)");
-                    }
-                });
                 reinitGame(true);
             }
 
@@ -1341,12 +1323,15 @@ public class PlayActivity extends AppCompatActivity {
         viewBottom.findViewById(R.id.btn_upload_log).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //上传日志成功
                 ZegoLiveRoom.uploadLog();
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+
                         Toast.makeText(PlayActivity.this, "上传日志成功!", Toast.LENGTH_SHORT).show();
+
                     }
                 }, 2000);
             }

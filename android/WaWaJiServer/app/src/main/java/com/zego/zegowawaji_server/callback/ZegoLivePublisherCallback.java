@@ -3,7 +3,7 @@ package com.zego.zegowawaji_server.callback;
 import com.zego.base.utils.AppLogger;
 import com.zego.zegoliveroom.callback.IZegoLivePublisherCallback;
 import com.zego.zegoliveroom.entity.AuxData;
-import com.zego.zegoliveroom.entity.ZegoStreamQuality;
+import com.zego.zegoliveroom.entity.ZegoPublishStreamQuality;
 import com.zego.zegowawaji_server.IRoomClient;
 import com.zego.zegowawaji_server.IStateChangedListener;
 
@@ -38,11 +38,15 @@ public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
         }
     }
 
+    @Override
+    public void onCaptureVideoFirstFrame() {
+    }
+
     /**
      * 推流质量更新
      */
     @Override
-    public void onPublishQualityUpdate(String streamId, ZegoStreamQuality zegoStreamQuality) {
+    public void onPublishQualityUpdate(String streamId, ZegoPublishStreamQuality zegoStreamQuality) {
         int count;
         if (mReceivePublishQuality.containsKey(streamId)) {
             count = mReceivePublishQuality.get(streamId) + 1;
@@ -54,13 +58,13 @@ public class ZegoLivePublisherCallback implements IZegoLivePublisherCallback {
         if (count == 20) {
             mReceivePublishQuality.put(streamId, 0);
 
-            AppLogger.getInstance().writeLog("stream: %s's quality update, quality: %d, videoFPS: %.1f, videoCaptureFPS: %.1f",
-                    streamId, zegoStreamQuality.quality, zegoStreamQuality.videoFPS, zegoStreamQuality.videoCaptureFPS);
+            AppLogger.getInstance().writeLog("stream: %s's quality update, quality: %d, videoEncFPS: %.1f, videoNetFPS: %.1f, videoCaptureFPS: %.1f",
+                    streamId, zegoStreamQuality.quality, zegoStreamQuality.vencFps, zegoStreamQuality.vnetFps, zegoStreamQuality.vcapFps);
         }
 
         if (iRoomClient.cameraIsDisabled()) return;
 
-        if (zegoStreamQuality.videoCaptureFPS <= 3) {
+        if (zegoStreamQuality.vcapFps <= 3) {
             if (mCaptureFpsAnomaly.containsKey(streamId)) {
                 count = mCaptureFpsAnomaly.get(streamId) + 1;
             } else {

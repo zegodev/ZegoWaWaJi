@@ -19,6 +19,7 @@ import com.google.gson.GsonBuilder;
 import com.zego.wawaji.R;
 import com.zego.wawaji_client.constants.BoardState;
 import com.zego.wawaji_client.constants.CMDKey;
+import com.zego.wawaji_client.utils.AppLogger;
 import com.zego.wawaji_client.utils.PreferenceUtil;
 import com.zego.zegoliveroom.ZegoLiveRoom;
 import com.zego.zegoliveroom.callback.IZegoCustomCommandCallback;
@@ -327,10 +328,8 @@ public class CMDCenter {
 
     void printLog(String msg) {
         Log.i(LOG_TAG, msg);
+        AppLogger.getInstance().writeLog(msg);
 
-        String now = sDataFormat.format(new Date());
-        mListLog.addFirst(String.format("%s %s", now, msg));
-        PreferenceUtil.getInstance().setObjectToString(LogListActivity.KEY_LIST_LOG, mListLog);
     }
 
     boolean isCommandFromAnchor(String userID) {
@@ -365,7 +364,7 @@ public class CMDCenter {
     /**
      * 从业务后台获取加密的游戏配置信息.
      */
-    void getEntrptedConfig() {
+    void getEntrptedConfig(final boolean comnfirmBoard) {
 
         RequestQueue mQueue = Volley.newRequestQueue(ZegoApplication.sApplicationContext);
 
@@ -374,12 +373,12 @@ public class CMDCenter {
         String url = String.format("http://wsliveroom%s-api.zego.im:8181/pay?" +
                         "app_id=%s&id_name=%s&session_id=%s&confirm=1&time_stamp=%s&item_type=123&item_price=200"
                 , appID, appID, PreferenceUtil.getInstance().getUserID(), mSessionID, timeStamp);
-
+        final String sessionId = mSessionID;
         StringRequest request = new StringRequest(url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        CMDCenter.getInstance().confirmBoard(true, response, timeStamp, new CMDCenter.OnCommandSendCallback() {
+                        CMDCenter.getInstance().confirmBoard(comnfirmBoard, response, timeStamp, sessionId, new CMDCenter.OnCommandSendCallback() {
                             @Override
                             public void onSendFail() {
                                 printLog("[CMDCenter_getEntrptedConfig] error, confirm board fail");
@@ -589,13 +588,13 @@ public class CMDCenter {
      *
      * @param confirmBoard true: 上机，false: 不上机
      */
-    void confirmBoard(boolean confirmBoard, String encryptedConfig, long timeStamp, final OnCommandSendCallback callback) {
-        printLog("[CMDCenter_confirmBoard], confirmBoard: " + confirmBoard + ", currentState: " + mCurrentBoardSate);
+    void confirmBoard(boolean confirmBoard, String encryptedConfig, long timeStamp, String sessionID, final OnCommandSendCallback callback) {
+        printLog("[CMDCenter_confirmBoardCMDCenter_confirmBoard], confirmBoard: " + confirmBoard + ", currentState: " + mCurrentBoardSate);
 
-        if (mCurrentBoardSate != BoardState.WaitingBoard) {
-            printLog("[CMDCenter_confirmBoard] error, state mismatch");
-            return;
-        }
+//        if (mCurrentBoardSate != BoardState.WaitingBoard) {
+//            printLog("[CMDCenter_confirmBoard] error, state mismatch");
+//            return;
+//        }
 
         // 取消之前的定时器
         if (mCountDownTimerRetryHttpRequest != null) {
@@ -608,14 +607,14 @@ public class CMDCenter {
             setCurrentBoardSate(BoardState.ConfirmBoard);
         }
 
-        Map<String, Object> mapCMD = getCMDHeader(getSeq(), CMD_CONFIRM_BOARD, mSessionID);
+        Map<String, Object> mapCMD = getCMDHeader(getSeq(), CMD_CONFIRM_BOARD, sessionID);
 
         Map<String, Object> mapData = getDataMap(timeStamp);
         mapData.put(CMDKey.CONFIRM, (mConfirmBoard ? YES : NO));
 
-        if (mConfirmBoard) {
-            mapData.put(CMDKey.CONFIG, encryptedConfig);
-        }
+
+        mapData.put(CMDKey.CONFIG, encryptedConfig);
+
 
         mapCMD.put(CMDKey.DATA, mapData);
 
@@ -683,6 +682,7 @@ public class CMDCenter {
                 }
             }
         }.start();
+
     }
 
     void moveLeft() {
@@ -794,12 +794,12 @@ public class CMDCenter {
                     }
                 });
             }
+
             @Override
             public void onFinish() {
 
             }
         }.start();
-
 
 
     }

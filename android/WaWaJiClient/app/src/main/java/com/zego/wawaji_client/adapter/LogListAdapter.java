@@ -10,29 +10,29 @@ import android.widget.TextView;
 import com.zego.wawaji.R;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by 赵晨璞 on 2016/6/19.
- *RecyclerView适配器
+ * RecyclerView适配器
  */
 
-public  class LogListAdapter extends RecyclerView.Adapter<LogListAdapter.MyViewHolder> {
+public class LogListAdapter extends RecyclerView.Adapter<LogListAdapter.MyViewHolder> {
 
     private Context mContext;
 
-    private LinkedList<String> mDatas;
+    private List<String> mDatas;
 
     private LayoutInflater mLayoutInflater;
 
-    public LogListAdapter(Context context, LinkedList<String> datas) {
-        mContext=context;
+    public LogListAdapter(Context context, List<String> datas) {
+        mContext = context;
         mDatas = datas;
         mLayoutInflater = LayoutInflater.from(context);
     }
 
     @Override
-    public LogListAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
-    {
+    public LogListAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new MyViewHolder(mLayoutInflater.inflate(R.layout.item_log_list, parent, false));
     }
 
@@ -42,27 +42,24 @@ public  class LogListAdapter extends RecyclerView.Adapter<LogListAdapter.MyViewH
     }
 
     @Override
-    public int getItemCount()
-    {
+    public int getItemCount() {
         return mDatas.size();
     }
 
-    public void setDatas(LinkedList<String> datas){
+    public void setDatas(List<String> datas) {
         mDatas = datas;
         notifyDataSetChanged();
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder
-    {
+
+    class MyViewHolder extends RecyclerView.ViewHolder {
         private TextView tv;
 
-        public MyViewHolder(View view)
-        {
+        public MyViewHolder(View view) {
             super(view);
-            tv = (TextView) view.findViewById(R.id.tv);
+            tv = view.findViewById(R.id.tv);
         }
     }
-
 
 
 }

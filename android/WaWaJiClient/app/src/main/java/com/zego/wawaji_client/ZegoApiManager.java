@@ -100,7 +100,7 @@ public class ZegoApiManager {
                 (byte)0xf0,(byte)0x6b,(byte)0xa6,(byte)0xf2,(byte)0x81,(byte)0x21,(byte)0x5b,(byte)0xa5
         };
         //是否开启测试环境
-        setTeseEnv(false);
+        setTeseEnv(true);
 
         init(appID, signKey);
     }

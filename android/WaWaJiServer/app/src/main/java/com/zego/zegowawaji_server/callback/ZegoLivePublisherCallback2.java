@@ -28,4 +28,8 @@ public class ZegoLivePublisherCallback2 implements IZegoLivePublisherCallback2 {
             mListener.onVideoCaptureSizeChanged(width, height, channelIndex);
         }
     }
+
+    @Override
+    public void onCaptureVideoFirstFrame(int var1) {
+    }
 }
