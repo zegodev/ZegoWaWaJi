@@ -370,7 +370,7 @@ public class CMDCenter {
 
         final long timeStamp = System.currentTimeMillis();
         String appID = ZegoApiManager.getInstance().getAppID() + "";
-        String url = String.format("http://wsliveroom%s-api.zego.im:8181/pay?" +
+        String url = String.format("http://webliveroom%s-api.zego.im:8181/pay?" +
                         "app_id=%s&id_name=%s&session_id=%s&confirm=1&time_stamp=%s&item_type=123&item_price=200"
                 , appID, appID, PreferenceUtil.getInstance().getUserID(), mSessionID, timeStamp);
         final String sessionId = mSessionID;

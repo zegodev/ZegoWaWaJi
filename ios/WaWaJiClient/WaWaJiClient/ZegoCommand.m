@@ -254,7 +254,7 @@ typedef void(^completionBlock)(NSInteger errorCode, NSString *encryptedConfig);
 
 //WARNING: !!!本接口仅提供给 zego demo 使用。请开发者不要调用，自行从各自的业务后台获取
 - (void)fetchEncryptedConfig:(int)confirm type:(NSString *)type value:(int)value sessionId:(NSString *)sessionId timestamp:(NSInteger)timestamp completion:(completionBlock)block {
-    NSString *baseUrl = [NSString stringWithFormat:@"http://wsliveroom%u-api.zego.im:8181/pay?", [ZegoSetting sharedInstance].appID];
+    NSString *baseUrl = [NSString stringWithFormat:@"http://webliveroom%u-api.zego.im:8181/pay?", [ZegoSetting sharedInstance].appID];
     NSString *param = [NSString stringWithFormat:@"app_id=%u&id_name=%@&session_id=%@&confirm=%d&time_stamp=%ld&item_type=%@&item_price=%d", [ZegoSetting sharedInstance].appID, [ZegoSetting sharedInstance].userID, sessionId, confirm, timestamp, type, value];
     
     NSString *requestUrl = [NSString stringWithFormat:@"%@%@", baseUrl, param];
