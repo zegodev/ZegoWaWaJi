@@ -218,15 +218,15 @@ var logUrl = '';
 var loginTokenUrl = '';
 var payTokenUrl = '';
 if (window.location.protocol === 'https:') {
-    server = 'wss://wsliveroom' + appid + '-api.zego.im:8282/ws'; //wawaji接入服务器地址    --- 即构下发的server地址
+    server = 'wss://webliveroom' + appid + '-api.zego.im:8282/ws'; //wawaji接入服务器地址    --- 即构下发的server地址
     logUrl = ''; //log服务器地址          --- 可填可不填
-    loginTokenUrl = 'https://wsliveroom' + appid + '-api.zego.im:8282/token'; //登录token派发地址       --- 业务后台自己的地址
-    payTokenUrl = 'https://wsliveroom' + appid + '-api.zego.im:8282/pay'; //支付地址               --- 业务后台自己的地址
+    loginTokenUrl = 'https://webliveroom' + appid + '-api.zego.im:8282/token'; //登录token派发地址       --- 业务后台自己的地址
+    payTokenUrl = 'https://webliveroom' + appid + '-api.zego.im:8282/pay'; //支付地址               --- 业务后台自己的地址
 } else {
-    server = 'ws://wsliveroom' + appid + '-api.zego.im:8181/ws'; //wawaji接入服务器地址    --- 即构下发的server地址
+    server = 'ws://webliveroom' + appid + '-api.zego.im:8181/ws'; //wawaji接入服务器地址    --- 即构下发的server地址
     logUrl = ''; //log服务器地址          --- 可填可不填
-    loginTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/token'; //登录token派发地址       --- 业务后台自己的地址
-    payTokenUrl = 'http://wsliveroom' + appid + '-api.zego.im:8181/pay'; //支付地址               --- 业务后台自己的地址
+    loginTokenUrl = 'http://webliveroom' + appid + '-api.zego.im:8181/token'; //登录token派发地址       --- 业务后台自己的地址
+    payTokenUrl = 'http://webliveroom' + appid + '-api.zego.im:8181/pay'; //支付地址               --- 业务后台自己的地址
 }
 
 var zg; //zegoClient对象
